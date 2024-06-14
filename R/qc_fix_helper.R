@@ -87,6 +87,12 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # replace with new context_str
   diff_lines[file_index_start] <- context_str
 
+  # check if last line is tick marks
+  if (stringr::str_detect(diff_lines[length(diff_lines)], "```")) {
+    diff_lines <- difflines[-c(length(diff_lines))]
+  }
+
+
 
   format_diff_for_github <- function(diff_lines) {
     result <- c()

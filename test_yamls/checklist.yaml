@@ -1,0 +1,22 @@
+owner: A2-ai
+repo: test-qc-api
+milestone: QC3  # optional
+description: checklist for QC round 2 review # optional
+files:
+- name: simulation.R
+  # optional
+  assignees:
+  - jenna-a2ai
+  items:
+    - does the code compile?
+    - does the model file hash match?
+    - has the control stream changed since the model was last run?
+- name: EDA.R
+  # optional
+  assignees:
+  - jenna-a2ai
+  items:
+    - are units in diagnostic figures correct?
+    - does the seed match from when the script was last run?
+    - does the output match what the comments expect?
+

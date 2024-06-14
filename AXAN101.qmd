@@ -1,0 +1,162 @@
+---
+title: "AXAN101"
+format: html
+editor: visual
+---
+
+```{r}
+renv::restore()
+
+library(arrow) # relevant for loading in client processed parquet files
+library(tidyr) # houses the pipe (%>%) and an endless list of useful tidying functions
+library(lubridate) # useful for working with dates and datetimes
+library(dplyr) # many useful data manipulation functions
+library(stringr) # useful for working with strings in R
+library(readr) # useful functon for reading or writing data in R
+
+# location of derived analysis dataset when we are done with assembly 
+derDir <- "data/derived"
+
+# location of source data that we will use for data assembly
+sourceDir <- "/data/client-processed-data-dev/Training-Admiral/Xanomeline/AXAN101"
+
+# ensure the dplyr filter is used
+if (!dir.exists(file.path(derDir))){
+  dir.create(file.path(derDir))
+}else{
+  print("dir exists")
+}
+
+#Ensure dplyr filter is used
+filter <- dplyr::filter
+```
+
+```{r}
+# define function to read parquet files and print out hashes for source data
+#    - hashes are an important QC tool for ensuring the correct version of client data is used in data assembly scripts
+read_parquet_with_hash <- function(file) {
+  path_to_file <- file.path(sourceDir, file)
+  file_hash <- digest::digest(file = path_to_file)
+  cat(path_to_file, file_hash, sep = ": ")
+  cat("\n")
+  read_parquet(path_to_file)
+}
+```
+
+```{r}
+# list all relevant source data domains needed for data assembly
+data_we_need <- sprintf("%s.parquet", c(
+  "pc",
+  "ex"
+))
+
+# map across 'data_we_need' with function read_parquet; store items in a list called raw_data
+raw_data <- purrr::map(data_we_need, read_parquet_with_hash) %>% setNames(tools::file_path_sans_ext(data_we_need))
+
+```
+
+```{r}
+amt <- raw_data$ex |> 
+  filter(EXTRT == "XANOMELINE") |> 
+  select(USUBJID, AMT = EXDOSE, DTIM = EXSTDTC, VISIT) |> 
+  mutate(CMT = 1, EVID = 1, DTIM = as.character(DTIM))
+```
+
+```{r}
+pk <- raw_data$pc |> 
+  # filter(PCSTAT != "NOT DONE") |>
+  # select(USUBJID, DV = PCSTRESN, DAY = PCDY, TPT = PCTPTNUM, DTIM = PCDTC, VISIT) |>
+  # ASDF should I convert this to a number?
+  select(USUBJID, DV = PCSTRESN, DAY = PCDY, TPT = PCTPT, DTIM = PCDTC, VISIT) |> 
+  mutate(CMT = 2, EVID = 0)
+```
+
+```{r}
+amt$DTIM <- as.character(amt$DTIM)
+pkdf1 <- bind_rows(amt, pk) |> 
+  arrange(USUBJID, DTIM) |> 
+  mutate(VISIT = str_remove(VISIT, "DOSING ON "))
+```
+
+```{r}
+pkdf2 <- pkdf1 |> 
+  group_by(USUBJID) |> 
+  mutate(
+    FDOSE = DTIM[first(which(EVID == 1))], 
+    ATFD = round(as.numeric(difftime(ymd_hms(DTIM), ymd_hms(FDOSE), units = "hours")), 3)
+   ) |> 
+  ungroup()
+```
+
+```{r}
+pkdf3 <- pkdf2 |> 
+  mutate(
+    # make run-in visit TIME = 0
+    DAY = as.numeric(DAY) + 7,
+    
+    # if visit is C1D3, add 2*24 hours
+    TPTNUM = ifelse(TPT == "pre-dose", round(-5/60, 3), as.numeric(str_extract(TPT, "\\d*(.|)\\d"))),
+    
+    NTFD = case_when(
+      # if visit is run-in, add 0 hours
+          VISIT == "Run-In" ~ 0 + TPTNUM,
+      # if visit is CDC1, add 0 hours
+          VISIT == "C1D1" ~ 7*24 + TPTNUM,
+      # if visit is C1D2, add 1*24 hours
+          VISIT == "C1D2" ~ 8*24 + TPTNUM,
+      # if visit is C1D3, add 2*24 hours
+          VISIT == "C1D3" ~ 9*24 + TPTNUM,
+      # if visit = C1D1-7, add 24*7 hours
+          # VISIT == "C1D1-7" ~ 7*24 + TPTNUM
+          ) #case_when
+
+  )  # mutate
+  
+```
+
+```{r}
+pkdf4 <- pkdf3 |>
+   mutate(
+      NTLD = case_when(TPTNUM >=  0 & EVID == 0 ~ TPTNUM,
+                       EVID == 1 ~ 0,
+                       TPTNUM < 0 & ATFD < 0 ~ 0,
+                       TPTNUM < 0 & ATFD > 0 ~ TPTNUM + 12
+                       ),
+) |>
+group_by(USUBJID) |> 
+  mutate(LDOSE = ifelse(EVID == 1, DTIM, NA)) |> 
+  fill(LDOSE, .direction = "downup") |> 
+  ungroup() |> 
+  mutate(
+    ATLD = round(as.numeric(difftime(ymd_hms(DTIM), ymd_hms(LDOSE), units = "hours")), 3)
+  ) |> select(-LDOSE, -TPTNUM)
+```
+
+```{r}
+pkdf5 <- pkdf4 |> 
+  mutate(
+    C = ifelse(ATFD < 0 & EVID == 0, "C", NA),
+    LINE = row_number(),
+    ID = match(USUBJID, unique(USUBJID)),
+    DV = ifelse(DV == 0, NA, DV),
+    LDV = round(log(DV), 3),
+    MDV = ifelse(is.na(DV), 1, 0),
+    BLQ = case_when(EVID == 1 ~ 0,
+                    EVID == 0 & !is.na(DV) ~ 0,
+                    EVID == 0 & ATFD < 0 & is.na(DV) ~ 2,
+                    EVID == 0 & ATFD > 0 & is.na(DV) ~ 1),
+    LLOQ = NA,
+    STUDY = "A2AI-XAN-101",
+    IMPDOS = 0,
+    DOSEA = AMT[first(which(EVID == 1))],
+    CFLAG = NA
+  ) %>% 
+  select(C, LINE, ID, ATFD, ATLD, NTFD, NTLD, AMT, DV, LDV, EVID, CMT, MDV, BLQ, LLOQ,
+         DOSEA, IMPDOS, STUDY, USUBJID, DTIM, FDOSE, VISIT, TPT, CFLAG)
+  write.csv(pkdf5, file.path(derDir, "PK_AXAN101.csv"), na = ".")
+
+
+
+```
+
+

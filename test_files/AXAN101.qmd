@@ -5,8 +5,6 @@ editor: visual
 ---
 
 ```{r}
-renv::restore()
-
 library(arrow) # relevant for loading in client processed parquet files
 library(tidyr) # houses the pipe (%>%) and an endless list of useful tidying functions
 library(lubridate) # useful for working with dates and datetimes
@@ -15,10 +13,10 @@ library(stringr) # useful for working with strings in R
 library(readr) # useful functon for reading or writing data in R
 
 # location of derived analysis dataset when we are done with assembly 
-derDir <- "data/derived"
+derDir <- "."
 
 # location of source data that we will use for data assembly
-sourceDir <- "/data/client-processed-data-dev/Training-Admiral/Xanomeline/AXAN101"
+sourceDir <- "."
 
 # ensure the dplyr filter is used
 if (!dir.exists(file.path(derDir))){
@@ -155,8 +153,5 @@ pkdf5 <- pkdf4 |>
          DOSEA, IMPDOS, STUDY, USUBJID, DTIM, FDOSE, VISIT, TPT, CFLAG)
   write.csv(pkdf5, file.path(derDir, "PK_AXAN101.csv"), na = ".")
 
-
-
+  
 ```
-
-

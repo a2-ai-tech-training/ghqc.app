@@ -1,3 +1,4 @@
+#' @export
 add_fix_comment <- function(owner, repo, issue_number, message = "", force = FALSE, compare_to_first = TRUE) {
   # get issue
   issue <- get_issue(owner, repo, issue_number)
@@ -5,7 +6,8 @@ add_fix_comment <- function(owner, repo, issue_number, message = "", force = FAL
   qc_commit <- {
     comments <- get_comments(owner, repo, issue_number)
     # if the user wants to get comparison from most recent QC fix and there are QC fixes to draw from
-    if (!compare_to_first && nrow(comments) != 0) { # TODO: fix bug where compare to first false
+    # TODO: fix bug where compare to first false but there's only the first commit
+    if (!compare_to_first && nrow(comments) != 0) {
       last_comment <- get_most_recent_comment_body(comments)
       commit <- get_current_commit_from_comment(last_comment)
       context <- glue::glue("Current script compared to <ins>the previous script updated with QC feedback</ins>: {commit}")

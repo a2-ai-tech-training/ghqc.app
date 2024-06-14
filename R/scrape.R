@@ -139,7 +139,7 @@ get_summary_df <- function(issues) {
 }
 
 get_summary_table <- function(df) {
-  ft <- flextable(df) %>%
+  ft <- flextable::flextable(df) %>%
     set_header_labels(file_path = "File Path",
                       author = "Author",
                       qc_type = "QC Type",
@@ -173,16 +173,17 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   }, issue_markdown_strings, issues)
   issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
 
+  image_path <- system.file("gsk.png", package = "ghqc")
   # header
   header_tex <- paste0(
     "\\usepackage{fancyhdr}\n",
     "\\pagestyle{fancy}\n",
-    "\\fancyhead[R]{\\includegraphics[width=2cm]{gsk.png}}\n",
+    "\\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
     "\\fancyhead[C]{}\n",
     "\\fancyhead[L]{}\n",
     "\\setlength{\\headheight}{30pt}\n",
     "\\fancypagestyle{plain}{%\n",
-    "    \\fancyhead[R]{\\includegraphics[width=2cm]{gsk.png}}\n",
+    "    \\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
     "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
     "}\n",
     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
@@ -212,15 +213,20 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   # summary table
   summary_table_section <- glue::glue(
   "```{{r, include=FALSE}}
+  install.packages(\"knitr\")
+  library(knitr)
+  knitr::opts_chunk$set(eval=FALSE)\n```\n\n",
+
+  "```{{r, eval=TRUE, include=FALSE}}
+  install.packages(\"flextable\")
+  install.packages(\"dplyr\")
   library(flextable)
   library(dplyr)
   summary_df <- read.csv(\"{summary_csv}\")\n",
   "summary_df <- summary_df %>%
   mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))\n```\n",
-  "# Summary Table\n```{{r, echo=FALSE, warning=FALSE, message=FALSE}}
-  library(flextable)
-  library(dplyr)
-  ft <- flextable(summary_df)
+  "# Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+  ft <- flextable::flextable(summary_df)
   dimensions <- dim_pretty(ft)
   col_widths <- dimensions$widths * 0.8
   #row_heights <- dimensions$heights * 0.8

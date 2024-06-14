@@ -157,7 +157,7 @@ create_big_section <- function(section_title, contents) {
   glue::glue("# {section_title}\n{contents}\n\n\\newpage\n\n", .trim = FALSE)
 } # create_section
 
-
+#' @export
 scrape_milestone <- function(owner, repo, milestone_name) {
   # issues
   issues <- get_issues(owner, repo, milestone_name)

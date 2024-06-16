@@ -212,12 +212,12 @@ scrape_milestone <- function(owner, repo, milestone_name) {
 
   # summary table
   summary_table_section <- glue::glue(
-  "```{{r, include=FALSE}}
+  "```{{r setup, include=FALSE}}
   install.packages(\"knitr\")
   library(knitr)
   knitr::opts_chunk$set(eval=FALSE)\n```\n\n",
 
-  "```{{r, eval=TRUE, include=FALSE}}
+  "```{{r, include=FALSE, eval=TRUE}}
   install.packages(\"flextable\")
   install.packages(\"dplyr\")
   library(flextable)

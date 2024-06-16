@@ -4,13 +4,8 @@ untracked_changes <- function() {
   nrow(not_staged) != 0
 }
 
-# get_file_changes <- function(previous_commit) {
-#   git_diff(ref = previous_commit)
-# }
-
-
 checkout_default_branch <- function() {
-  branches <- git_branch_list()
+  branches <- gert::git_branch_list()
 
   # Determine the default branch
   default_branch <- if ("main" %in% branches$name) {
@@ -22,21 +17,21 @@ checkout_default_branch <- function() {
   }
 
   # Checkout the default branch
-  git_branch_checkout(default_branch)
+  gert::git_branch_checkout(default_branch)
 }
 
 checkout_temp_branch <- function(temp_branch, commit_sha) {
   # get all branches
-  branches <- git_branch_list()
+  branches <- gert::git_branch_list()
 
   # if it doesn't already exist
   if (!temp_branch %in% branches$name) {
     # create it
-    git_branch_create(temp_branch, ref = commit_sha)
+    gert::git_branch_create(temp_branch, ref = commit_sha)
   }
 
   # check it out
-  git_branch_checkout(temp_branch)
+  gert::git_branch_checkout(temp_branch)
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
@@ -50,7 +45,7 @@ read_file_at_commit <- function(commit_sha, file_path) {
   # read file in previous commit
   file_content <- readLines(file_path)
   checkout_default_branch()
-  git_branch_delete(temp_branch)
+  gert::git_branch_delete(temp_branch)
   return(file_content)
 }
 
@@ -89,7 +84,7 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
 
   # check if last line is tick marks
   if (stringr::str_detect(diff_lines[length(diff_lines)], "```")) {
-    diff_lines <- difflines[-c(length(diff_lines))]
+    diff_lines <- diff_lines[-c(length(diff_lines))]
   }
 
 

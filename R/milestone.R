@@ -49,11 +49,11 @@ get_milestone_number <- function(params) {
   milestone_number <- {
     searched_number <- look_up_existing_milestone_number(params)
     if (!is.null(searched_number)) {
-      print("milestone already exists")
+      #print("milestone already exists")
       searched_number
     }
     else {
-      print("milestone created")
+      #print("milestone created")
       milestone <- create_milestone(params)
       milestone$number
     }

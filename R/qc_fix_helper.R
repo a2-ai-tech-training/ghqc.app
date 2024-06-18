@@ -49,6 +49,27 @@ read_file_at_commit <- function(commit_sha, file_path) {
   return(file_content)
 }
 
+extract_line_numbers <- function(text) {
+  match <- stringr::str_match(text, "@@ ([^@]+) @@")[2]
+  first_set <- stringr::str_match(match, "^\\s*(\\d+)(?:,(\\d+))?")[,2:3]
+  second_set <- stringr::str_match(match, "/\\s*(\\d+)(?:,(\\d+))?\\s*$")[,2:3]
+  list(previous = as.numeric(first_set), current = as.numeric(second_set))
+}
+
+format_line_numbers <- function(numbers) {
+  # if there's just one line, it prints like
+  # ("@@ 1 / 1,5 @@"
+  # instead of
+  # ("@@ 1,1 / 1,5 @@"
+  # to not be verbose
+  # so this fixes it to be verbose for parsing ease
+  if (is.na(numbers$previous[2])) {numbers$previous[2] <- 1}
+  if (is.na(numbers$current[2])) {numbers$current[2] <- 1}
+  previous <- glue::glue("{numbers$previous[1]}-{numbers$previous[1]+numbers$previous[2]-1}")
+  current <- glue::glue("{numbers$current[1]}-{numbers$current[1]+numbers$current[2]-1}")
+  glue::glue("@@ previous script: lines {previous} @@\n@@  current script: lines {current} @@")
+}
+
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # get file contents at the specified commits
   compared_script <- read_file_at_commit(commit_sha_orig, file_path)
@@ -69,16 +90,15 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
     }
   }
 
+
   # delete the lines with the file names
   diff_lines <- diff_lines[-c(file_index_start, file_index_start + 1)]
 
   # now file_index_start is the index where the line numbers are
-  # extract the numbers from this line
-  numbers <- stringr::str_extract_all(diff_lines[file_index_start], "\\d+")[[1]]
-  numbers <- as.numeric(numbers)
-
+  # extract the line numbers
+  numbers <- extract_line_numbers(diff_lines[file_index_start])
   # reformat line numbers
-  context_str <- glue::glue("@@ previous script: lines {numbers[1]}-{numbers[1]+numbers[2]-1} @@\n@@  current script: lines {numbers[3]}-{numbers[3]+numbers[4]-1} @@")
+  context_str <- format_line_numbers(numbers)
   # replace with new context_str
   diff_lines[file_index_start] <- context_str
 

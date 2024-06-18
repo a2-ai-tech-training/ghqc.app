@@ -67,7 +67,7 @@ add_fix_comment <- function(owner, repo, issue_number, message = "", force = FAL
   comment_body
 
   # add comment to post
-  gh::gh("POST /repos/:owner/:repo/issues/:issue_number/comments",
+  comment <- gh::gh("POST /repos/:owner/:repo/issues/:issue_number/comments",
          owner = owner,
          repo = repo,
          issue_number = issue_number,

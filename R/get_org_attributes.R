@@ -46,28 +46,18 @@ get_current_repo <- function() {
   basename(gert::git_find())
 }
 
+get_organization_name_from_url <- function(url) {
+  pattern <- "https://[^/]+/([^/]+)/[^/]+\\.git"
+  org_name <- sub(pattern, "\\1", url)
+  return(org_name)
+}
+
 #' @export
 get_organization <- function() {
-  extract_organization_name <- function(remote_url) {
-    if (grepl("github.com", remote_url)) {
-      url <- sub("https://github.com/", "", remote_url)
-      url <- sub("git@github.com:", "", url)
-      url <- sub("\\.git$", "", url)
-
-      # split the remaining string to get the organization name
-      parts <- strsplit(url, "/")[[1]]
-      if (length(parts) >= 2) {
-        return(parts[1])
-      }
-    }
-    return(NA)
-  }
-
   repo_path <- gert::git_find()
   remotes <- gert::git_remote_list(repo = repo_path)
   remote_url <- remotes$url
-
-  extract_organization_name(remote_url)
+  get_organization_name_from_url(remote_url)
 }
 
 get_issue <- function(owner, repo, issue_number) {

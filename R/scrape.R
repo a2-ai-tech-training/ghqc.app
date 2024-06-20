@@ -86,7 +86,7 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   )
 } # issue_to_markdown
 
-markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name, env) {
+markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name) {
   wd <- getwd()
 
   pdf_name <- {
@@ -95,7 +95,7 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name, env) 
     }
     else {
       # they might have already put pdf in the name
-      if (stringr::str_detect(".pdf")) {
+      if (stringr::str_detect(input_name, ".pdf")) {
         input_name
       }
       else {
@@ -105,13 +105,17 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name, env) 
   }
 
   # create temporary rmd
-  rmd <- file.path(tempdir(), glue::glue("{repo}-{milestone_name}.Rmd"))
+  temp_dir <- tempdir()
+  rmd <- tempfile()
+  #rmd <- file.path(tempdir(), glue::glue("{repo}-{milestone_name}.Rmd"))
+  fs::file_create(rmd)
   # delete temporary rmd when it's time
-  withr::defer(unlink(rmd), envir = env)
+  withr::defer_parent(unlink(rmd))
   writeLines(rmd_content, con = rmd)
   # create pdf from rmd
 
   rmarkdown::render(rmd, output_file = file.path(wd, pdf_name))
+  return(invisible())
 } # markdown_to_pdf
 
 scrape_issue <- function(owner, repo, issue_number) {
@@ -231,7 +235,7 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   library(knitr)
   library(dplyr)
   library(flextable)
-  knitr::opts_chunk$set(eval=FALSE)\n```\n\n",
+  knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n",
 
   "```{{r, include=FALSE, echo=FALSE, eval=TRUE}}
   summary_df <- read.csv(\"{summary_csv}\")\n
@@ -269,5 +273,11 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
     issue_sections
   )
 
-  markdown_to_pdf(rmd, repo, milestone_name, pdf_name, env = parent.frame())
+  result <- suppressWarnings({
+    capture.output({
+      output <- markdown_to_pdf(rmd, repo, milestone_name, pdf_name)
+    })
+    output
+  })
+
 }

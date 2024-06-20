@@ -43,7 +43,15 @@ add_fix_comment <- function(owner, repo, issue_number, message = "", force = FAL
 
   # get assignees
   assignees_vec <- sapply(issue$assignees, function(assignee) glue::glue("@{assignee$login}"))
-  assignees_body <- glue::glue_collapse(assignees_vec, sep = "\n")
+  assignees_body <- {
+    if (length(assignees_vec) != 0) {
+      list <- glue::glue_collapse(assignees_vec, sep = "\n")
+      glue::glue("{list}\n\n")
+    }
+    else {
+      ""
+    }
+  }
 
   # format message
   message_body <- {
@@ -54,7 +62,7 @@ add_fix_comment <- function(owner, repo, issue_number, message = "", force = FAL
   diff <- format_diff(issue$title, qc_commit, last_commit)
 
   # format comment
-  comment_body <- glue::glue("{assignees_body}\n\n", # TODO: bug if no assignees
+  comment_body <- glue::glue("{assignees_body}",
                              "{message_body}",
                              "## {issue$title}\n",
                              "{context}\n",

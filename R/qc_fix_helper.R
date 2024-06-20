@@ -20,7 +20,7 @@ checkout_default_branch <- function() {
   gert::git_branch_checkout(default_branch)
 }
 
-checkout_temp_branch <- function(temp_branch, commit_sha) {
+checkout_temp_branch <- function(temp_branch, commit_sha, env) {
   # get all branches
   branches <- gert::git_branch_list()
 
@@ -32,6 +32,7 @@ checkout_temp_branch <- function(temp_branch, commit_sha) {
 
   # check it out
   gert::git_branch_checkout(temp_branch)
+  withr::defer(checkout_default_branch(), envir = env)
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
@@ -41,7 +42,7 @@ read_file_at_commit <- function(commit_sha, file_path) {
   # name of temp branch
   temp_branch <- paste0("temp-", commit_sha)
   # checkout temp branch (defer deletion)
-  checkout_temp_branch(temp_branch, commit_sha)
+  checkout_temp_branch(temp_branch, commit_sha, parent.frame())
   # read file in previous commit
   file_content <- readLines(file_path)
   checkout_default_branch()
@@ -68,6 +69,48 @@ format_line_numbers <- function(numbers) {
   previous <- glue::glue("{numbers$previous[1]}-{numbers$previous[1]+numbers$previous[2]-1}")
   current <- glue::glue("{numbers$current[1]}-{numbers$current[1]+numbers$current[2]-1}")
   glue::glue("@@ previous script: lines {previous} @@\n@@  current script: lines {current} @@")
+}
+
+add_line_numbers <- function(text) {
+  # Extract the start and end lines for previous and current scripts
+  prev_lines <- stringr::str_match(text, "@@ previous script: lines (\\d+)-(\\d+) @@")[,2:3]
+  current_lines <- stringr::str_match(text, "@@  current script: lines (\\d+)-(\\d+) @@")[,2:3]
+
+  prev_start <- as.numeric(prev_lines[1])
+  current_start <- as.numeric(current_lines[1])
+
+  # Split the text into lines
+  lines <- stringr::str_split(text, "\n")[[1]]
+
+  # Create variables to keep track of line numbers
+  prev_line_num <- prev_start
+  current_line_num <- current_start
+
+  # Iterate over the lines and add line numbers where appropriate
+  new_lines <- sapply(lines, function(line) {
+    if (stringr::str_detect(line, "^- ")) {
+      # Previous script line
+      new_line <- stringr::str_replace(line, "^- ", paste0("- ", prev_line_num, " "))
+      prev_line_num <<- prev_line_num + 1
+    } else if (stringr::str_detect(line, "^\\+ ")) {
+      # Current script line
+      new_line <- stringr::str_replace(line, "^\\+ ", paste0("+ ", current_line_num, " "))
+      current_line_num <<- current_line_num + 1
+    } else if (stringr::str_detect(line, "^  ")) {
+      # Context line (unmodified line)
+      new_line <- stringr::str_replace(line, "^  ", paste0("  ", current_line_num, " "))
+      current_line_num <<- current_line_num + 1
+      prev_line_num <<- prev_line_num + 1
+    } else {
+      # Header or empty line
+      new_line <- line
+    }
+    new_line
+  })
+
+  # Join the lines back into a single string
+  new_text <- paste(new_lines, collapse = "\n")
+  return(new_text)
 }
 
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
@@ -125,8 +168,9 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
 
   github_diff <- format_diff_for_github(diff_lines)
 
-  file_difference <- glue::glue_collapse(github_diff, sep = "\n")
-  glue::glue("```diff\n{file_difference}\n```")
+  diff_cat <- glue::glue_collapse(github_diff, sep = "\n")
+  diff_with_line_numbers <- add_line_numbers(diff_cat)
+  glue::glue("```diff\n{diff_with_line_numbers}\n```")
 }
 
 get_comments <- function(owner, repo, issue_number) {

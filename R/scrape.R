@@ -78,7 +78,6 @@ issue_to_markdown <- function(owner, repo, issue_number) {
 
   # put it all together
   paste0(
-    #intro,
     issue_section,
     milestone_section,
     assignees_section,
@@ -91,13 +90,8 @@ issue_to_markdown <- function(owner, repo, issue_number) {
 } # issue_to_markdown
 
 markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name, env) {
-  # create temporary rmd
-  tempdir <- tempdir()
-  rmd <- file.path(tempdir(), paste0(milestone_name, ".Rmd"))
-  # delete temporary rmd when it's time
-  withr::defer(unlink(rmd), envir = env)
-  writeLines(rmd_content, con = rmd)
-  # create pdf from rmd
+  wd <- getwd()
+
   pdf_name <- {
     if (is.null(input_name)) {
       glue::glue("{repo}-{milestone_name}.pdf")
@@ -112,10 +106,15 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name, env) 
       }
     }
   }
-  pdf <- rmarkdown::render(rmd, output_file = pdf_name)
 
-  # return path to pdf
-  pdf_name
+  # create temporary rmd
+  rmd <- file.path(tempdir(), glue::glue("{repo}-{milestone_name}.Rmd"))
+  # delete temporary rmd when it's time
+  withr::defer(unlink(rmd), envir = env)
+  writeLines(rmd_content, con = rmd)
+  # create pdf from rmd
+
+  rmarkdown::render(rmd, output_file = file.path(wd, pdf_name))
 } # markdown_to_pdf
 
 scrape_issue <- function(owner, repo, issue_number) {
@@ -128,13 +127,13 @@ get_summary_table_col_vals <- function(issue) {
   close_data <- get_close_info(issue)
 
   file_path <- issue$title
-  author <- ifelse(!is.null(metadata$author), metadata$author, NA)
-  qc_type <- ifelse(!is.null(metadata$qc_type), metadata$qc_type, NA)
+  author <- ifelse(!is.null(metadata$author), metadata$author, "NA")
+  qc_type <- ifelse(!is.null(metadata$qc_type), metadata$qc_type, "NA")
   file_name <- basename(file_path)
   #git_sha <- ifelse(!is.null(metadata$git_sha), metadata$git_sha, NA)
-  qcer <- ifelse(length(issue$assignees) > 0, issue$assignees[[1]], NA)
-  issue_closer <- ifelse(!is.null(close_data$closer), close_data$closer, NA)
-  close_date <- ifelse(!is.null(close_data$closed_at), close_data$closed_at, NA)
+  qcer <- ifelse(length(issue$assignees) > 0, issue$assignees[[1]], "NA")
+  issue_closer <- ifelse(!is.null(close_data$closer), close_data$closer, "NA")
+  close_date <- ifelse(!is.null(close_data$closed_at), close_data$closed_at, "NA")
 
   c(
     file_path = file_path,
@@ -150,8 +149,16 @@ get_summary_table_col_vals <- function(issue) {
 
 get_summary_df <- function(issues) {
   col_vals <- lapply(issues, get_summary_table_col_vals)
-  df <- do.call(rbind, lapply(col_vals, as.data.frame))
-  df <- as.data.frame(df)
+  list_of_vectors <- lapply(col_vals, function(vec) {
+    # Convert named vector to data frame
+    as.data.frame(as.list(vec))
+  })
+
+  # Combine the data frames using bind_rows
+  df <- bind_rows(list_of_vectors)
+
+  # Print the data frame
+  print(df)
 }
 
 get_summary_table <- function(df) {
@@ -160,7 +167,6 @@ get_summary_table <- function(df) {
                       author = "Author",
                       qc_type = "QC Type",
                       file_name = "File Name",
-                      #git_sha = "Git SHA",
                       qcer = "QCer",
                       issue_closer = "Issue Closer",
                       close_date = "Close Date") %>%
@@ -189,8 +195,9 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   }, issue_markdown_strings, issues)
   issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
 
+  header_path <- system.file("header.tex", package = "ghqc")
   image_path <- system.file("gsk.png", package = "ghqc")
-  # header
+
   header_tex <- paste0(
     "\\usepackage{fancyhdr}\n",
     "\\pagestyle{fancy}\n",
@@ -205,7 +212,7 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
     "\\usepackage{lastpage}\n"
   )
-  writeLines(header_tex, "header.tex")
+  writeLines(header_tex, header_path)
 
   # doc intro
   intro <- glue::glue(
@@ -219,7 +226,7 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
       toc: true
       toc_depth: 1
       includes:
-        in_header: header.tex
+        in_header: {header_path}
   ---
 
   \\newpage
@@ -252,7 +259,7 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   qcer = \"QCer\",
   issue_closer = \"Issue Closer\",
   close_date = \"Close Date\") %>%
-  set_table_properties(width = 1.0, align = \"left\") %>%
+  set_table_properties(width = 1.0) %>% # , align = \"left\"
   width(j = seq_along(col_widths), width = col_widths) %>%
   fontsize(size = 9, part = 'all') %>%
   theme_vanilla()

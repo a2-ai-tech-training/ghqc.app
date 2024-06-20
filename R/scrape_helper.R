@@ -53,11 +53,11 @@ get_timeline_list <- function(timeline_events) {
     user <- if (!is.null(event$actor)) event$actor$login else "Unknown"
     time <- humanize_time(event$created_at)
     if (event_type == "assigned") {
-      return(glue::glue("- assigned to {event$assignee$login} by {event$actor$login} at {time}\n", .trim = FALSE))
+      return(glue::glue("- assigned to {event$assignee$login} by {user} at {time}\n", .trim = FALSE))
     }
 
     if (event_type == "unassigned") {
-      return(glue::glue("- unassigned {event$assignee$login} by {event$assigner$login} at {time}\n", .trim = FALSE))
+      return(glue::glue("- unassigned {event$assignee$login} by {user} at {time}\n", .trim = FALSE))
     }
 
     else if (event_type == "milestoned") {

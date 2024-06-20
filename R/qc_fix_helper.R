@@ -25,7 +25,7 @@ cleanup_branches <- function(temp_branch) {
   gert::git_branch_delete(temp_branch)
 }
 
-checkout_temp_branch <- function(temp_branch, commit_sha, env) {
+checkout_temp_branch <- function(temp_branch, commit_sha) {
   # get all branches
   branches <- gert::git_branch_list()
 
@@ -37,21 +37,15 @@ checkout_temp_branch <- function(temp_branch, commit_sha, env) {
 
   # check it out
   gert::git_branch_checkout(temp_branch)
-  withr::defer(cleanup_branches(temp_branch), envir = env)
+  withr::defer_parent(cleanup_branches(temp_branch))
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
-  # withr::defer(
-  #   checkout_default_branch()
-  # )
-  # name of temp branch
   temp_branch <- paste0("temp-", commit_sha)
   # checkout temp branch (defer deletion)
-  checkout_temp_branch(temp_branch, commit_sha, parent.frame())
+  checkout_temp_branch(temp_branch, commit_sha)
   # read file in previous commit
   file_content <- readLines(file_path)
-  #checkout_default_branch()
-  #gert::git_branch_delete(temp_branch)
   return(file_content)
 }
 
@@ -100,11 +94,11 @@ add_line_numbers <- function(text) {
       prev_line_num <<- prev_line_num + 1
     } else if (stringr::str_detect(line, "^\\+ ")) {
       # current script line
-      new_line <- stringr::str_replace(line, "^\\+ ", paste0("+ {current_line_num} "))
+      new_line <- stringr::str_replace(line, "^\\+ ", glue::glue("+ {current_line_num} "))
       current_line_num <<- current_line_num + 1
     } else if (stringr::str_detect(line, "^  ")) {
       # unmodified line
-      new_line <- stringr::str_replace(line, "^  ", paste0("  {current_line_num} "))
+      new_line <- stringr::str_replace(line, "^  ", glue::glue("  {current_line_num} "))
       current_line_num <<- current_line_num + 1
       prev_line_num <<- prev_line_num + 1
     } else {

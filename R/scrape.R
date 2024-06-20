@@ -73,9 +73,6 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   timeline_body <- glue::glue_collapse(timeline_list, sep = "\n")
   timeline_section <- create_section("Detailed Timeline", timeline_body)
 
-  # extract metadata from body
-  metadata <- get_metadata(issue$body)
-
   # put it all together
   paste0(
     issue_section,
@@ -150,15 +147,10 @@ get_summary_table_col_vals <- function(issue) {
 get_summary_df <- function(issues) {
   col_vals <- lapply(issues, get_summary_table_col_vals)
   list_of_vectors <- lapply(col_vals, function(vec) {
-    # Convert named vector to data frame
     as.data.frame(as.list(vec))
   })
 
-  # Combine the data frames using bind_rows
   df <- bind_rows(list_of_vectors)
-
-  # Print the data frame
-  print(df)
 }
 
 get_summary_table <- function(df) {
@@ -235,16 +227,18 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
 
   # summary table
   summary_table_section <- glue::glue(
-  "```{{r setup, include=FALSE}}
+  "```{{r setup, echo=FALSE, include=FALSE}}
   library(knitr)
   library(dplyr)
   library(flextable)
   knitr::opts_chunk$set(eval=FALSE)\n```\n\n",
 
-  "```{{r, include=FALSE, eval=TRUE}}
-  summary_df <- read.csv(\"{summary_csv}\")\n",
-  "summary_df <- summary_df %>%
-  mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))\n```\n",
+  "```{{r, include=FALSE, echo=FALSE, eval=TRUE}}
+  summary_df <- read.csv(\"{summary_csv}\")\n
+  summary_df <- summary_df %>%
+  mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
+  invisible(summary_df)\n```\n",
+
   "# Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
   ft <- flextable::flextable(summary_df)
   dimensions <- dim_pretty(ft)

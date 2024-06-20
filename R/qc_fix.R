@@ -9,17 +9,16 @@ add_fix_comment <- function(owner, repo, issue_number, message = "", force = FAL
     # TODO: fix bug where compare to first false but there's only the first commit
     if (!compare_to_first && nrow(comments) != 0) {
       last_comment <- get_most_recent_comment_body(comments)
-      commit <- get_current_commit_from_comment(last_comment)
-      context <- glue::glue("Current script compared to <ins>the previous script updated with QC feedback</ins>: {commit}")
-      commit
+      compared_commit <- get_current_commit_from_comment(last_comment)
+      context <- glue::glue("Current script compared to <ins>the previous script updated with QC feedback</ins>: {compared_commit}")
+      compared_commit
     }
     else { # get commit upon qc request
-      commit <- get_metadata(issue$body)$git_sha
-      context <- glue::glue("Current script compared to <ins>the original script upon QC request</ins>: {commit}")
-      commit
+      compared_commit <- get_metadata(issue$body)$git_sha
+      context <- glue::glue("Current script compared to <ins>the original script upon QC request</ins>: {compared_commit}")
+      compared_commit
     }
   }
-
 
   # get last commit
   last_commit <- gert::git_log(max = 1)$commit

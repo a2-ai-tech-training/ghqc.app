@@ -20,6 +20,11 @@ checkout_default_branch <- function() {
   gert::git_branch_checkout(default_branch)
 }
 
+cleanup_branches <- function(temp_branch) {
+  checkout_default_branch()
+  gert::git_branch_delete(temp_branch)
+}
+
 checkout_temp_branch <- function(temp_branch, commit_sha, env) {
   # get all branches
   branches <- gert::git_branch_list()
@@ -32,7 +37,7 @@ checkout_temp_branch <- function(temp_branch, commit_sha, env) {
 
   # check it out
   gert::git_branch_checkout(temp_branch)
-  withr::defer(checkout_default_branch(), envir = env)
+  withr::defer(cleanup_branches(temp_branch), envir = env)
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
@@ -45,8 +50,8 @@ read_file_at_commit <- function(commit_sha, file_path) {
   checkout_temp_branch(temp_branch, commit_sha, parent.frame())
   # read file in previous commit
   file_content <- readLines(file_path)
-  checkout_default_branch()
-  gert::git_branch_delete(temp_branch)
+  #checkout_default_branch()
+  #gert::git_branch_delete(temp_branch)
   return(file_content)
 }
 
@@ -66,51 +71,50 @@ format_line_numbers <- function(numbers) {
   # so this fixes it to be verbose for parsing ease
   if (is.na(numbers$previous[2])) {numbers$previous[2] <- 1}
   if (is.na(numbers$current[2])) {numbers$current[2] <- 1}
+
   previous <- glue::glue("{numbers$previous[1]}-{numbers$previous[1]+numbers$previous[2]-1}")
   current <- glue::glue("{numbers$current[1]}-{numbers$current[1]+numbers$current[2]-1}")
+
   glue::glue("@@ previous script: lines {previous} @@\n@@  current script: lines {current} @@")
 }
 
 add_line_numbers <- function(text) {
-  # Extract the start and end lines for previous and current scripts
+  # get start and end lines for prev and current scripts
   prev_lines <- stringr::str_match(text, "@@ previous script: lines (\\d+)-(\\d+) @@")[,2:3]
   current_lines <- stringr::str_match(text, "@@  current script: lines (\\d+)-(\\d+) @@")[,2:3]
 
   prev_start <- as.numeric(prev_lines[1])
   current_start <- as.numeric(current_lines[1])
 
-  # Split the text into lines
+  # get lines from text
   lines <- stringr::str_split(text, "\n")[[1]]
 
-  # Create variables to keep track of line numbers
+  # increment on prev and current lines
   prev_line_num <- prev_start
   current_line_num <- current_start
 
-  # Iterate over the lines and add line numbers where appropriate
   new_lines <- sapply(lines, function(line) {
     if (stringr::str_detect(line, "^- ")) {
-      # Previous script line
-      new_line <- stringr::str_replace(line, "^- ", paste0("- ", prev_line_num, " "))
+      # prev script line
+      new_line <- stringr::str_replace(line, "^- ", glue::glue("- {prev_line_num} "))
       prev_line_num <<- prev_line_num + 1
     } else if (stringr::str_detect(line, "^\\+ ")) {
-      # Current script line
-      new_line <- stringr::str_replace(line, "^\\+ ", paste0("+ ", current_line_num, " "))
+      # current script line
+      new_line <- stringr::str_replace(line, "^\\+ ", paste0("+ {current_line_num} "))
       current_line_num <<- current_line_num + 1
     } else if (stringr::str_detect(line, "^  ")) {
-      # Context line (unmodified line)
-      new_line <- stringr::str_replace(line, "^  ", paste0("  ", current_line_num, " "))
+      # unmodified line
+      new_line <- stringr::str_replace(line, "^  ", paste0("  {current_line_num} "))
       current_line_num <<- current_line_num + 1
       prev_line_num <<- prev_line_num + 1
     } else {
-      # Header or empty line
+      # empty line
       new_line <- line
     }
     new_line
   })
 
-  # Join the lines back into a single string
-  new_text <- paste(new_lines, collapse = "\n")
-  return(new_text)
+  glue::glue_collapse(new_lines, sep = "\n")
 }
 
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
@@ -119,8 +123,6 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   current_script <- read_file_at_commit(commit_sha_new, file_path)
 
   diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
-
-  # convert to character
   diff_lines <- as.character(diff_output)
 
   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
@@ -145,7 +147,7 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # replace with new context_str
   diff_lines[file_index_start] <- context_str
 
-  # check if last line is tick marks
+  # check if last line is tick marks for formatting
   if (stringr::str_detect(diff_lines[length(diff_lines)], "```")) {
     diff_lines <- diff_lines[-c(length(diff_lines))]
   }
@@ -190,12 +192,5 @@ get_most_recent_comment_body <- function(comments_df) {
 }
 
 get_current_commit_from_comment <- function(body) {
-  current_commit <- stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
-  #original_commit <- stringr::str_match(body, "\\* original QC request commit: ([a-f0-9]+)")[,2]
-
-  # list(
-  #   current_commit = current_commit,
-  #   original_commit = original_commit
-  # )
-  current_commit
+  stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
 }

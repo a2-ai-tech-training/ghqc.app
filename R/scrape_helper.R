@@ -71,7 +71,6 @@ get_timeline_list <- function(timeline_events) {
 }
 
 download_image <- function(url) {
-  #library(httr2)
   is_amz_redirect <- function(resp) {
     httr2::resp_header(resp, "Server") == "AmazonS3" && nzchar(httr2::resp_header(resp, "x-amz-request-id", default = ""))
   }

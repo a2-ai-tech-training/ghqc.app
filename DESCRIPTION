@@ -28,7 +28,12 @@ Imports:
     withr,
     yaml,
     shinyjs,
-    dplyr
+    dplyr,
+    diffobj,
+    flextable,
+    processx,
+    rmarkdown,
+    knitr
 Suggests: 
     testthat (>= 3.0.0),
     httptest,

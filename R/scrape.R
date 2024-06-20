@@ -90,16 +90,32 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   )
 } # issue_to_markdown
 
-markdown_to_pdf <- function(rmd_content, repo, issue_number) {
+markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name, env) {
   # create temporary rmd
-  rmd <- file.path(getwd(), paste0(issue_number, ".Rmd"))
+  tempdir <- tempdir()
+  rmd <- file.path(tempdir(), paste0(milestone_name, ".Rmd"))
+  # delete temporary rmd when it's time
+  withr::defer(unlink(rmd), envir = env)
   writeLines(rmd_content, con = rmd)
   # create pdf from rmd
-  pdf <- rmarkdown::render(rmd, output_file = paste0(repo, "-", issue_number, ".pdf"))
-  # delete temporary rmd
-  #unlink(rmd)
+  pdf_name <- {
+    if (is.null(input_name)) {
+      glue::glue("{repo}-{milestone_name}.pdf")
+    }
+    else {
+      # they might have already put pdf in the name
+      if (stringr::str_detect(".pdf")) {
+        input_name
+      }
+      else {
+        glue::glue("{input_name}.pdf")
+      }
+    }
+  }
+  pdf <- rmarkdown::render(rmd, output_file = pdf_name)
+
   # return path to pdf
-  pdf
+  pdf_name
 } # markdown_to_pdf
 
 scrape_issue <- function(owner, repo, issue_number) {
@@ -158,7 +174,7 @@ create_big_section <- function(section_title, contents) {
 } # create_section
 
 #' @export
-scrape_milestone <- function(owner, repo, milestone_name) {
+scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   # issues
   issues <- get_issues(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)
@@ -213,15 +229,12 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   # summary table
   summary_table_section <- glue::glue(
   "```{{r setup, include=FALSE}}
-  install.packages(\"knitr\")
   library(knitr)
+  library(dplyr)
+  library(flextable)
   knitr::opts_chunk$set(eval=FALSE)\n```\n\n",
 
   "```{{r, include=FALSE, eval=TRUE}}
-  install.packages(\"flextable\")
-  install.packages(\"dplyr\")
-  library(flextable)
-  library(dplyr)
   summary_df <- read.csv(\"{summary_csv}\")\n",
   "summary_df <- summary_df %>%
   mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))\n```\n",
@@ -239,7 +252,6 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   qcer = \"QCer\",
   issue_closer = \"Issue Closer\",
   close_date = \"Close Date\") %>%
-  #set_table_properties(width = .7, align = \"left\") %>%
   set_table_properties(width = 1.0, align = \"left\") %>%
   width(j = seq_along(col_widths), width = col_widths) %>%
   fontsize(size = 9, part = 'all') %>%
@@ -256,5 +268,5 @@ scrape_milestone <- function(owner, repo, milestone_name) {
     issue_sections
   )
 
-  markdown_to_pdf(rmd, repo, milestone_name)
+  markdown_to_pdf(rmd, repo, milestone_name, pdf_name, env = parent.frame())
 }

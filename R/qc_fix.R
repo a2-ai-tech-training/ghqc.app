@@ -1,5 +1,5 @@
 #' @export
-add_fix_comment <- function(owner, repo, issue_number, message = "", force = FALSE, compare_to_first = TRUE) {
+create_comment_body <- function(owner, repo, issue_number, message = "", force = FALSE, compare_to_first = TRUE) {
   # get issue
   issue <- get_issue(owner, repo, issue_number)
 
@@ -71,13 +71,43 @@ add_fix_comment <- function(owner, repo, issue_number, message = "", force = FAL
                              .trim = FALSE
                              )
 
-  comment_body
+  as.character(comment_body)
+}
 
-  # add comment to post
+#' @export
+post_comment <- function(owner, repo, issue_number, body) {
   comment <- gh::gh("POST /repos/:owner/:repo/issues/:issue_number/comments",
-         owner = owner,
-         repo = repo,
-         issue_number = issue_number,
-         body = as.character(comment_body)
-         )
+                    owner = owner,
+                    repo = repo,
+                    issue_number = issue_number,
+                    body = body
+  )
+}
+
+add_fix_comment <- function(owner, repo, issue_number, message = "", force = FALSE, compare_to_first = TRUE) {
+  body <- create_coment_body(owner, repo, issue_number, message, force, compare_to_first)
+  post_comment(owner, repo, issue_number, body)
+}
+
+create_gfm_file <- function(comment_body) {
+  #  title: \"GitHub Markdown Example\"
+  intro <- glue::glue(
+  "---
+  output:
+  github_document:
+  keep_md: true
+  ---\n
+  ")
+
+  rmd_content <- paste0(
+    intro,
+    comment_body
+  )
+
+  #rmd_file_path <- tempfile(fileext = ".Rmd")
+  rmd_file_path <- file.path(getwd(), "test")
+
+  writeLines(rmd_content, rmd_file_path)
+
+  rmarkdown::render(rmd_file_path, output_format = "github_document")
 }

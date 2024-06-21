@@ -26,7 +26,7 @@ create_gfm_file <- function(comment_body) {
   withr::defer(fs::file_delete(html_path))
   withr::defer(fs::file_delete(md_path))
 
-  new_html <- modify_html(html_path)
+  modify_html(html_path)
 }
 
 modify_html <- function(html_file) {
@@ -72,6 +72,8 @@ modify_html <- function(html_file) {
   xml_add_child(head_node, read_html(css))
 
   # Write the modified content back to an HTML file
-  modified_html_file <- "modified_example.html"
+  modified_html_file <- tempfile(fileext = ".html")
+  #withr::defer_parent(fs::file_delete(modified_html_file))
   write_html(html_content, modified_html_file)
+  modified_html_file
 }

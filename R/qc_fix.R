@@ -45,7 +45,7 @@ create_comment_body <- function(owner, repo, issue_number, message = "", force =
   assignees_body <- {
     if (length(assignees_vec) != 0) {
       list <- glue::glue_collapse(assignees_vec, sep = "\n")
-      glue::glue("{list}\n\n")
+      glue::glue("{list}\n\n\n")
     }
     else {
       ""

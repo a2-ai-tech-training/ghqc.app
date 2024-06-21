@@ -86,26 +86,6 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   )
 } # issue_to_markdown
 
-
-# only output = Output created: specified_pdf_name.pdf
-# when rendering to pdf
-# suppress_messages <- function(rmd_file, pdf_path) {
-#   custom_render <- function(file, ...) {
-#     output <- capture.output({
-#       rmarkdown::render(file, ...)
-#     }, type = "message")
-#
-#     # filter out the "processing file:" messages
-#     filtered_output <- grep("processing file:", output, value = TRUE, invert = TRUE)
-#
-#     # print the filtered output
-#     cat(filtered_output, sep = "\n")
-#   }
-#
-#   # call the custom render function
-#   custom_render(rmd_file, output_file = pdf_path, quiet = TRUE)
-# }
-
 markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name) {
   wd <- getwd()
 
@@ -202,6 +182,7 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   summary_df <- get_summary_df(issues)
   summary_csv <- tempfile(fileext = ".csv")
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
+  withr::defer_parent(fs::file_delete(summary_csv))
   author <- Sys.info()[["user"]]
 
   issue_numbers <- sapply(issues, function(issue) issue$number)

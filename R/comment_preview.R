@@ -13,22 +13,20 @@ create_gfm_file <- function(comment_body) {
     comment_body
   )
 
-  rmd_file_path <- tempfile(fileext = ".Rmd")
-  fs::file_create(rmd_file_path)
+  rmd_path <- tempfile(fileext = ".Rmd")
+  fs::file_create(rmd_path)
   # delete temporary rmd when it's time
-  withr::defer_parent(unlink(rmd_file_path))
-  writeLines(rmd_content, con = rmd_file_path)
+  withr::defer(fs::file_delete(rmd_path))
+  writeLines(rmd_content, con = rmd_path)
 
-  # rmd_file_path <- tempfile(tmpdir = getwd(), fileext = ".Rmd")
-  # withr::defer_parent(fs::file_delete(rmd_file_path))
-  # writeLines(md_content, rmd_file_path)
+  html_path <- stringr::str_replace(rmd_path, "\\.Rmd$", ".html")
+  md_path <- stringr::str_replace(rmd_path, "\\.Rmd$", ".md")
+  rmarkdown::render(rmd_path, output_format = "github_document", clean = TRUE, quiet = TRUE)
+  # withr::defer_parent(fs::file_delete(rmd_path))
+  withr::defer(fs::file_delete(html_path))
+  withr::defer(fs::file_delete(md_path))
 
-  rmarkdown::render(rmd_file_path, output_format = "github_document", clean = TRUE, quiet = TRUE)
-  fs::file_delete(rmd_file_path)
-  html_path <- stringr::str_replace(rmd_file_path, "\\.Rmd$", ".html")
-  #print(html_path)
-  modify_html(html_path)
-  #rmd_file_path
+  new_html <- modify_html(html_path)
 }
 
 modify_html <- function(html_file) {

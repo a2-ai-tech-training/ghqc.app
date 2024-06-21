@@ -86,6 +86,26 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   )
 } # issue_to_markdown
 
+
+# only output = Output created: specified_pdf_name.pdf
+# when rendering to pdf
+# suppress_messages <- function(rmd_file, pdf_path) {
+#   custom_render <- function(file, ...) {
+#     output <- capture.output({
+#       rmarkdown::render(file, ...)
+#     }, type = "message")
+#
+#     # filter out the "processing file:" messages
+#     filtered_output <- grep("processing file:", output, value = TRUE, invert = TRUE)
+#
+#     # print the filtered output
+#     cat(filtered_output, sep = "\n")
+#   }
+#
+#   # call the custom render function
+#   custom_render(rmd_file, output_file = pdf_path, quiet = TRUE)
+# }
+
 markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name) {
   wd <- getwd()
 
@@ -95,7 +115,7 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name) {
     }
     else {
       # they might have already put pdf in the name
-      if (stringr::str_detect(input_name, ".pdf")) {
+      if (stringr::str_detect(input_name, "\\.pdf$")) {
         input_name
       }
       else {
@@ -105,17 +125,17 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name) {
   }
 
   # create temporary rmd
-  temp_dir <- tempdir()
-  rmd <- tempfile()
-  #rmd <- file.path(tempdir(), glue::glue("{repo}-{milestone_name}.Rmd"))
+  rmd <- tempfile(fileext = ".Rmd")
   fs::file_create(rmd)
   # delete temporary rmd when it's time
   withr::defer_parent(unlink(rmd))
   writeLines(rmd_content, con = rmd)
-  # create pdf from rmd
 
-  rmarkdown::render(rmd, output_file = file.path(wd, pdf_name))
-  return(invisible())
+  # create pdf from rmd
+  pdf_path <- file.path(wd, pdf_name)
+  suppressWarnings(rmarkdown::render(rmd, output_file = pdf_path, quiet = TRUE)) #
+  pdf_path_abs <- normalizePath(pdf_path)
+  return(glue::glue("Output file: {pdf_path_abs}"))
 } # markdown_to_pdf
 
 scrape_issue <- function(owner, repo, issue_number) {
@@ -210,13 +230,15 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   )
   writeLines(header_tex, header_path)
 
+  date <- format(Sys.Date(), '%B %d, %Y')
+
   # doc intro
   intro <- glue::glue(
   "---
   title: GSK QC Report
   subtitle: {repo}, {milestone_name}
   author: {author}
-  date: \"`r format(Sys.Date(), '%B %d, %Y')`\"
+  date: {date}
   output:
     pdf_document:
       toc: true
@@ -231,13 +253,13 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
 
   # summary table
   summary_table_section <- glue::glue(
-  "```{{r setup, echo=FALSE, include=FALSE}}
+  "```{{r setup, include=FALSE}}
   library(knitr)
   library(dplyr)
   library(flextable)
   knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n",
 
-  "```{{r, include=FALSE, echo=FALSE, eval=TRUE}}
+  "```{{r, include=FALSE, eval=TRUE}}
   summary_df <- read.csv(\"{summary_csv}\")\n
   summary_df <- summary_df %>%
   mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
@@ -273,11 +295,11 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
     issue_sections
   )
 
-  result <- suppressWarnings({
-    capture.output({
+ #result <- suppressWarnings({
+ capture.output({
       output <- markdown_to_pdf(rmd, repo, milestone_name, pdf_name)
-    })
-    output
   })
+  output
+ # })
 
 }

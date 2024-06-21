@@ -26,7 +26,9 @@ create_gfm_file <- function(comment_body) {
   withr::defer(fs::file_delete(html_path))
   withr::defer(fs::file_delete(md_path))
 
-  modify_html(html_path)
+  modified_html_file <- modify_html(html_path)
+  withr::defer_parent(fs::file_delete(modified_html_file))
+  modified_html_file
 }
 
 modify_html <- function(html_file) {
@@ -55,7 +57,6 @@ modify_html <- function(html_file) {
   xml2::xml_add_child(head_node, read_html(css))
 
   modified_html_file <- tempfile(fileext = ".html")
-  withr::defer_parent(fs::file_delete(modified_html_file))
   xml2::write_html(html_content, modified_html_file)
   modified_html_file
 }

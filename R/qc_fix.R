@@ -90,24 +90,40 @@ add_fix_comment <- function(owner, repo, issue_number, message = "", force = FAL
 }
 
 create_gfm_file <- function(comment_body) {
-  #  title: \"GitHub Markdown Example\"
+
   intro <- glue::glue(
   "---
   output:
-  github_document:
-  keep_md: true
+    github_document:
+      toc: false
   ---\n
   ")
 
-  rmd_content <- paste0(
+  md_content <- paste0(
     intro,
     comment_body
   )
+#
+#   color_line <- function(line, prefix, class) {
+#     if (startsWith(line, prefix)) {
+#       paste0("<span class='", class, "'>", line, "</span>")
+#     } else {
+#       line
+#     }
+#   }
+#
+#   md_content_colored <- sapply(md_content, function(line) {
+#     line <- color_line(line, "-", "diff-remove")
+#     line <- color_line(line, "+", "diff-add")
+#     line
+#   })
+#
+#   html_content <- htmltools::HTML(paste(md_content_colored, collapse = "<br/>"))
 
-  #rmd_file_path <- tempfile(fileext = ".Rmd")
-  rmd_file_path <- file.path(getwd(), "test")
+  rmd_file_path <- tempfile(tmpdir = getwd(), fileext = ".Rmd")
+  withr::defer_parent(fs::file_delete(rmd_file_path))
+  writeLines(md_content, rmd_file_path)
 
-  writeLines(rmd_content, rmd_file_path)
-
-  rmarkdown::render(rmd_file_path, output_format = "github_document")
+  rmarkdown::render(rmd_file_path, output_format = "github_document", quiet = TRUE)
+  rmd_file_path
 }

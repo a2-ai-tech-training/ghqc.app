@@ -85,7 +85,7 @@ post_comment <- function(owner, repo, issue_number, body) {
 }
 
 add_fix_comment <- function(owner, repo, issue_number, message = "", force = FALSE, compare_to_first = TRUE) {
-  body <- create_coment_body(owner, repo, issue_number, message, force, compare_to_first)
+  body <- create_comment_body(owner, repo, issue_number, message, force, compare_to_first)
   post_comment(owner, repo, issue_number, body)
 }
 

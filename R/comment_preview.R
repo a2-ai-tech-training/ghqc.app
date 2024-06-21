@@ -55,7 +55,7 @@ modify_html <- function(html_file) {
   xml2::xml_add_child(head_node, read_html(css))
 
   modified_html_file <- tempfile(fileext = ".html")
-  #withr::defer_parent(fs::file_delete(modified_html_file))
+  withr::defer_parent(fs::file_delete(modified_html_file))
   xml2::write_html(html_content, modified_html_file)
   modified_html_file
 }

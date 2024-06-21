@@ -181,6 +181,7 @@ scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   issues <- get_issues(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)
   summary_csv <- tempfile(fileext = ".csv")
+  withr::defer_parent(fs::file_delete(summary_csv))
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
   withr::defer_parent(fs::file_delete(summary_csv))
   author <- Sys.info()[["user"]]

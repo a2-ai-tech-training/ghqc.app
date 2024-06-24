@@ -6,7 +6,6 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
   qc_commit <- {
     comments <- get_comments(owner, repo, issue_number)
     # if the user wants to get comparison from most recent QC fix and there are QC fixes to draw from
-    # TODO: fix bug where compare to first false but there's only the first commit
     if (!compare_to_first && nrow(comments) != 0) {
       last_comment <- get_most_recent_comment_body(comments)
       compared_commit <- get_current_commit_from_comment(last_comment)
@@ -43,12 +42,10 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
   # get assignees
   assignees_vec <- sapply(issue$assignees, function(assignee) glue::glue("@{assignee$login}"))
   assignees_body <- {
-    if (length(assignees_vec) != 0) {
+    if (length(assignees_vec) == 0) ""
+    else {
       list <- glue::glue_collapse(assignees_vec, sep = "\n")
       glue::glue("{list}\n\n\n")
-    }
-    else {
-      ""
     }
   }
 

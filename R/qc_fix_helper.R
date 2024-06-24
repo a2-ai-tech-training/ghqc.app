@@ -4,28 +4,13 @@ untracked_changes <- function() {
   nrow(not_staged) != 0
 }
 
-checkout_default_branch <- function() {
-  branches <- gert::git_branch_list()
-
-  # Determine the default branch
-  default_branch <- if ("main" %in% branches$name) {
-    "main"
-  } else if ("master" %in% branches$name) {
-    "master"
-  } else {
-    stop("Neither 'main' nor 'master' branch found")
-  }
-
-  # Checkout the default branch
-  gert::git_branch_checkout(default_branch)
-}
-
-cleanup_branches <- function(temp_branch) {
-  checkout_default_branch()
+cleanup_branches <- function(temp_branch, current_branch) {
+  # checkout the branch the user was working on
+  gert::git_branch_checkout(current_branch)
   gert::git_branch_delete(temp_branch)
 }
 
-checkout_temp_branch <- function(temp_branch, commit_sha) {
+checkout_temp_branch <- function(temp_branch, commit_sha, current_branch) {
   # get all branches
   branches <- gert::git_branch_list()
 
@@ -37,13 +22,13 @@ checkout_temp_branch <- function(temp_branch, commit_sha) {
 
   # check it out
   gert::git_branch_checkout(temp_branch)
-  withr::defer_parent(cleanup_branches(temp_branch))
+  withr::defer_parent(cleanup_branches(temp_branch, current_branch))
 }
 
-read_file_at_commit <- function(commit_sha, file_path) {
+read_file_at_commit <- function(commit_sha, file_path, current_branch) {
   temp_branch <- paste0("temp-", commit_sha)
   # checkout temp branch (defer deletion)
-  checkout_temp_branch(temp_branch, commit_sha)
+  checkout_temp_branch(temp_branch, commit_sha, current_branch)
   # read file in previous commit
   file_content <- readLines(file_path)
   return(file_content)
@@ -113,8 +98,9 @@ add_line_numbers <- function(text) {
 
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # get file contents at the specified commits
-  compared_script <- read_file_at_commit(commit_sha_orig, file_path)
-  current_script <- read_file_at_commit(commit_sha_new, file_path)
+  current_branch <- gert::git_branch()
+  compared_script <- read_file_at_commit(commit_sha_orig, file_path, current_branch)
+  current_script <- read_file_at_commit(commit_sha_new, file_path, current_branch)
 
   diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
   diff_lines <- as.character(diff_output)

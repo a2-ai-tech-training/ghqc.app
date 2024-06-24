@@ -33,7 +33,9 @@ Imports:
     flextable,
     processx,
     rmarkdown,
-    knitr
+    knitr,
+    shinyWidgets,
+    rstudioapi
 Suggests: 
     testthat (>= 3.0.0),
     httptest,

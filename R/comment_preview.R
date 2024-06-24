@@ -54,7 +54,7 @@ modify_html <- function(html_file) {
   </style>
 "
   head_node <- xml2::xml_find_first(html_content, "//head")
-  xml2::xml_add_child(head_node, read_html(css))
+  xml2::xml_add_child(head_node, rvest::read_html(css))
 
   modified_html_file <- tempfile(fileext = ".html")
   xml2::write_html(html_content, modified_html_file)

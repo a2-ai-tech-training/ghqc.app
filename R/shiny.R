@@ -1,79 +1,14 @@
 #' @import shiny
 NULL
 
-#' Get a Tree List of Files and Directories
-#'
-#' This function recursively retrieves a tree list of files and directories from a given path.
-#'
-#' @param path A character string specifying the path to retrieve the file tree from.
-#' @return A list representing the tree structure of files and directories. Directories are
-#' represented as lists with the class "folder" and files are represented as empty strings
-#' with the class "file".
-#'
-#' @export
-get_files_tree_list <- function(path) {
-  # Get all files and directories at the current path
-  items <- list.files(path, full.names = TRUE)
-
-  # items_with_ext <- items[tools::file_ext(items) %in% c("R", "mod", "cpp")]
-  items_with_ext <- items[tools::file_ext(items) != ""] # no filtering for extensions for now
-
-  # Filter directories
-  directories <- items[dir.exists(items)]
-
-  # Initialize an empty list to store the structure
-  tree_list <- list()
-
-  for (dir in directories) {
-    subdir_list <- get_files_tree_list(dir)
-    if (length(subdir_list) > 0) {
-      tree_list[[basename(dir)]] <- structure(subdir_list, sttype = "folder", sticon = "fa fa-folder")
-    }
+generate_input_id <- function(prefix = NULL, name) {
+  clean_name <- gsub("[^a-zA-Z0-9/_.-]", "", name)
+  if (is.null(prefix)) {
+    return(clean_name)
+  } else {
+    return(paste0(prefix, "_", clean_name))
   }
-
-  # Add files to the tree list
-  for (file in items_with_ext) {
-    tree_list[[basename(file)]] <- structure("", sttype = "file", sticon = "fa fa-file")
-  }
-
-  return(tree_list)
 }
-
-#' Get Selected Items from a Tree Structure
-#'
-#' This function recursively retrieves selected items from a given tree structure.
-#' Each node in the tree can have an attribute "stselected" which, if TRUE, indicates
-#' that the node is selected.
-#'
-#' @param tree A list representing the tree structure, where each node can have the
-#' attribute "stselected" to indicate selection.
-#' @param parent A character string specifying the parent path. Defaults to an empty string.
-#' @return A list of selected items from the tree structure. The structure of the returned
-#' list mirrors the input tree, with selected items indicated.
-#' @export
-get_selected_items <- function(tree, parent = "") {
-  results <- list()
-  for (name in names(tree)) {
-    node <- tree[[name]]
-
-    path <- if (parent == "") name else paste(parent, name, sep = "/")
-
-    if (!is.null(attr(node, "stselected")) && attr(node, "stselected")) {
-      if (is.list(node) && any(sapply(node, function(x) !is.null(attr(x, "stselected")) && attr(x, "stselected")))) {
-        results[[name]] <- get_selected_items(node, path)
-      } else {
-        results[[path]] <- attr(node, "id")
-      }
-    } else if (is.list(node)) {
-      sub_results <- get_selected_items(node, path)
-      if (length(sub_results) > 0) {
-        results[[name]] <- sub_results
-      }
-    }
-  }
-  return(results)
-}
-
 
 #' Render a Selected List with Inputs
 #'
@@ -89,41 +24,38 @@ get_selected_items <- function(tree, parent = "") {
 #' @export
 render_selected_list <- function(input, ns, items = NULL, checklist_choices = NULL, depth = 0) {
   checklist_choices <- setNames(names(checklist_choices), names(checklist_choices))
-  ul <- div(class = paste("grid-container", "depth", depth, sep="-"))
+  ul <- div(class = paste("grid-container", "depth", depth, sep = "-"))
 
-  for (name in names(items)) {
-    current_item <- items[[name]]
-    is_file <- !is.list(current_item)
+  for (name in items) {
+    checklist_input_id <- generate_input_id("checklist", name)
+    assignee_input_id <- generate_input_id("assignee", name)
 
-    if (is_file) {
-      checklist_input <- selectizeInput(
-        ns(paste0("checklist_", gsub("/", "_", name))),
-        label = NULL,
-        choices = checklist_choices,
-        width = "100%",
-        options = list(placeholder = "select checklist"),
-      )
-      assignee_input <- selectizeInput(
-        ns(paste0("assignee_", gsub("/", "_", name))),
-        label = NULL,
-        choices = input$assignees,
-        width = "100%",
-        options = list(placeholder = "no assignees"),
-      )
+    checklist_input <- selectizeInput(
+      ns(checklist_input_id),
+      label = NULL,
+      choices = checklist_choices,
+      width = "100%",
+      options = list(placeholder = "select checklist")
+    )
+    assignee_input <- selectizeInput(
+      ns(assignee_input_id),
+      label = NULL,
+      choices = input$assignees,
+      width = "100%",
+      options = list(placeholder = "no assignees")
+    )
 
-      # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)
-      modified_name <- gsub("([^a-zA-Z0-9])", "\\1<wbr>", name)
+    # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)
+    modified_name <- gsub("([^a-zA-Z0-9])", "\\1<wbr>", generate_input_id(name=name))
 
-      ul <- tagAppendChild(ul, div(
-        class = "grid-items",
-        div(class = "item-a", HTML(modified_name)),
-        div(class = "item-b", checklist_input),
-        div(class = "item-c", assignee_input)
-      ))
-    } else {
-      ul <- tagAppendChild(ul, render_selected_list(input, ns, items[[name]], checklist_choices, depth + 1))
-    }
+    ul <- tagAppendChild(ul, div(
+      class = "grid-items",
+      div(class = "item-a", HTML(modified_name)),
+      div(class = "item-b", checklist_input),
+      div(class = "item-c", assignee_input)
+    ))
   }
+
   ul
 }
 
@@ -139,38 +71,33 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
 #' @param session A server-side representation of a Shiny session.
 #' @param items A list representing the selected items.
 #'
-#' @return None The function performs operations on UI elements and does not return
+#' @return None. The function performs operations on UI elements and does not return
 #'   any value.
 #' @export
-isolate_rendered_list <- function(input, session, items){
-  for (name in names(items)) {
-    current_item <- items[[name]]
-    is_file <- !is.list(current_item)
+isolate_rendered_list <- function(input, session, items) {
+  for (name in items) {
+    checklist_input_id <- generate_input_id("checklist", name)
+    assignee_input_id <- generate_input_id("assignee", name)
 
-    if (is_file) {
-      checklist_input_id <- paste0("checklist_", gsub("/", "_", name))
-      assignee_input_id <- paste0("assignee_", gsub("/", "_", name))
-
+    updateSelectizeInput(
+      session,
+      checklist_input_id,
+      selected = isolate(input[[checklist_input_id]])
+    )
+    if (length(input$assignees) == 1) {
       updateSelectizeInput(
         session,
-        checklist_input_id,
-        selected = isolate(input[[checklist_input_id]])
+        assignee_input_id,
+        choices = input$assignees,
+        selected = input$assignees
       )
-      if (length(input$assignees) == 1) {
-        updateSelectizeInput(
-          session,
-          assignee_input_id,
-          choices = input$assignees,
-          selected = input$assignees
-        )
-      } else {
-        updateSelectizeInput(
-          session,
-          assignee_input_id,
-          choices = input$assignees,
-          selected = isolate(input[[assignee_input_id]])
-        )
-      }
+    } else {
+      updateSelectizeInput(
+        session,
+        assignee_input_id,
+        choices = input$assignees,
+        selected = isolate(input[[assignee_input_id]])
+      )
     }
   }
 }
@@ -187,32 +114,24 @@ isolate_rendered_list <- function(input, session, items){
 #' @export
 extract_file_data <- function(input, items) {
   file_data <- list()
-  for (name in names(items)) {
-    # Check if name has a file extension and only add to file_names if so
-    is_file <- grepl("\\.", name)
-    if (is_file) {
-      checklist_input_id <- paste0("checklist_", gsub("/", "_", name))
-      assignee_input_id <- paste0("assignee_", gsub("/", "_", name))
+  for (name in items) {
+    checklist_input_id <- generate_input_id("checklist", name)
+    assignee_input_id <- generate_input_id("assignee", name)
 
-      checklist_input_value <- input[[checklist_input_id]]
-      assignee_input_value <- input[[assignee_input_id]]
+    checklist_input_value <- input[[checklist_input_id]]
+    assignee_input_value <- input[[assignee_input_id]]
 
-      if(!isTruthy(assignee_input_value)) {
-        assignee_input_value <- NULL
-      }
-      # requires the widget and input to be available before proceeding
-      if (!isTruthy(checklist_input_value)) {
-        return(NULL)
-      }
-
-      file_data <- append(file_data, list(create_file_data_structure(file_name = name, assignees = assignee_input_value, checklist_type = checklist_input_value)))
+    if (!isTruthy(assignee_input_value)) {
+      assignee_input_value <- NULL
     }
-    # Recursively call extract_file_names for subdirectories
-    if (!is.null(items[[name]])) {
-      subdir_data <- extract_file_data(input, items[[name]])
-      file_data <- c(file_data, subdir_data)
+    # requires the widget and input to be available before proceeding
+    if (!isTruthy(checklist_input_value)) {
+      return(NULL)
     }
+
+    file_data <- append(file_data, list(create_file_data_structure(file_name = generate_input_id(name=name), assignees = assignee_input_value, checklist_type = checklist_input_value)))
   }
+
   return(file_data)
 }
 
@@ -241,3 +160,85 @@ determine_modal_message <- function(ahead = gert::git_ahead_behind()$ahead, behi
     return("Current repository status is unclear. Please check the Git status and ensure everything is synchronized.")
   }
 }
+
+#' Convert Directory File Paths to a Data Frame
+#'
+#' This function lists all files in the specified directory recursively,
+#' filters out paths without extensions, sorts them so that files with directory
+#' names are pushed to the top, and then converts the sorted paths to a data frame
+#' with levels representing the directory structure.
+#'
+#' @param dir_path A character string specifying the path to the directory. Default should be the root directory.
+#' @return A data frame where each row represents a file. The columns represent
+#' different levels of the directory structure.
+#' @export
+convert_dir_to_df <- function(dir_path = find_root_directory()) {
+  # TODO: need to exclude renv because some 50k+ entries. do we want to hard code exclusions or set a limiter
+  # and just give message in app or console to notify user?
+  # can create sep widget (selectize?) to search as maybe won't cause session to hang
+  #
+  exclusions <- "renv"
+  all_paths <- grep(list.files(path= ".", recursive = TRUE), pattern = exclusions, invert=TRUE, value=TRUE)
+
+  has_dirname <- dirname(all_paths) != "."
+
+  sorted_indices <- order(!has_dirname, all_paths)
+  sorted_paths <- all_paths[sorted_indices]
+  # Find the maximum path length
+  max_path_length <- max(sapply(sorted_paths, function(x) length(unlist(strsplit(x, "/")))))
+
+  # Convert to data frame with padding for shorter paths
+  df <- do.call(rbind, lapply(sorted_paths, function(x) {
+    file_name <- basename(x)
+    path_parts <- unlist(strsplit(x, "/"))
+
+    if (length(path_parts) > 1) {
+      path_parts <- c(paste0("📁 ", path_parts[-length(path_parts)]), paste0("📄 ", path_parts[length(path_parts)]))
+    } else {
+      path_parts <- paste0("📄 ", path_parts)
+    }
+
+    padded_paths <- c(path_parts, rep(NA, max_path_length - length(path_parts)))
+
+    data.frame(t(data.frame(padded_paths)), stringsAsFactors = FALSE)
+  }))
+
+  colnames(df) <- c(paste0("level", 1:(ncol(df))))
+  return(df)
+}
+
+#' Find Root Directory
+#'
+#' This function searches for the root directory of a Git repository by looking for .Rproj file.
+#' @return Sets wd to the path of the project root.
+#' @export
+find_root_directory <- function() {
+  # Initialize the current directory
+  current_dir <- normalizePath(getwd(), winslash = "/")
+
+  findProjectRoot <- function(path) {
+    files <- list.files(path, full.names = TRUE)
+
+    if (any(grepl("\\.Rproj$", files))) {
+      return(path)
+    } else {
+      parent_dir <- dirname(path)
+
+      if (parent_dir == path) {
+        stop("No .Rproj file found in any parent directories.")
+      }
+
+      return(findProjectRoot(parent_dir))
+    }
+  }
+
+  project_root <- findProjectRoot(current_dir)
+
+  if (current_dir != project_root) {
+    setwd(project_root)
+    message("Directory changed to project root:", project_root, "\n")
+  }
+
+  return(project_root)
+}
+

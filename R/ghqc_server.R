@@ -1,7 +1,7 @@
 #' @import shiny
-#' @importFrom shinyjs enable disable addClass removeClass
-#' @importFrom shinyTree renderTree shinyTree
-#' @importFrom waiter Waiter spin_1
+#' @importFrom shinyjs enable disable addClass removeClass delay
+#' @importFrom shinyWidgets treeInput create_tree
+#' @importFrom waiter Waiter spin_1 spin_2
 #' @importFrom gert git_ahead_behind
 NULL
 
@@ -10,7 +10,7 @@ ghqc_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    w <- Waiter$new(
+    w_create_qc_items <- Waiter$new(
       id = ns("main_container"),
       html = tagList(
         spin_1(),
@@ -19,6 +19,13 @@ ghqc_server <- function(id) {
       color = "darkgrey"
     )
 
+    w_load_items <- Waiter$new(
+      id = ns("content"),
+      html = tagList(
+        spin_2(),
+      ),
+      color = "white"
+    )
 
     output$sidebar <- renderUI({
       tagList(
@@ -34,19 +41,10 @@ ghqc_server <- function(id) {
           choices = "",
           multiple = TRUE
         ),
-        tags$body(
-          div(
-            class = "flex-container",
-            h5("Select files for QC", class = "header-padding"),
-            actionButton(ns("file_info"), NULL,
-                         icon = icon("question"),
-                         class = "small-action-button"
-            )
-          )
-        ),
-        shinyTree(ns("tree_list"), checkbox = TRUE)
+        uiOutput(ns("tree_list_ui")),
       )
     })
+
 
     observeEvent(input$file_info, {
       showModal(
@@ -68,7 +66,6 @@ ghqc_server <- function(id) {
         )
       )
     })
-
 
     observe({
       updateSelectizeInput(
@@ -95,37 +92,52 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
 
-    output$tree_list <- renderTree({
-      get_files_tree_list(path = ".")
+    output$tree_list_ui <- renderUI({
+      files_tree_df <- convert_dir_to_df(dir_path = find_root_directory())
+
+      treeInput(
+        inputId = ns("tree_list"),
+        label = div(
+          "Select files for QC",
+          actionButton(ns("file_info"), NULL, icon = icon("question"), class = "question-action-button")
+        ),
+        choices = create_tree(files_tree_df),
+        returnValue = "text", # neither id or all gives pathing
+        closeDepth = 0
+      )
     })
+
+
 
     selected_items <- reactive({
       validate(need(input$tree_list, "No files selected"))
-      get_selected_items(tree = input$tree_list)
-    })
+      session$sendCustomMessage("process_tree_list", message = list(ns = id)) # pass in ns id for new input
 
+      input$paths # input needs to be set through js because treeInput not built to give pathing info
+    })
 
     output$main_panel <- renderUI({
       validate(need(length(selected_items()) > 0, "No files selected"))
-
+      w_load_items$show()
       list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
-
       isolate_rendered_list(input, session, selected_items())
 
+      session$sendCustomMessage("adjust_grid", list) # finds the width of the files and adjusts grid column spacing based on values
       return(list)
     })
 
-    # button actions
+    observeEvent(c(selected_items(), input$assignees), {
+      delay(300, {
+        w_load_items$hide()
+      })
+    }, ignoreInit = TRUE)
 
-    # button state
+    # button behavior
     observe({
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
 
-      req(selected_items())
-      file_data <- extract_file_data(input, selected_items())
-
-      if (length(file_data) > 0 && isTruthy(input$milestone)) {
+      if (length(selected_items()) > 0 && isTruthy(input$milestone)) {
         removeClass("create_qc_items", "disabled-btn")
         addClass("create_qc_items", "enabled-btn")
       }
@@ -136,25 +148,25 @@ return "<div><strong>" + escape(item.username) + "</div>"
       file_data <- extract_file_data(input, selected_items())
 
       if (git_ahead_behind()$ahead == git_ahead_behind()$behind) {
-        w$show()
+        w_create_qc_items$show()
         create_yaml("test",
-          repo = get_current_repo(), # TODO: set to current repo for final: get_current_repo()
+          repo = get_current_repo(),
           milestone = input$milestone,
           description = input$milestone_description,
           files = file_data
         )
-        create_checklists("test.yaml") # commented to test context behavior outside of gh port
+        create_checklists("test.yaml")
 
         removeClass("create_qc_items", "enabled-btn")
         addClass("create_qc_items", "disabled-btn")
 
-        w$update(html = tagList(
+        w_create_qc_items$update(html = tagList(
           h4("QC items created!", style = "color: white;")
         ))
 
         Sys.sleep(1) # Delay to allow the user to see the success message
 
-        w$hide()
+        w_create_qc_items$hide()
       } else {
         showModal(
           modalDialog(determine_modal_message())
@@ -164,10 +176,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     observeEvent(input$reset, {
       session$reload()
-    })
-
-    observeEvent(input$done, {
-      stopApp(TRUE)
     })
 
     return(input)

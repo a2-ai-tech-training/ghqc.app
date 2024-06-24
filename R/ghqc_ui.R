@@ -10,9 +10,13 @@ ghqc_ui <- function(id) {
   ui <- miniPage(
     use_waiter(),
     useShinyjs(),
-    #tags$head(tags$style(HTML(brio::read_file(system.file("css/styles.css", package = "ghqc"))))),
+    # tags$head(tags$style(HTML(brio::read_file(system.file("css/styles.css", package = "ghqc"))))),
     tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/styles.css")),
+      tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/styles.css"),
+      tags$script(type = "module", src = "ghqc/js/adjust_grid.js"),
+      tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js"),
+      tags$script(type = "module", src = "ghqc/js/tree_paths.js")
+      ),
     waiter_preloader(
       html = tagList(
         spin_1(),
@@ -22,23 +26,27 @@ ghqc_ui <- function(id) {
     ),
     div(
       id = ns("main_container"),
-      div(id=ns("title_bar"),
-           gadgetTitleBar(title = span(img(src = "ghqc/assets/logo.png", height = 50), "QC Shiny Tool"))
+      gadgetTitleBar(
+        title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "QC Shiny Tool"),
+        right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),
       div(
         id = ns("content"),
         uiOutput(ns("sidebar")),
-        uiOutput(ns("main_panel"))
+        div(
+          id = ns("divider"),
+          actionButton(ns("toggle_sidebar"), "", icon = icon("angle-double-left"), class = "toggle-sidebar-btn")
+        ),
+        miniContentPanel(uiOutput(ns("main_panel")))
       ),
       div(
-        id=ns("button_block"),
+        class = "button_block",
         miniButtonBlock(
-          actionButton(ns("create_qc_items"), "Create QC items"),
-          actionButton(ns("reset"), "Reset")
+          actionButton(ns("create_qc_items"), "Create QC items")
         )
       )
     )
   )
+
   return(ui)
 }
-

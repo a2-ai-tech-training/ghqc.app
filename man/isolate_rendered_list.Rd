@@ -14,7 +14,7 @@ isolate_rendered_list(input, session, items)
 \item{items}{A list representing the selected items.}
 }
 \value{
-None The function performs operations on UI elements and does not return
+None. The function performs operations on UI elements and does not return
 any value.
 }
 \description{

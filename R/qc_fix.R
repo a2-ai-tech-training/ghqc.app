@@ -1,5 +1,5 @@
 #' @export
-create_comment_body <- function(owner, repo, issue_number, message = "", force = FALSE, compare_to_first = TRUE) {
+create_comment_body <- function(owner, repo, issue_number, message = NULL, diff = NULL, force = FALSE, compare_to_first = TRUE) {
   # get issue
   issue <- get_issue(owner, repo, issue_number)
 
@@ -54,18 +54,25 @@ create_comment_body <- function(owner, repo, issue_number, message = "", force =
 
   # format message
   message_body <- {
-    if (message == "") message
+    if (is.null(message)) ""
     else glue::glue("{message}\n\n\n")
   }
 
-  diff <- format_diff(issue$title, qc_commit, last_commit)
+
+  diff <- {
+    if (is.null(diff)) ""
+    else {
+      diff_formatted <- format_diff(issue$title, qc_commit, last_commit)
+      glue::glue("## {issue$title}\n",
+                 "{context}\n",
+                 "{diff_formatted}\n\n",)
+    }
+  }
 
   # format comment
   comment_body <- glue::glue("{assignees_body}",
                              "{message_body}",
-                             "## {issue$title}\n",
-                             "{context}\n",
-                             "{diff}\n\n",
+                             "{diff}",
                              "## Metadata\n",
                              "* current QC request commit: {last_commit}",
                              .trim = FALSE

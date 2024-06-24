@@ -154,7 +154,7 @@ get_summary_df <- function(issues) {
     as.data.frame(as.list(vec))
   })
 
-  df <- bind_rows(list_of_vectors)
+  df <- dplyr::bind_rows(list_of_vectors)
 }
 
 get_summary_table <- function(df) {

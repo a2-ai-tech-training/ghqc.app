@@ -5,7 +5,6 @@
 #' @importFrom gert git_ahead_behind
 NULL
 
-#' @export
 ghqc_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns

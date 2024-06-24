@@ -1,3 +1,7 @@
+body {
+  padding: 0 !important; /* modal ui changes workaround: https://stackoverflow.com/questions/63938194/r-shiny-app-width-shrinks-after-i-close-the-modal */
+}
+
 div[id$="-sidebar"] {
   width: 250px;
   min-width: 250px;
@@ -74,8 +78,10 @@ div[id$="-main_container"] {
   overflow: auto;
 }
 
+
 .logo-img {
   margin-right: -15px !important;
+  background-color: transparent; /* modal ui changes workaround: https://stackoverflow.com/questions/63938194/r-shiny-app-width-shrinks-after-i-close-the-modal */
 }
 
 .grid-container-depth-0 {

@@ -4,7 +4,6 @@
 #' @importFrom waiter use_waiter waiter_preloader
 NULL
 
-#' @export
 ghqc_ui <- function(id) {
   ns <- NS(id)
   ui <- miniPage(

@@ -52,7 +52,7 @@ get_checklists <- function() {
   )
 }
 
-#' @export
+
 create_file_data_structure <- function(file_name, assignees = NULL, checklist_type = NULL, checklists = get_checklists()) {
   # if checklist_type wasn't given, make it the file ext
   if (is.null(checklist_type)) {
@@ -115,7 +115,6 @@ create_file_data_structure <- function(file_name, assignees = NULL, checklist_ty
 #   - confidence interval is 95%
 #   - 500 simulations given
 #   - generated figures match
-#' @export
 create_yaml <- function(name,
                         repo,
                         files, # files must be a list of lists not a vector of lists

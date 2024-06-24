@@ -7,9 +7,9 @@ $(document).ready(function() {
     // Change the icon based on the sidebar state
     var icon = $(this).find('i'); // find icon
     if (sidebar.hasClass('collapsed')) {
-      icon.removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
+      icon.removeClass('fas fa-angles-left').addClass('fas fa-angles-right');
     } else {
-      icon.removeClass('fa-angle-double-right').addClass('fa-angle-double-left');
+      icon.removeClass('fas fa-angles-right').addClass('fas fa-angles-left');
     }
     // call adjust_grid after toggle
     setTimeout(adjust_grid, 100)

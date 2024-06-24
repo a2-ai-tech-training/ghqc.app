@@ -21,7 +21,7 @@ generate_input_id <- function(prefix = NULL, name) {
 #' @param items A list representing the selected items.
 #' @param checklist_choices A vector of checklist choices for the selectize input fields.
 #'
-#' @export
+#' @noRd
 render_selected_list <- function(input, ns, items = NULL, checklist_choices = NULL, depth = 0) {
   checklist_choices <- setNames(names(checklist_choices), names(checklist_choices))
   ul <- div(class = paste("grid-container", "depth", depth, sep = "-"))
@@ -73,7 +73,7 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
 #'
 #' @return None. The function performs operations on UI elements and does not return
 #'   any value.
-#' @export
+#' @noRd
 isolate_rendered_list <- function(input, session, items) {
   for (name in items) {
     checklist_input_id <- generate_input_id("checklist", name)
@@ -111,7 +111,7 @@ isolate_rendered_list <- function(input, session, items) {
 #' @param items A list representing the selected items, typically structured hierarchically.
 #' @return A list of structured data for each file, including the file name, assignees, and checklist type.
 #'
-#' @export
+#' @noRd
 extract_file_data <- function(input, items) {
   file_data <- list()
   for (name in items) {
@@ -148,7 +148,7 @@ extract_file_data <- function(input, items) {
 #'        is behind the remote repository.
 #'
 #' @return A character string with the message to be displayed in the modal.
-#' @export
+#' @noRd
 determine_modal_message <- function(ahead = gert::git_ahead_behind()$ahead, behind = gert::git_ahead_behind()$behind) {
   if (ahead > 0 && behind > 0) {
     return("The local repository has changes that need to be pushed and there are updates on the remote that need to be pulled. Please sync these changes.")
@@ -171,7 +171,7 @@ determine_modal_message <- function(ahead = gert::git_ahead_behind()$ahead, behi
 #' @param dir_path A character string specifying the path to the directory. Default should be the root directory.
 #' @return A data frame where each row represents a file. The columns represent
 #' different levels of the directory structure.
-#' @export
+#' @noRd
 convert_dir_to_df <- function(dir_path = find_root_directory()) {
   # TODO: need to exclude renv because some 50k+ entries. do we want to hard code exclusions or set a limiter
   # and just give message in app or console to notify user?
@@ -211,7 +211,7 @@ convert_dir_to_df <- function(dir_path = find_root_directory()) {
 #'
 #' This function searches for the root directory of a Git repository by looking for .Rproj file.
 #' @return Sets wd to the path of the project root.
-#' @export
+#' @noRd
 find_root_directory <- function() {
   # Initialize the current directory
   current_dir <- normalizePath(getwd(), winslash = "/")

@@ -2,7 +2,7 @@
 #' @importFrom shinyjs enable disable addClass removeClass delay
 #' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2
-#' @importFrom gert git_ahead_behind
+#' @importFrom gert git_ahead_behind git_status
 NULL
 
 ghqc_server <- function(id) {
@@ -107,7 +107,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
 
-
     selected_items <- reactive({
       validate(need(input$tree_list, "No files selected"))
       session$sendCustomMessage("process_tree_list", message = list(ns = id)) # pass in ns id for new input
@@ -142,35 +141,73 @@ return "<div><strong>" + escape(item.username) + "</div>"
       }
     })
 
+    qc_items <- reactive({
+      req(selected_items())
+      extract_file_data(input, selected_items())
+    })
+
+
     observeEvent(input$create_qc_items, {
       req(selected_items())
-      file_data <- extract_file_data(input, selected_items())
+      file_names <- sapply(qc_items(), function(x) x$name)
 
-      if (git_ahead_behind()$ahead == git_ahead_behind()$behind) {
+      git_files <- git_status()$file
+      git_sync_status <- git_ahead_behind()
+      message <- determine_modal_message(selected_files = file_names, git_files = git_files, git_sync_status = git_sync_status)
+
+      if (length(message) > 0) {
+        showModal(modalDialog(
+          HTML(message),
+          footer = tagList(
+            if (length(git_files) > 0 &&
+                !any(file_names %in% git_files) &&
+                git_sync_status$ahead == 0 &&
+                git_sync_status$behind == 0) {
+              actionButton(ns("proceed"), "Proceed Anyway")
+            },
+            actionButton(ns("return"), "Return")
+          )
+        ))
+      } else {
         w_create_qc_items$show()
+
         create_yaml("test",
-          repo = get_current_repo(),
-          milestone = input$milestone,
-          description = input$milestone_description,
-          files = file_data
-        )
+                    repo = get_current_repo(),
+                    milestone = input$milestone,
+                    description = input$milestone_description,
+                    files = qc_items())
         create_checklists("test.yaml")
 
         removeClass("create_qc_items", "enabled-btn")
         addClass("create_qc_items", "disabled-btn")
 
-        w_create_qc_items$update(html = tagList(
-          h4("QC items created!", style = "color: white;")
-        ))
-
-        Sys.sleep(1) # Delay to allow the user to see the success message
-
         w_create_qc_items$hide()
-      } else {
         showModal(
-          modalDialog(determine_modal_message())
+          modalDialog("QC items created successfully.")
         )
       }
+    })
+
+    observeEvent(input$proceed, {
+      removeModal()
+      w_create_qc_items$show()
+      create_yaml("test",
+                  repo = get_current_repo(),
+                  milestone = input$milestone,
+                  description = input$milestone_description,
+                  files = qc_items())
+      create_checklists("test.yaml")
+      removeClass("create_qc_items", "enabled-btn")
+      addClass("create_qc_items", "disabled-btn")
+
+      w_create_qc_items$hide()
+      showModal(
+        modalDialog("QC items created successfully.")
+      )
+    })
+
+    observeEvent(input$return, {
+      removeModal()
     })
 
     observeEvent(input$reset, {

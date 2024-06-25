@@ -150,18 +150,33 @@ extract_file_data <- function(input, items) {
 #'
 #' @return A character string with the message to be displayed in the modal.
 #' @noRd
-determine_modal_message <- function(ahead = gert::git_ahead_behind()$ahead, behind = gert::git_ahead_behind()$behind) {
-  if (ahead > 0 && behind > 0) {
-    return("The local repository has changes that need to be pushed and there are updates on the remote that need to be pulled. Please sync these changes.")
-  } else if (ahead > 0) {
-    return("There are local changes that need to be pushed to the remote repository. Please push these changes.")
-  } else if (behind > 0) {
-    return("There are updates on the remote repository that need to be pulled. Please pull these updates.")
-  } else {
-    return("Current repository status is unclear. Please check the Git status and ensure everything is synchronized.")
-  }
-}
+determine_modal_message <- function(selected_files, git_files, git_sync_status) {
+  messages <- c()
+  uncommitted_selected_files <- selected_files %in% git_files
 
+  generate_html_list <- function(files) {
+    paste("<li>", files, "</li>", collapse = "")
+  }
+
+  if (git_sync_status$ahead > 0 || git_sync_status$behind > 0) {
+    sync_messages <- c()
+    if (git_sync_status$ahead > 0) sync_messages <- c(sync_messages, "push changes to the remote repository.")
+    if (git_sync_status$behind > 0) sync_messages <- c(sync_messages, "pull updates from the remote.")
+    messages <- c(messages, "There are local changes that need to be synchronized. Please", paste(sync_messages, collapse = " and "))
+  }
+
+  if (any(uncommitted_selected_files)) {
+    messages <- c(messages, sprintf("The following selected local files have uncommitted changes:<ul>%s</ul>",
+                                    generate_html_list(selected_files[uncommitted_selected_files])))
+  }
+
+  if (length(git_files) > 0 && !any(uncommitted_selected_files)) {
+    messages <- c(messages, sprintf("There are local files that have uncommitted changes:<ul>%s</ul>",
+                                    generate_html_list(git_files)))
+  }
+
+  return(paste(messages, collapse = " "))
+}
 #' Convert Directory File Paths to a Data Frame
 #'
 #' This function lists all files in the specified directory recursively,

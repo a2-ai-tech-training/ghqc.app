@@ -81,7 +81,7 @@ get_issues <- function(owner, repo, milestone) {
          owner = owner, repo = repo, milestone = milestone_number, state = "all")
 }
 
-get_issues2 <- function() {
+get_issues_info <- function() {
   issues <- tryCatch({
     gh::gh("GET /repos/{owner}/{repo}/issues",
            owner = get_organization(),

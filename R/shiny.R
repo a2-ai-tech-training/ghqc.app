@@ -1,4 +1,5 @@
 #' @import shiny
+#' @importFrom fs dir_ls
 NULL
 
 generate_input_id <- function(prefix = NULL, name) {
@@ -173,12 +174,12 @@ determine_modal_message <- function(ahead = gert::git_ahead_behind()$ahead, behi
 #' different levels of the directory structure.
 #' @noRd
 convert_dir_to_df <- function(dir_path = find_root_directory()) {
-  # TODO: need to exclude renv because some 50k+ entries. do we want to hard code exclusions or set a limiter
-  # and just give message in app or console to notify user?
-  # can create sep widget (selectize?) to search as maybe won't cause session to hang
-  #
-  exclusions <- "renv"
-  all_paths <- grep(list.files(path= ".", recursive = TRUE), pattern = exclusions, invert=TRUE, value=TRUE)
+  if (getwd() != dir_path) {
+    setwd(dir_path)
+    message("Directory changed to project root:", dir_path, "\n")
+  }
+
+  all_paths <- dir_ls(recurse = TRUE, regexp = "renv", invert = TRUE, type = "file")
 
   has_dirname <- dirname(all_paths) != "."
 
@@ -213,7 +214,6 @@ convert_dir_to_df <- function(dir_path = find_root_directory()) {
 #' @return Sets wd to the path of the project root.
 #' @noRd
 find_root_directory <- function() {
-  # Initialize the current directory
   current_dir <- normalizePath(getwd(), winslash = "/")
 
   findProjectRoot <- function(path) {
@@ -233,11 +233,6 @@ find_root_directory <- function() {
   }
 
   project_root <- findProjectRoot(current_dir)
-
-  if (current_dir != project_root) {
-    setwd(project_root)
-    message("Directory changed to project root:", project_root, "\n")
-  }
 
   return(project_root)
 }

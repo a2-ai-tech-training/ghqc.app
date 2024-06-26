@@ -11,9 +11,6 @@ ghqc_update_ui <- function(id) {
     useShinyjs(),
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/styles.css"),
-      # tags$script(type = "module", src = "ghqc/js/adjust_grid.js"),
-      # tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js"),
-      # tags$script(type = "module", src = "ghqc/js/tree_paths.js")
     ),
     waiter_preloader(
       html = tagList(

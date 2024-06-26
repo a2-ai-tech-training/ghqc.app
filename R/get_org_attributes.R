@@ -85,7 +85,9 @@ get_issues_info <- function() {
   issues <- tryCatch({
     gh::gh("GET /repos/{owner}/{repo}/issues",
            owner = get_organization(),
-           repo = get_current_repo())
+           repo = get_current_repo(),
+           per_page = 100,
+           state = "all")
   }, error = function(e) {
     stop("Failed to fetch issues.")
   })
@@ -94,6 +96,18 @@ get_issues_info <- function() {
     stop("No issues found in the repository.")
   }
 
-  issues_df <- purrr::map_df(issues, ~data.frame(number = .x$number, title = .x$title))
+  issues_df <- purrr::map_df(issues, ~{
+    tibble::tibble(
+      number = .x$number,
+      title = .x$title,
+      milestone = if (!is.null(.x$milestone)) .x$milestone$title else NA,
+      milestone_created = if (!is.null(.x$milestone) && !is.null(.x$milestone$created_at)) .x$milestone$created_at else NA
+    )
+  })
+
+  # Filter out issues without a milestone
+  issues_df <- issues_df %>% dplyr::filter(!is.na(milestone))
+
   return(issues_df)
 }
+

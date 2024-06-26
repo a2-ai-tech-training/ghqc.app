@@ -136,19 +136,20 @@ extract_file_data <- function(input, items) {
   return(file_data)
 }
 
-#' Determine the Modal Message for Git Synchronization
+#' Determine Modal Message Based on Git Status and File Commit Status
 #'
-#' This function determines the appropriate modal message based on the
-#' current Git status regarding how many commits the local repository is
-#' ahead or behind the remote repository. It provides instructions for
-#' the user to either push local changes, pull remote updates, or both.
+#' This function generates HTML-formatted messages indicating the synchronization status
+#' of the local git repository and the commit status of selected files. It highlights
+#' files that need to be pushed or pulled to synchronize with the remote repository, as
+#' well as local files with uncommitted changes.
 #'
-#' @param ahead Integer indicating how many commits the local repository
-#'        is ahead of the remote repository.
-#' @param behind Integer indicating how many commits the local repository
-#'        is behind the remote repository.
+#' @param selected_files A character vector of file paths representing files selected by the user.
+#' @param git_files A character vector of file paths representing files with uncommitted changes in the git repository.
+#' @param git_sync_status A list containing elements `ahead` and `behind` which indicate the number
+#' of commits by which the local repository is ahead or behind the remote repository, respectively.
 #'
-#' @return A character string with the message to be displayed in the modal.
+#' @return A character string with HTML content detailing the status messages. If no issues are
+#' detected, the function returns `NULL`.
 #' @noRd
 determine_modal_message <- function(selected_files, git_files, git_sync_status) {
   messages <- c()
@@ -181,6 +182,7 @@ determine_modal_message <- function(selected_files, git_files, git_sync_status) 
     return(paste(messages, collapse = " "))
   }
 }
+
 #' Convert Directory File Paths to a Data Frame
 #'
 #' This function lists all files in the specified directory recursively,
@@ -204,10 +206,10 @@ convert_dir_to_df <- function(dir_path = find_root_directory()) {
 
   sorted_indices <- order(!has_dirname, all_paths)
   sorted_paths <- all_paths[sorted_indices]
-  # Find the maximum path length
+
   max_path_length <- max(sapply(sorted_paths, function(x) length(unlist(strsplit(x, "/")))))
 
-  # Convert to data frame with padding for shorter paths
+  # Convert to data frame with padding for shorter paths for treeInput format
   df <- do.call(rbind, lapply(sorted_paths, function(x) {
     file_name <- basename(x)
     path_parts <- unlist(strsplit(x, "/"))
@@ -230,7 +232,7 @@ convert_dir_to_df <- function(dir_path = find_root_directory()) {
 #' Find Root Directory
 #'
 #' This function searches for the root directory of a Git repository by looking for .Rproj file.
-#' @return Sets wd to the path of the project root.
+#' @return The path of the project root.
 #' @noRd
 find_root_directory <- function() {
   current_dir <- normalizePath(getwd(), winslash = "/")

@@ -1,50 +1,31 @@
-untracked_changes <- function() {
+untracked_changes <- function(qc_file) {
   status <- gert::git_status()
-  not_staged <- subset(status, status == "modified" & !staged)
-  nrow(not_staged) != 0
-}
-
-checkout_default_branch <- function() {
-  branches <- gert::git_branch_list()
-
-  # Determine the default branch
-  default_branch <- if ("main" %in% branches$name) {
-    "main"
-  } else if ("master" %in% branches$name) {
-    "master"
-  } else {
-    stop("Neither 'main' nor 'master' branch found")
+  if (qc_file %in% status$file) {
+    TRUE
   }
+  else FALSE
 
-  # Checkout the default branch
-  gert::git_branch_checkout(default_branch)
 }
 
-cleanup_branches <- function(temp_branch) {
-  checkout_default_branch()
-  gert::git_branch_delete(temp_branch)
+name_file_copy <- function(file_path) {
+  dir_name <- dirname(file_path)
+  file_name <- basename(file_path)
+  file_extension <- tools::file_ext(file_name)
+  file_base_name <- tools::file_path_sans_ext(file_name)
+
+  file_copy_name <- paste0(file_base_name, "_copy_for_ghqc.", file_extension)
+  file.path(dir_name, file_copy_name)
 }
 
-checkout_temp_branch <- function(temp_branch, commit_sha) {
-  # get all branches
-  branches <- gert::git_branch_list()
-
-  # if it doesn't already exist
-  if (!temp_branch %in% branches$name) {
-    # create it
-    gert::git_branch_create(temp_branch, ref = commit_sha)
-  }
-
-  # check it out
-  gert::git_branch_checkout(temp_branch)
-  withr::defer_parent(cleanup_branches(temp_branch))
+rename_file_copy <- function(file_path) {
+  file.rename(file_path, stringr::str_remove(file_path, "_copy_for_ghqc"))
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
-  temp_branch <- paste0("temp-", commit_sha)
-  # checkout temp branch (defer deletion)
-  checkout_temp_branch(temp_branch, commit_sha)
-  # read file in previous commit
+  # checkout file
+  args <- c("checkout", commit_sha, "--", file_path)
+  processx::run("git", args)
+  # read file
   file_content <- readLines(file_path)
   return(file_content)
 }
@@ -111,13 +92,30 @@ add_line_numbers <- function(text) {
   glue::glue_collapse(new_lines, sep = "\n")
 }
 
+clean_up <- function(file_path, copied_file) {
+  # delete copy at previous commits
+  fs::file_delete(file_path)
+  # rename file to original name
+  rename_file_copy(copied_file)
+}
+
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
+  # create copy
+  copied_file <- name_file_copy(file_path)
+  file.copy(file_path, copied_file)
+  withr::defer_parent(
+    clean_up(file_path, copied_file)
+  )
+
   # get file contents at the specified commits
   compared_script <- read_file_at_commit(commit_sha_orig, file_path)
   current_script <- read_file_at_commit(commit_sha_new, file_path)
 
+  # get diff
   diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
   diff_lines <- as.character(diff_output)
+
+
 
   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
   file_index_start <- {
@@ -179,10 +177,31 @@ get_comments <- function(owner, repo, issue_number) {
   comments_df <- do.call(rbind, lapply(comments, function(x) as.data.frame(t(unlist(x)), stringsAsFactors = FALSE)))
 }
 
+# returns true if the user can check "compare to most recent qc fix"
+# false otherwise
+check_if_there_are_update_comments <- function(owner, repo, issue_number) {
+  comments <- get_comments(owner, repo, issue_number)
+  most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
+  if (is.na(most_recent_qc_commit)) FALSE
+  else TRUE
+}
 
-get_most_recent_comment_body <- function(comments_df) {
-  most_recent_row <- comments_df %>% dplyr::arrange(desc(created_at)) %>%  dplyr::slice(1)
-  most_recent_row$body
+# gets the most recent qc update commit from the comments in the issue
+# if there are no update comments from the author, it returns NA
+get_commit_from_most_recent_update_comment <- function(comments_df) {
+  # sort by descending creation time
+  comments_df <- comments_df %>% dplyr::arrange(dplyr::desc(created_at))
+
+  # loop through comments, grab the first one
+  for (i in seq_len(nrow(comments_df))) {
+    comment <- comments_df[i, ]
+    commit_from_comment <- get_current_commit_from_comment(comment$body)
+    if (!is.na(commit_from_comment)) {
+      return(commit_from_comment)
+    }
+  }
+
+  return(NA)
 }
 
 get_current_commit_from_comment <- function(body) {

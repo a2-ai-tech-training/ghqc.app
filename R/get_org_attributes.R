@@ -75,10 +75,46 @@ get_issue_timeline <- function(owner, repo, issue_number) {
          owner = owner, repo = repo, issue_number = issue_number)
 }
 
-get_issues <- function(owner, repo, milestone) {
-  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone))
-  gh::gh("GET /repos/:owner/:repo/issues",
-         owner = owner, repo = repo, milestone = milestone_number, state = "all")
+# get_issues <- function(owner, repo, milestone) {
+#   params <- c(owner, repo)
+#
+#   gh::gh("GET /repos/:owner/:repo/issues",
+#          owner = owner, repo = repo, milestone = milestone_number, state = "all")
+# }
+
+get_all_issues <- function(owner, repo, state = "all", milestone_name = NULL) {
+  params <- list(
+    owner = owner,
+    repo = repo,
+    state = state,
+    per_page = 100,
+    page = page
+  )
+
+  if (!is.null(milestone_name)) {
+    # get milestone number from name
+    milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone))
+    params$milestone <- milestone_number
+  }
+
+  issues <- list()
+  page <- 1
+
+  repeat {
+    # get a page of issues
+    res <- gh("GET /repos/:owner/:repo/issues", params)
+
+    # break if no more issues
+    if (length(res) == 0) break
+
+    # append to list
+    issues <- c(issues, res)
+
+    # next page
+    page <- page + 1
+  }
+
+  return(issues)
 }
 
 get_issues_info <- function() {

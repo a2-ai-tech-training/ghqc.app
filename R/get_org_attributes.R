@@ -91,7 +91,6 @@ get_all_issues <- function(owner, repo, state = "all", milestone_name = NULL) {
   params <- list(
     owner = owner,
     repo = repo,
-    milestone = milestone_number,
     state = state,
     per_page = 100,
     page = page

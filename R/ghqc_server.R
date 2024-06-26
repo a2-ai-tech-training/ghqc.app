@@ -8,6 +8,7 @@ NULL
 ghqc_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    qc_trigger <- reactiveVal(FALSE)
 
     w_create_qc_items <- Waiter$new(
       id = ns("main_container"),
@@ -146,16 +147,15 @@ return "<div><strong>" + escape(item.username) + "</div>"
       extract_file_data(input, selected_items())
     })
 
-
     observeEvent(input$create_qc_items, {
-      req(selected_items())
+      req(qc_items())
       file_names <- sapply(qc_items(), function(x) x$name)
 
       git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
       message <- determine_modal_message(selected_files = file_names, git_files = git_files, git_sync_status = git_sync_status)
 
-      if (length(message) > 0) {
+      if (!is.null(message)) {
         showModal(modalDialog(
           HTML(message),
           footer = tagList(
@@ -169,27 +169,14 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         ))
       } else {
-        w_create_qc_items$show()
-
-        create_yaml("test",
-                    repo = get_current_repo(),
-                    milestone = input$milestone,
-                    description = input$milestone_description,
-                    files = qc_items())
-        create_checklists("test.yaml")
-
-        removeClass("create_qc_items", "enabled-btn")
-        addClass("create_qc_items", "disabled-btn")
-
-        w_create_qc_items$hide()
-        showModal(
-          modalDialog("QC items created successfully.")
-        )
+        qc_trigger(TRUE)
       }
     })
 
-    observeEvent(input$proceed, {
-      removeModal()
+    observe({
+      req(qc_trigger())
+      qc_trigger(FALSE)
+
       w_create_qc_items$show()
       create_yaml("test",
                   repo = get_current_repo(),
@@ -204,6 +191,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
       showModal(
         modalDialog("QC items created successfully.")
       )
+    })
+
+    observeEvent(input$proceed, {
+      removeModal()
+      qc_trigger(TRUE)
     })
 
     observeEvent(input$return, {

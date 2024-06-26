@@ -175,7 +175,11 @@ determine_modal_message <- function(selected_files, git_files, git_sync_status) 
                                     generate_html_list(git_files)))
   }
 
-  return(paste(messages, collapse = " "))
+  if (length(messages) == 0) {
+    return(NULL)
+  } else {
+    return(paste(messages, collapse = " "))
+  }
 }
 #' Convert Directory File Paths to a Data Frame
 #'

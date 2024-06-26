@@ -177,10 +177,31 @@ get_comments <- function(owner, repo, issue_number) {
   comments_df <- do.call(rbind, lapply(comments, function(x) as.data.frame(t(unlist(x)), stringsAsFactors = FALSE)))
 }
 
+# returns true if the user can check "compare to most recent qc fix"
+# false otherwise
+check_if_there_are_update_comments <- function(owner, repo, issue_number) {
+  comments <- get_comments(owner, repo, issue_number)
+  most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
+  if (is.na(most_recent_qc_commit)) FALSE
+  else TRUE
+}
 
-get_most_recent_comment_body <- function(comments_df) {
-  most_recent_row <- comments_df %>% dplyr::arrange(desc(created_at)) %>%  dplyr::slice(1)
-  most_recent_row$body
+# gets the most recent qc update commit from the comments in the issue
+# if there are no update comments from the author, it returns NA
+get_commit_from_most_recent_update_comment <- function(comments_df) {
+  # sort by descending creation time
+  comments_df <- comments_df %>% dplyr::arrange(dplyr::desc(created_at))
+
+  # loop through comments, grab the first one
+  for (i in seq_len(nrow(comments_df))) {
+    comment <- comments_df[i, ]
+    commit_from_comment <- get_current_commit_from_comment(comment$body)
+    if (!is.na(commit_from_comment)) {
+      return(commit_from_comment)
+    }
+  }
+
+  return(NA)
 }
 
 get_current_commit_from_comment <- function(body) {

@@ -5,10 +5,10 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
 
   qc_commit <- {
     comments <- get_comments(owner, repo, issue_number)
-    # if the user wants to get comparison from most recent QC fix and there are QC fixes to draw from
-    if (!compare_to_first && nrow(comments) != 0) {
-      last_comment <- get_most_recent_comment_body(comments)
-      compared_commit <- get_current_commit_from_comment(last_comment)
+    update_comments_exist <- check_if_there_are_update_comments(owner, repo, issue_number)
+    # if the user wants to get comparison from most recent QC update comment and there are QC update comments to draw from
+    if (!compare_to_first && update_comments_exist) {
+      compared_commit <- get_commit_from_most_recent_update_comment(comments)
       context <- glue::glue("Current script compared to <ins>the previous script updated with QC feedback</ins>: {compared_commit}")
       compared_commit
     }
@@ -88,8 +88,15 @@ post_comment <- function(owner, repo, issue_number, body) {
   )
 }
 
-add_fix_comment <- function(owner, repo, issue_number, message = "", force = FALSE, compare_to_first = TRUE) {
-  body <- create_comment_body(owner, repo, issue_number, message, force, compare_to_first)
+add_fix_comment <- function(owner, repo, issue_number, message = NULL, diff = FALSE, force = FALSE, compare_to_first = TRUE) {
+  body <- create_comment_body(owner = owner,
+                              repo = repo,
+                              issue_number = issue_number,
+                              message = message,
+                              diff = diff,
+                              force = force,
+                              compare_to_first = compare_to_first)
+
   post_comment(owner, repo, issue_number, body)
 }
 

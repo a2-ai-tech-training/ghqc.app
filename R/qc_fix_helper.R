@@ -7,53 +7,22 @@ untracked_changes <- function(qc_file) {
 
 }
 
-cleanup_branches <- function(temp_branch, current_branch) {
-  # checkout the branch the user was working on
-  gert::git_branch_checkout(current_branch)
-  gert::git_branch_delete(temp_branch)
-}
-
-checkout_temp_branch <- function(temp_branch, commit_sha, current_branch) {
-  # get all branches
-  branches <- gert::git_branch_list()
-
-  # if it doesn't already exist
-  if (!temp_branch %in% branches$name) {
-    # create it
-    gert::git_branch_create(temp_branch, ref = commit_sha)
-  }
-
-  # check it out
-  gert::git_branch_checkout(temp_branch)
-  withr::defer_parent(cleanup_branches(temp_branch, current_branch))
-}
-
-# read_file_at_commit <- function(commit_sha, file_path, current_branch) {
-#   temp_branch <- paste0("temp-", commit_sha)
-#   # checkout temp branch (defer deletion)
-#   checkout_temp_branch(temp_branch, commit_sha, current_branch)
-#   # read file in previous commit
-#   file_content <- readLines(file_path)
-#   return(file_content)
-# }
-
 name_file_copy <- function(file_path) {
   dir_name <- dirname(file_path)
   file_name <- basename(file_path)
   file_extension <- tools::file_ext(file_name)
   file_base_name <- tools::file_path_sans_ext(file_name)
 
-  file_copy_name <- paste0(file_base_name, "_copy.", file_extension)
+  file_copy_name <- paste0(file_base_name, "_copy_for_ghqc.", file_extension)
   file.path(dir_name, file_copy_name)
 }
 
 rename_file_copy <- function(file_path) {
-  file.rename(file_path, stringr::str_remove(file_path, "_copy"))
+  file.rename(file_path, stringr::str_remove(file_path, "_copy_for_ghqc"))
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
   # checkout file
-  print(getwd())
   args <- c("checkout", commit_sha, "--", file_path)
   processx::run("git", args)
   # read file
@@ -123,11 +92,20 @@ add_line_numbers <- function(text) {
   glue::glue_collapse(new_lines, sep = "\n")
 }
 
+clean_up <- function(file_path, copied_file) {
+  # delete copy at previous commits
+  fs::file_delete(file_path)
+  # rename file to original name
+  rename_file_copy(copied_file)
+}
+
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # create copy
   copied_file <- name_file_copy(file_path)
   file.copy(file_path, copied_file)
-  #withr::defer_parent(rename_file_copy(copied_file))
+  withr::defer_parent(
+    clean_up(file_path, copied_file)
+  )
 
   # get file contents at the specified commits
   compared_script <- read_file_at_commit(commit_sha_orig, file_path)
@@ -137,11 +115,7 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
   diff_lines <- as.character(diff_output)
 
-  # clean up
-  # delete copy at previous commits
-  fs::file_delete(file_path)
-  # rename file to original name
-  rename_file_copy(copied_file)
+
 
   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
   file_index_start <- {

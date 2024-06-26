@@ -1,7 +1,15 @@
-untracked_changes <- function() {
+untracked_changes <- function(qc_file) {
   status <- gert::git_status()
-  not_staged <- subset(status, status == "modified" & !staged)
-  nrow(not_staged) != 0
+  if (qc_file %in% status$file) {
+    rlang::abort(message = glue::glue("{qc_file} has unpushed changes - be sure to commit and push changes."),
+                 class = "commit_error",
+                 x = last_commit)
+  }
+
+  #not_staged <- subset(status, status == "modified" & !staged)
+  if (nrow(status) != 0) {
+    rlang::warn()
+  }
 }
 
 cleanup_branches <- function(temp_branch, current_branch) {
@@ -33,6 +41,15 @@ read_file_at_commit <- function(commit_sha, file_path, current_branch) {
   file_content <- readLines(file_path)
   return(file_content)
 }
+# read_file_at_commit <- function(commit_sha, file_path, current_branch) {
+#   processx::run(glue::glue("git checkout {commit_sha} -- {file_path}"))
+#   temp_branch <- paste0("temp-", commit_sha)
+#   # checkout temp branch (defer deletion)
+#   checkout_temp_branch(temp_branch, commit_sha, current_branch)
+#   # read file in previous commit
+#   file_content <- readLines(file_path)
+#   return(file_content)
+# }
 
 extract_line_numbers <- function(text) {
   match <- stringr::str_match(text, "@@ ([^@]+) @@")[2]
@@ -97,6 +114,8 @@ add_line_numbers <- function(text) {
 }
 
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
+  # create copy
+  file.copy(file_path, "copy")
   # get file contents at the specified commits
   current_branch <- gert::git_branch()
   compared_script <- read_file_at_commit(commit_sha_orig, file_path, current_branch)

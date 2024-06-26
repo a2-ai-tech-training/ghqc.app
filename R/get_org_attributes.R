@@ -107,7 +107,7 @@ get_all_issues <- function(owner, repo, state = "all", milestone_name = NULL) {
 
   repeat {
     # get a page of issues
-    res <- gh("GET /repos/:owner/:repo/issues", params)
+    res <- gh::gh("GET /repos/:owner/:repo/issues", params)
 
     # break if no more issues
     if (length(res) == 0) break

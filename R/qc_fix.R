@@ -32,7 +32,7 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
   }
 
   # if there are untracked changes and the user hasn't forced the operation to go through
-  else if (untracked_changes(issue$title) && !force) {
+  else if (!force && untracked_changes(issue$title)) {
     # error: not all changes committed and pushed
     rlang::abort(message = glue::glue("remote repository has untracked changes - commit these before running again, or rerun with force = TRUE"),
                  class = "commit_shas_match",

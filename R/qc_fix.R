@@ -57,7 +57,7 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
 
 
   diff <- {
-    if (is.null(diff)) ""
+    if (!diff) ""
     else {
       diff_formatted <- format_diff(issue$title, qc_commit, last_commit)
       glue::glue("## {issue$title}\n",

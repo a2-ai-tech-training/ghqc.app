@@ -1,15 +1,10 @@
 untracked_changes <- function(qc_file) {
   status <- gert::git_status()
   if (qc_file %in% status$file) {
-    rlang::abort(message = glue::glue("{qc_file} has unpushed changes - be sure to commit and push changes."),
-                 class = "commit_error",
-                 x = last_commit)
+    TRUE
   }
+  else FALSE
 
-  #not_staged <- subset(status, status == "modified" & !staged)
-  if (nrow(status) != 0) {
-    rlang::warn()
-  }
 }
 
 cleanup_branches <- function(temp_branch, current_branch) {
@@ -33,16 +28,7 @@ checkout_temp_branch <- function(temp_branch, commit_sha, current_branch) {
   withr::defer_parent(cleanup_branches(temp_branch, current_branch))
 }
 
-read_file_at_commit <- function(commit_sha, file_path, current_branch) {
-  temp_branch <- paste0("temp-", commit_sha)
-  # checkout temp branch (defer deletion)
-  checkout_temp_branch(temp_branch, commit_sha, current_branch)
-  # read file in previous commit
-  file_content <- readLines(file_path)
-  return(file_content)
-}
 # read_file_at_commit <- function(commit_sha, file_path, current_branch) {
-#   processx::run(glue::glue("git checkout {commit_sha} -- {file_path}"))
 #   temp_branch <- paste0("temp-", commit_sha)
 #   # checkout temp branch (defer deletion)
 #   checkout_temp_branch(temp_branch, commit_sha, current_branch)
@@ -50,6 +36,30 @@ read_file_at_commit <- function(commit_sha, file_path, current_branch) {
 #   file_content <- readLines(file_path)
 #   return(file_content)
 # }
+
+name_file_copy <- function(file_path) {
+  dir_name <- dirname(file_path)
+  file_name <- basename(file_path)
+  file_extension <- tools::file_ext(file_name)
+  file_base_name <- tools::file_path_sans_ext(file_name)
+
+  file_copy_name <- paste0(file_base_name, "_copy.", file_extension)
+  file.path(dir_name, file_copy_name)
+}
+
+rename_file_copy <- function(file_path) {
+  file.rename(file_path, stringr::str_remove(file_path, "_copy"))
+}
+
+read_file_at_commit <- function(commit_sha, file_path) {
+  # checkout file
+  print(getwd())
+  args <- c("checkout", commit_sha, "--", file_path)
+  processx::run("git", args)
+  # read file
+  file_content <- readLines(file_path)
+  return(file_content)
+}
 
 extract_line_numbers <- function(text) {
   match <- stringr::str_match(text, "@@ ([^@]+) @@")[2]
@@ -115,14 +125,23 @@ add_line_numbers <- function(text) {
 
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # create copy
-  file.copy(file_path, "copy")
-  # get file contents at the specified commits
-  current_branch <- gert::git_branch()
-  compared_script <- read_file_at_commit(commit_sha_orig, file_path, current_branch)
-  current_script <- read_file_at_commit(commit_sha_new, file_path, current_branch)
+  copied_file <- name_file_copy(file_path)
+  file.copy(file_path, copied_file)
+  #withr::defer_parent(rename_file_copy(copied_file))
 
+  # get file contents at the specified commits
+  compared_script <- read_file_at_commit(commit_sha_orig, file_path)
+  current_script <- read_file_at_commit(commit_sha_new, file_path)
+
+  # get diff
   diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
   diff_lines <- as.character(diff_output)
+
+  # clean up
+  # delete copy at previous commits
+  fs::file_delete(file_path)
+  # rename file to original name
+  rename_file_copy(copied_file)
 
   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
   file_index_start <- {

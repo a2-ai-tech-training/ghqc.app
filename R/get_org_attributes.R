@@ -102,7 +102,7 @@ get_all_issues <- function(owner, repo, state = "all", milestone_name = NULL) {
 
   repeat {
     # get a page of issues
-    res <- gh("GET /repos/:owner/:repo/issues", params)
+    res <- gh::gh("GET /repos/:owner/:repo/issues", params)
 
     # break if no more issues
     if (length(res) == 0) break
@@ -122,8 +122,7 @@ get_issues_info <- function() {
     gh::gh("GET /repos/{owner}/{repo}/issues",
            owner = get_organization(),
            repo = get_current_repo(),
-           per_page = 100,
-           state = "all")
+           per_page = 100)
   }, error = function(e) {
     stop("Failed to fetch issues.")
   })

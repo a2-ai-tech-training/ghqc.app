@@ -27,7 +27,8 @@ ghqc_update_ui <- function(id) {
         ),
         miniContentPanel(
           div(id = ns("center_content"),
-          selectizeInput(ns("select_issue"), "Select Issue", choices = "", multiple = FALSE),
+          selectizeInput(ns("select_milestone"), "Select QC Item List", choices = "", multiple = FALSE),
+          selectizeInput(ns("select_issue"), "Select QC Item", choices = "", multiple = FALSE),
           textAreaInput(ns("message"), "Message", ""),
           checkboxInput(ns("show_diff"), "Show file difference?", FALSE),
           conditionalPanel(

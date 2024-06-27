@@ -1,3 +1,36 @@
+error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_number) {
+  issue <- get_issue(owner, repo, issue_number)
+
+  qc_commit <- {
+    # get comments
+    comments <- get_comments(owner, repo, issue_number)
+
+    # see if there have been updates
+    update_comments_exist <- check_if_there_are_update_comments(owner, repo, issue_number)
+
+    # get sha from most recent qc update
+    if (update_comments_exist) {
+      get_commit_from_most_recent_update_comment(comments)
+    }
+    # else, if not updates, get sha from original qc request
+    else {
+      get_metadata(issue$body)$git_sha
+    }
+  }
+
+  # get last commit
+  last_commit <- gert::git_log(max = 1)$commit
+
+  # if the latest commit is the same as the latest qc request commit, the files will just be the same, so error
+  # i.e. the author didn't update the file, so posting a comment about updates doesn't make sense
+  if (qc_commit == last_commit) {
+    # error: didn't commit and push changes to remote repo
+    rlang::abort(message = glue::glue("repository unchanged since initialized QC request - be sure to commit and push changes."),
+                 class = "commit_shas_match",
+                 x = last_commit)
+  }
+} # error_if_repo_unchanged_since_last_qc_request
+
 #' @export
 create_comment_body <- function(owner, repo, issue_number, message = NULL, diff = FALSE, force = FALSE, compare_to_first = TRUE) {
   # get issue
@@ -22,22 +55,22 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
   # get last commit
   last_commit <- gert::git_log(max = 1)$commit
 
-  ## handle errors
-  # if there have been no updates
-  if (qc_commit == last_commit && !force) {
-    # error: didn't commit and push changes to remote repo
-    rlang::abort(message = glue::glue("remote repository unchanged since initialized QC request - be sure to commit and push changes."),
-                 class = "commit_shas_match",
-                 x = last_commit)
-  }
-
-  # if there are untracked changes and the user hasn't forced the operation to go through
-  else if (!force && untracked_changes(issue$title)) {
-    # error: not all changes committed and pushed
-    rlang::abort(message = glue::glue("remote repository has untracked changes - commit these before running again, or rerun with force = TRUE"),
-                 class = "commit_shas_match",
-                 x = last_commit)
-  }
+  # ## handle errors
+  # # if there have been no updates
+  # if (qc_commit == last_commit && !force) {
+  #   # error: didn't commit and push changes to remote repo
+  #   rlang::abort(message = glue::glue("remote repository unchanged since initialized QC request - be sure to commit and push changes."),
+  #                class = "commit_shas_match",
+  #                x = last_commit)
+  # }
+  #
+  # # if there are untracked changes and the user hasn't forced the operation to go through
+  # else if (!force && untracked_changes(issue$title)) {
+  #   # error: not all changes committed and pushed
+  #   rlang::abort(message = glue::glue("remote repository has untracked changes - commit these before running again, or rerun with force = TRUE"),
+  #                class = "commit_shas_match",
+  #                x = last_commit)
+  # }
 
   # get assignees
   assignees_vec <- sapply(issue$assignees, function(assignee) glue::glue("@{assignee$login}"))

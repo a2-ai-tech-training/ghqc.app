@@ -127,6 +127,7 @@ get_issues_info <- function() {
     stop("Failed to fetch issues.")
   })
 
+
   if (is.null(issues) || length(issues) == 0) {
     stop("No issues found in the repository.")
   }

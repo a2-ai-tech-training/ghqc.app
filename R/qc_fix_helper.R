@@ -181,9 +181,10 @@ get_comments <- function(owner, repo, issue_number) {
 # false otherwise
 check_if_there_are_update_comments <- function(owner, repo, issue_number) {
   comments <- get_comments(owner, repo, issue_number)
+  if (length(comments) == 0) return(FALSE)
   most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
-  if (is.na(most_recent_qc_commit)) FALSE
-  else TRUE
+  if (is.na(most_recent_qc_commit)) return(FALSE)
+  else return(TRUE)
 }
 
 # gets the most recent qc update commit from the comments in the issue

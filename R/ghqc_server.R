@@ -147,20 +147,29 @@ return "<div><strong>" + escape(item.username) + "</div>"
       extract_file_data(input, selected_items())
     })
 
+    observe({
+      req(qc_items())
+      file_names <- sapply(qc_items(), function(x) x$name)
+      print(file_names)
+    })
     observeEvent(input$create_qc_items, {
       req(qc_items())
       file_names <- sapply(qc_items(), function(x) x$name)
 
-      git_files <- git_status()$file
+      uncommitted_git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
-      message <- determine_create_modal_message(selected_files = file_names, git_files = git_files, git_sync_status = git_sync_status)
+      untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
+      message <- determine_create_modal_message(selected_files = file_names,
+                                                uncommitted_git_files = uncommitted_git_files,
+                                                untracked_selected_files = untracked_selected_files,
+                                                git_sync_status = git_sync_status)
 
       if (!is.null(message)) {
         showModal(modalDialog(
           HTML(message),
           footer = tagList(
-            if (length(git_files) > 0 &&
-                !any(file_names %in% git_files) &&
+            if (length(uncommitted_git_files) > 0 &&
+                !any(file_names %in% untracked_selected_files) &&
                 git_sync_status$ahead == 0 &&
                 git_sync_status$behind == 0) {
               actionButton(ns("proceed"), "Proceed Anyway")

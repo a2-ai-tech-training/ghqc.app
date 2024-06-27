@@ -1,63 +1,121 @@
-untracked_changes <- function() {
+untracked_changes <- function(qc_file) {
   status <- gert::git_status()
-  not_staged <- subset(status, status == "modified" & !staged)
-  nrow(not_staged) != 0
+  if (qc_file %in% status$file) {
+    TRUE
+  }
+  else FALSE
+
 }
 
-checkout_default_branch <- function() {
-  branches <- gert::git_branch_list()
+name_file_copy <- function(file_path) {
+  dir_name <- dirname(file_path)
+  file_name <- basename(file_path)
+  file_extension <- tools::file_ext(file_name)
+  file_base_name <- tools::file_path_sans_ext(file_name)
 
-  # Determine the default branch
-  default_branch <- if ("main" %in% branches$name) {
-    "main"
-  } else if ("master" %in% branches$name) {
-    "master"
-  } else {
-    stop("Neither 'main' nor 'master' branch found")
-  }
-
-  # Checkout the default branch
-  gert::git_branch_checkout(default_branch)
+  file_copy_name <- paste0(file_base_name, "_copy_for_ghqc.", file_extension)
+  file.path(dir_name, file_copy_name)
 }
 
-checkout_temp_branch <- function(temp_branch, commit_sha) {
-  # get all branches
-  branches <- gert::git_branch_list()
-
-  # if it doesn't already exist
-  if (!temp_branch %in% branches$name) {
-    # create it
-    gert::git_branch_create(temp_branch, ref = commit_sha)
-  }
-
-  # check it out
-  gert::git_branch_checkout(temp_branch)
+rename_file_copy <- function(file_path) {
+  file.rename(file_path, stringr::str_remove(file_path, "_copy_for_ghqc"))
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
-  # withr::defer(
-  #   checkout_default_branch()
-  # )
-  # name of temp branch
-  temp_branch <- paste0("temp-", commit_sha)
-  # checkout temp branch (defer deletion)
-  checkout_temp_branch(temp_branch, commit_sha)
-  # read file in previous commit
+  # checkout file
+  args <- c("checkout", commit_sha, "--", file_path)
+  processx::run("git", args)
+  # read file
   file_content <- readLines(file_path)
-  checkout_default_branch()
-  gert::git_branch_delete(temp_branch)
   return(file_content)
 }
 
+extract_line_numbers <- function(text) {
+  match <- stringr::str_match(text, "@@ ([^@]+) @@")[2]
+  first_set <- stringr::str_match(match, "^\\s*(\\d+)(?:,(\\d+))?")[,2:3]
+  second_set <- stringr::str_match(match, "/\\s*(\\d+)(?:,(\\d+))?\\s*$")[,2:3]
+  list(previous = as.numeric(first_set), current = as.numeric(second_set))
+}
+
+format_line_numbers <- function(numbers) {
+  # if there's just one line, it prints like
+  # ("@@ 1 / 1,5 @@"
+  # instead of
+  # ("@@ 1,1 / 1,5 @@"
+  # to not be verbose
+  # so this fixes it to be verbose for parsing ease
+  if (is.na(numbers$previous[2])) {numbers$previous[2] <- 1}
+  if (is.na(numbers$current[2])) {numbers$current[2] <- 1}
+
+  previous <- glue::glue("{numbers$previous[1]}-{numbers$previous[1]+numbers$previous[2]-1}")
+  current <- glue::glue("{numbers$current[1]}-{numbers$current[1]+numbers$current[2]-1}")
+
+  glue::glue("@@ previous script: lines {previous} @@\n@@  current script: lines {current} @@")
+}
+
+add_line_numbers <- function(text) {
+  # get start and end lines for prev and current scripts
+  prev_lines <- stringr::str_match(text, "@@ previous script: lines (\\d+)-(\\d+) @@")[,2:3]
+  current_lines <- stringr::str_match(text, "@@  current script: lines (\\d+)-(\\d+) @@")[,2:3]
+
+  prev_start <- as.numeric(prev_lines[1])
+  current_start <- as.numeric(current_lines[1])
+
+  # get lines from text
+  lines <- stringr::str_split(text, "\n")[[1]]
+
+  # increment on prev and current lines
+  prev_line_num <- prev_start
+  current_line_num <- current_start
+
+  new_lines <- sapply(lines, function(line) {
+    if (stringr::str_detect(line, "^- ")) {
+      # prev script line
+      new_line <- stringr::str_replace(line, "^- ", glue::glue("- {prev_line_num} "))
+      prev_line_num <<- prev_line_num + 1
+    } else if (stringr::str_detect(line, "^\\+ ")) {
+      # current script line
+      new_line <- stringr::str_replace(line, "^\\+ ", glue::glue("+ {current_line_num} "))
+      current_line_num <<- current_line_num + 1
+    } else if (stringr::str_detect(line, "^  ")) {
+      # unmodified line
+      new_line <- stringr::str_replace(line, "^  ", glue::glue("  {current_line_num} "))
+      current_line_num <<- current_line_num + 1
+      prev_line_num <<- prev_line_num + 1
+    } else {
+      # empty line
+      new_line <- line
+    }
+    new_line
+  })
+
+  glue::glue_collapse(new_lines, sep = "\n")
+}
+
+clean_up <- function(file_path, copied_file) {
+  # delete copy at previous commits
+  fs::file_delete(file_path)
+  # rename file to original name
+  rename_file_copy(copied_file)
+}
+
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
+  # create copy
+  copied_file <- name_file_copy(file_path)
+  file.copy(file_path, copied_file)
+  withr::defer_parent(
+    clean_up(file_path, copied_file)
+  )
+
   # get file contents at the specified commits
   compared_script <- read_file_at_commit(commit_sha_orig, file_path)
   current_script <- read_file_at_commit(commit_sha_new, file_path)
 
+  # get diff
   diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
-
-  # convert to character
   diff_lines <- as.character(diff_output)
+
+
 
   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
   file_index_start <- {
@@ -69,20 +127,19 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
     }
   }
 
+
   # delete the lines with the file names
   diff_lines <- diff_lines[-c(file_index_start, file_index_start + 1)]
 
   # now file_index_start is the index where the line numbers are
-  # extract the numbers from this line
-  numbers <- stringr::str_extract_all(diff_lines[file_index_start], "\\d+")[[1]]
-  numbers <- as.numeric(numbers)
-
+  # extract the line numbers
+  numbers <- extract_line_numbers(diff_lines[file_index_start])
   # reformat line numbers
-  context_str <- glue::glue("@@ previous script: lines {numbers[1]}-{numbers[1]+numbers[2]-1} @@\n@@  current script: lines {numbers[3]}-{numbers[3]+numbers[4]-1} @@")
+  context_str <- format_line_numbers(numbers)
   # replace with new context_str
   diff_lines[file_index_start] <- context_str
 
-  # check if last line is tick marks
+  # check if last line is tick marks for formatting
   if (stringr::str_detect(diff_lines[length(diff_lines)], "```")) {
     diff_lines <- diff_lines[-c(length(diff_lines))]
   }
@@ -105,8 +162,9 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
 
   github_diff <- format_diff_for_github(diff_lines)
 
-  file_difference <- glue::glue_collapse(github_diff, sep = "\n")
-  glue::glue("```diff\n{file_difference}\n```")
+  diff_cat <- glue::glue_collapse(github_diff, sep = "\n")
+  diff_with_line_numbers <- add_line_numbers(diff_cat)
+  glue::glue("```diff\n{diff_with_line_numbers}\n```")
 }
 
 get_comments <- function(owner, repo, issue_number) {
@@ -119,19 +177,33 @@ get_comments <- function(owner, repo, issue_number) {
   comments_df <- do.call(rbind, lapply(comments, function(x) as.data.frame(t(unlist(x)), stringsAsFactors = FALSE)))
 }
 
+# returns true if the user can check "compare to most recent qc fix"
+# false otherwise
+check_if_there_are_update_comments <- function(owner, repo, issue_number) {
+  comments <- get_comments(owner, repo, issue_number)
+  most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
+  if (is.na(most_recent_qc_commit)) FALSE
+  else TRUE
+}
 
-get_most_recent_comment_body <- function(comments_df) {
-  most_recent_row <- comments_df %>% dplyr::arrange(desc(created_at)) %>%  dplyr::slice(1)
-  most_recent_row$body
+# gets the most recent qc update commit from the comments in the issue
+# if there are no update comments from the author, it returns NA
+get_commit_from_most_recent_update_comment <- function(comments_df) {
+  # sort by descending creation time
+  comments_df <- comments_df %>% dplyr::arrange(dplyr::desc(created_at))
+
+  # loop through comments, grab the first one
+  for (i in seq_len(nrow(comments_df))) {
+    comment <- comments_df[i, ]
+    commit_from_comment <- get_current_commit_from_comment(comment$body)
+    if (!is.na(commit_from_comment)) {
+      return(commit_from_comment)
+    }
+  }
+
+  return(NA)
 }
 
 get_current_commit_from_comment <- function(body) {
-  current_commit <- stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
-  #original_commit <- stringr::str_match(body, "\\* original QC request commit: ([a-f0-9]+)")[,2]
-
-  # list(
-  #   current_commit = current_commit,
-  #   original_commit = original_commit
-  # )
-  current_commit
+  stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
 }

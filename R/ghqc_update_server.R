@@ -86,12 +86,12 @@ ghqc_update_server <- function(id) {
 
     observeEvent(input$preview, {
       req(issue_parts())
-      print(issue_parts())
 
 
       git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
-      message <- determine_update_modal_message(selected_issue = issue_parts()$issue_title, git_files = git_files, git_sync_status = git_sync_status)
+      gh_issue_status <- check_if_there_are_update_comments(owner = get_organization(), repo = get_current_repo(), issue_number = issue_parts()$issue_number)
+      message <- determine_update_modal_message(selected_issue = issue_parts()$issue_title, git_files = git_files, git_sync_status = git_sync_status, gh_issue_status = gh_issue_status)
 
       if (!is.null(message)) {
         showModal(modalDialog(
@@ -99,6 +99,7 @@ ghqc_update_server <- function(id) {
           footer = tagList(
             if (length(git_files) > 0 &&
                 !(issue_parts()$issue_title %in% git_files) &&
+                gh_issue_status &&
                 git_sync_status$ahead == 0 &&
                 git_sync_status$behind == 0) {
               actionButton(ns("proceed"), "Proceed Anyway")
@@ -118,7 +119,8 @@ ghqc_update_server <- function(id) {
 
       git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
-      message <- determine_update_modal_message(selected_issue = issue_parts()$issue_title, git_files = git_files, git_sync_status = git_sync_status)
+      gh_issue_status <- check_if_there_are_update_comments(owner = get_organization(), repo = get_current_repo(), issue_number = issue_parts()$issue_number)
+      message <- determine_update_modal_message(selected_issue = issue_parts()$issue_title, git_files = git_files, git_sync_status = git_sync_status, gh_issue_status = gh_issue_status)
 
       if (!is.null(message)) {
         showModal(modalDialog(
@@ -126,6 +128,7 @@ ghqc_update_server <- function(id) {
           footer = tagList(
             if (length(git_files) > 0 &&
                 !(issue_parts()$issue_title %in% git_files) &&
+                gh_issue_status &&
                 git_sync_status$ahead == 0 &&
                 git_sync_status$behind == 0) {
               actionButton(ns("proceed"), "Proceed Anyway")

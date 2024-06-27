@@ -29,10 +29,10 @@ ghqc_server <- function(id) {
 
     output$sidebar <- renderUI({
       tagList(
-        textInput(ns("milestone"), "Create a QC identifier (github milestone)"),
+        textInput(ns("milestone"), "Name QC Item List (github milestone)"),
         textAreaInput(
           ns("milestone_description"),
-          "Create a description for the QC",
+          "Create a description for the QC Item List",
           placeholder = "(optional)"
         ),
         selectizeInput(
@@ -153,7 +153,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
-      message <- determine_modal_message(selected_files = file_names, git_files = git_files, git_sync_status = git_sync_status)
+      message <- determine_create_modal_message(selected_files = file_names, git_files = git_files, git_sync_status = git_sync_status)
 
       if (!is.null(message)) {
         showModal(modalDialog(

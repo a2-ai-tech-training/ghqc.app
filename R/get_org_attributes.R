@@ -113,6 +113,7 @@ get_all_issues_in_repo <- function(owner, repo) {
     page <- page + 1
   }
 
+  # closed issues
   closed_issues <- list()
   page <- 1
 
@@ -120,7 +121,7 @@ get_all_issues_in_repo <- function(owner, repo) {
     res <- gh::gh("GET /repos/:owner/:repo/issues",
                   owner = owner,
                   repo = repo,
-                  state = "open",
+                  state = "closed",
                   per_page = 100,
                   page = page)
 
@@ -137,32 +138,55 @@ get_all_issues_in_repo <- function(owner, repo) {
   return(c(open_issues, closed_issues))
 }
 
-get_all_issues_in_milestone <- function(owner, repo, state = "all", milestone_name) {
+# sort by open/closed
+get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   # get milestone number from name
-  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone))
+  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
 
-  issues <- list()
+  open_issues <- list()
   page <- 1
 
   repeat {
-    # get a page of issues
-    gh::gh("GET /repos/:owner/:repo/issues",
-           owner = owner,
-           repo = repo,
-           state = state,
-           per_page = 100,
-           page = page,
-           milestone = milestone_number)
+    res <- gh::gh("GET /repos/:owner/:repo/issues",
+                  owner = owner,
+                  repo = repo,
+                  milestone = milestone_number,
+                  state = "open",
+                  per_page = 100,
+                  page = page)
 
     # break if no more issues
     if (length(res) == 0) break
 
     # append to list
-    issues <- c(issues, res)
+    open_issues <- c(open_issues, res)
 
     # next page
     page <- page + 1
   }
 
-  return(issues)
+  # closed issues
+  closed_issues <- list()
+  page <- 1
+
+  repeat {
+    res <- gh::gh("GET /repos/:owner/:repo/issues",
+                  owner = owner,
+                  repo = repo,
+                  milestone = milestone_number,
+                  state = "closed",
+                  per_page = 100,
+                  page = page)
+
+    # break if no more issues
+    if (length(res) == 0) break
+
+    # append to list
+    closed_issues <- c(closed_issues, res)
+
+    # next page
+    page <- page + 1
+  }
+
+  return(c(open_issues, closed_issues))
 }

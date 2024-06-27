@@ -1,4 +1,4 @@
-check_if_qc_file_not_staged <- function(qc_file_path) {
+check_if_qc_file_untracked <- function(qc_file_path) {
   status <- processx::run("git", c("status", "-u"))$stdout
   lines <- strsplit(status, "\n")[[1]]
   untracked_start <- grep("Untracked files:", lines)
@@ -11,6 +11,6 @@ check_if_qc_file_not_staged <- function(qc_file_path) {
     return(any(grepl(qc_file_path, untracked_lines)))
   }
 
-  # If the "Untracked files" not found, return false
+  # if "Untracked files" not found, return false
   return(FALSE)
 }

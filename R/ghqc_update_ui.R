@@ -22,7 +22,7 @@ ghqc_update_ui <- function(id) {
     div(
       id = ns("main_container"),
         gadgetTitleBar(
-          title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "QC 2"),
+          title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "Update QC Shiny Tool"),
           right = actionButton(ns("reset"), "Reset", class = "btn-sm")
         ),
         miniContentPanel(

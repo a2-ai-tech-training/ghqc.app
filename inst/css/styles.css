@@ -1,5 +1,7 @@
 body {
   margin: 0 !important;
+  max-width: none !important;
+  min-width: none !important;
   padding: 0 !important; /* modal ui changes workaround: https://stackoverflow.com/questions/63938194/r-shiny-app-width-shrinks-after-i-close-the-modal */
 }
 

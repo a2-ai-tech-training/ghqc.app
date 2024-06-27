@@ -1,4 +1,3 @@
-#' @export
 get_names_and_usernames <- function(username) {
   user <- gh::gh("/users/{username}", username = username)
   return(list(
@@ -7,7 +6,6 @@ get_names_and_usernames <- function(username) {
   ))
 }
 
-#' @export
 get_members_list <- function(org) {
   page <- 1
   # start with empty list of members
@@ -24,7 +22,6 @@ get_members_list <- function(org) {
   purrr::map(all_members, ~ get_names_and_usernames(.x$login))
 }
 
-#' @export
 get_members_df <- function(org) {
   members_list <- get_members_list(org)
   purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
@@ -57,7 +54,6 @@ get_organization_name_from_url <- function(url) {
   return(org_name)
 }
 
-#' @export
 get_organization <- function() {
   repo_path <- gert::git_find()
   remotes <- gert::git_remote_list(repo = repo_path)
@@ -190,3 +186,34 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
 
   return(c(open_issues, closed_issues))
 }
+
+get_issues_info <- function() {
+  issues <- tryCatch({
+    gh::gh("GET /repos/{owner}/{repo}/issues",
+           owner = get_organization(),
+           repo = get_current_repo(),
+           per_page = 100)
+  }, error = function(e) {
+    stop("Failed to fetch issues.")
+  })
+
+
+  if (is.null(issues) || length(issues) == 0) {
+    stop("No issues found in the repository.")
+  }
+
+  issues_df <- purrr::map_df(issues, ~{
+    tibble::tibble(
+      number = .x$number,
+      title = .x$title,
+      milestone = if (!is.null(.x$milestone)) .x$milestone$title else NA,
+      milestone_created = if (!is.null(.x$milestone) && !is.null(.x$milestone$created_at)) .x$milestone$created_at else NA
+    )
+  })
+
+  # Filter out issues without a milestone
+  issues_df <- issues_df %>% dplyr::filter(!is.na(milestone))
+
+  return(issues_df)
+}
+

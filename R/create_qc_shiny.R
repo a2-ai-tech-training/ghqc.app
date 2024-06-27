@@ -144,16 +144,17 @@ extract_file_data <- function(input, items) {
 #' well as local files with uncommitted changes.
 #'
 #' @param selected_files A character vector of file paths representing files selected by the user.
-#' @param git_files A character vector of file paths representing files with uncommitted changes in the git repository.
+#' @param uncommitted_git_files A character vector of file paths representing files with uncommitted changes in the git repository.
 #' @param git_sync_status A list containing elements `ahead` and `behind` which indicate the number
 #' of commits by which the local repository is ahead or behind the remote repository, respectively.
 #'
 #' @return A character string with HTML content detailing the status messages. If no issues are
 #' detected, the function returns `NULL`.
 #' @noRd
-determine_create_modal_message <- function(selected_files, git_files, git_sync_status) {
+determine_create_modal_message <- function(selected_files, uncommitted_git_files, untracked_selected_files, git_sync_status) {
   messages <- c()
-  uncommitted_selected_files <- selected_files %in% git_files
+
+  uncommitted_selected_files <- selected_files[selected_files %in% uncommitted_git_files | selected_files %in% untracked_selected_files]
 
   generate_html_list <- function(files) {
     paste("<li>", files, "</li>", collapse = "")
@@ -169,14 +170,14 @@ determine_create_modal_message <- function(selected_files, git_files, git_sync_s
     messages <- c(messages, paste(error_icon_html, "There are local changes that need to be synchronized. Please", paste(sync_messages, collapse = " and "), "<br>"))
   }
 
-  if (any(uncommitted_selected_files)) {
+  if (length(uncommitted_selected_files) > 0) {
     messages <- c(messages, sprintf("%s The following selected local files have uncommitted changes:<ul>%s</ul><br>",
-                                    error_icon_html, generate_html_list(selected_files[uncommitted_selected_files])))
+                                    error_icon_html, generate_html_list(uncommitted_selected_files)))
   }
 
-  if (length(git_files) > 0 && !any(uncommitted_selected_files)) {
+  if (length(uncommitted_git_files) > 0 && length(uncommitted_selected_files) == 0) {
     messages <- c(messages, sprintf("%s There are local files that have uncommitted changes:<ul>%s</ul><br>",
-                                    warning_icon_html, generate_html_list(git_files)))
+                                    warning_icon_html, generate_html_list(uncommitted_git_files)))
   }
 
   if (length(messages) == 0) {

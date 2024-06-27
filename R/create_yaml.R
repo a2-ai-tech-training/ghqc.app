@@ -140,6 +140,7 @@ create_yaml <- function(name,
   validate_yaml_contents(data)
   # make path
   yaml_path <- file.path(paste0(name, ".yaml"))
+  withr::defer_parent(fs::file_delete(yaml_path))
   # create yaml
   write(yaml_string, file = yaml_path)
 

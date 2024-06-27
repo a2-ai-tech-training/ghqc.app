@@ -73,12 +73,8 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   timeline_body <- glue::glue_collapse(timeline_list, sep = "\n")
   timeline_section <- create_section("Detailed Timeline", timeline_body)
 
-  # extract metadata from body
-  metadata <- get_metadata(issue$body)
-
   # put it all together
   paste0(
-    #intro,
     issue_section,
     milestone_section,
     assignees_section,
@@ -90,16 +86,36 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   )
 } # issue_to_markdown
 
-markdown_to_pdf <- function(rmd_content, repo, issue_number) {
+markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name) {
+  wd <- getwd()
+
+  pdf_name <- {
+    if (is.null(input_name)) {
+      glue::glue("{repo}-{milestone_name}.pdf")
+    }
+    else {
+      # they might have already put pdf in the name
+      if (stringr::str_detect(input_name, "\\.pdf$")) {
+        input_name
+      }
+      else {
+        glue::glue("{input_name}.pdf")
+      }
+    }
+  }
+
   # create temporary rmd
-  rmd <- file.path(getwd(), paste0(issue_number, ".Rmd"))
+  rmd <- tempfile(fileext = ".Rmd")
+  fs::file_create(rmd)
+  # delete temporary rmd when it's time
+  withr::defer_parent(unlink(rmd))
   writeLines(rmd_content, con = rmd)
+
   # create pdf from rmd
-  pdf <- rmarkdown::render(rmd, output_file = paste0(repo, "-", issue_number, ".pdf"))
-  # delete temporary rmd
-  #unlink(rmd)
-  # return path to pdf
-  pdf
+  pdf_path <- file.path(wd, pdf_name)
+  suppressWarnings(rmarkdown::render(rmd, output_file = pdf_path, quiet = TRUE)) #
+  pdf_path_abs <- normalizePath(pdf_path)
+  return(glue::glue("Output file: {pdf_path_abs}"))
 } # markdown_to_pdf
 
 scrape_issue <- function(owner, repo, issue_number) {
@@ -112,13 +128,13 @@ get_summary_table_col_vals <- function(issue) {
   close_data <- get_close_info(issue)
 
   file_path <- issue$title
-  author <- ifelse(!is.null(metadata$author), metadata$author, NA)
-  qc_type <- ifelse(!is.null(metadata$qc_type), metadata$qc_type, NA)
+  author <- ifelse(!is.null(metadata$author), metadata$author, "NA")
+  qc_type <- ifelse(!is.null(metadata$qc_type), metadata$qc_type, "NA")
   file_name <- basename(file_path)
   #git_sha <- ifelse(!is.null(metadata$git_sha), metadata$git_sha, NA)
-  qcer <- ifelse(length(issue$assignees) > 0, issue$assignees[[1]], NA)
-  issue_closer <- ifelse(!is.null(close_data$closer), close_data$closer, NA)
-  close_date <- ifelse(!is.null(close_data$closed_at), close_data$closed_at, NA)
+  qcer <- ifelse(length(issue$assignees) > 0, issue$assignees[[1]], "NA")
+  issue_closer <- ifelse(!is.null(close_data$closer), close_data$closer, "NA")
+  close_date <- ifelse(!is.null(close_data$closed_at), close_data$closed_at, "NA")
 
   c(
     file_path = file_path,
@@ -134,8 +150,11 @@ get_summary_table_col_vals <- function(issue) {
 
 get_summary_df <- function(issues) {
   col_vals <- lapply(issues, get_summary_table_col_vals)
-  df <- do.call(rbind, lapply(col_vals, as.data.frame))
-  df <- as.data.frame(df)
+  list_of_vectors <- lapply(col_vals, function(vec) {
+    as.data.frame(as.list(vec))
+  })
+
+  df <- dplyr::bind_rows(list_of_vectors)
 }
 
 get_summary_table <- function(df) {
@@ -144,7 +163,6 @@ get_summary_table <- function(df) {
                       author = "Author",
                       qc_type = "QC Type",
                       file_name = "File Name",
-                      #git_sha = "Git SHA",
                       qcer = "QCer",
                       issue_closer = "Issue Closer",
                       close_date = "Close Date") %>%
@@ -158,12 +176,14 @@ create_big_section <- function(section_title, contents) {
 } # create_section
 
 #' @export
-scrape_milestone <- function(owner, repo, milestone_name) {
+scrape_milestone <- function(owner = get_organization(), repo = get_current_repo(), milestone_name, pdf_name = NULL) {
   # issues
-  issues <- get_issues(owner, repo, milestone_name)
+  issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)
   summary_csv <- tempfile(fileext = ".csv")
+  withr::defer_parent(fs::file_delete(summary_csv))
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
+  withr::defer_parent(fs::file_delete(summary_csv))
   author <- Sys.info()[["user"]]
 
   issue_numbers <- sapply(issues, function(issue) issue$number)
@@ -173,8 +193,9 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   }, issue_markdown_strings, issues)
   issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
 
+  header_path <- system.file("header.tex", package = "ghqc")
   image_path <- system.file("gsk.png", package = "ghqc")
-  # header
+
   header_tex <- paste0(
     "\\usepackage{fancyhdr}\n",
     "\\pagestyle{fancy}\n",
@@ -189,7 +210,9 @@ scrape_milestone <- function(owner, repo, milestone_name) {
     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
     "\\usepackage{lastpage}\n"
   )
-  writeLines(header_tex, "header.tex")
+  writeLines(header_tex, header_path)
+
+  date <- format(Sys.Date(), '%B %d, %Y')
 
   # doc intro
   intro <- glue::glue(
@@ -197,13 +220,13 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   title: GSK QC Report
   subtitle: {repo}, {milestone_name}
   author: {author}
-  date: \"`r format(Sys.Date(), '%B %d, %Y')`\"
+  date: {date}
   output:
     pdf_document:
       toc: true
       toc_depth: 1
       includes:
-        in_header: header.tex
+        in_header: {header_path}
   ---
 
   \\newpage
@@ -213,18 +236,17 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   # summary table
   summary_table_section <- glue::glue(
   "```{{r setup, include=FALSE}}
-  install.packages(\"knitr\")
   library(knitr)
-  knitr::opts_chunk$set(eval=FALSE)\n```\n\n",
+  library(dplyr)
+  library(flextable)
+  knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n",
 
   "```{{r, include=FALSE, eval=TRUE}}
-  install.packages(\"flextable\")
-  install.packages(\"dplyr\")
-  library(flextable)
-  library(dplyr)
-  summary_df <- read.csv(\"{summary_csv}\")\n",
-  "summary_df <- summary_df %>%
-  mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))\n```\n",
+  summary_df <- read.csv(\"{summary_csv}\")\n
+  summary_df <- summary_df %>%
+  mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
+  invisible(summary_df)\n```\n",
+
   "# Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
   ft <- flextable::flextable(summary_df)
   dimensions <- dim_pretty(ft)
@@ -239,8 +261,7 @@ scrape_milestone <- function(owner, repo, milestone_name) {
   qcer = \"QCer\",
   issue_closer = \"Issue Closer\",
   close_date = \"Close Date\") %>%
-  #set_table_properties(width = .7, align = \"left\") %>%
-  set_table_properties(width = 1.0, align = \"left\") %>%
+  set_table_properties(width = 1.0) %>% # , align = \"left\"
   width(j = seq_along(col_widths), width = col_widths) %>%
   fontsize(size = 9, part = 'all') %>%
   theme_vanilla()
@@ -256,5 +277,11 @@ scrape_milestone <- function(owner, repo, milestone_name) {
     issue_sections
   )
 
-  markdown_to_pdf(rmd, repo, milestone_name)
+ #result <- suppressWarnings({
+ capture.output({
+      output <- markdown_to_pdf(rmd, repo, milestone_name, pdf_name)
+  })
+  output
+ # })
+
 }

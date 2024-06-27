@@ -170,6 +170,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           footer = tagList(
             if (length(uncommitted_git_files) > 0 &&
                 !any(file_names %in% untracked_selected_files) &&
+                !any(file_names %in% uncommitted_git_files) &&
                 git_sync_status$ahead == 0 &&
                 git_sync_status$behind == 0) {
               actionButton(ns("proceed"), "Proceed Anyway")

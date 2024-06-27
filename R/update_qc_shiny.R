@@ -1,6 +1,7 @@
-determine_update_modal_message <- function(selected_issue, git_files, git_sync_status, gh_issue_status) {
+determine_update_modal_message <- function(selected_issue, uncommitted_git_files, untracked_selected_files, git_sync_status) {
   messages <- c()
-  uncommitted_selected_files <- selected_issue %in% git_files
+  #uncommitted_selected_issue <- selected_issue %in% git_files
+  uncommitted_selected_issue <- selected_issue[selected_issue %in% uncommitted_git_files | selected_issue %in% untracked_selected_files]
 
   generate_html_list <- function(files) {
     paste("<li>", files, "</li>", collapse = "")
@@ -16,19 +17,19 @@ determine_update_modal_message <- function(selected_issue, git_files, git_sync_s
     messages <- c(messages, paste(error_icon_html, "There are local changes that need to be synchronized. Please", paste(sync_messages, collapse = " and "), "<br>"))
   }
 
-  if (any(uncommitted_selected_files)) {
+  if (length(uncommitted_selected_issue) > 0) {
     messages <- c(messages, sprintf("%s The following selected local files have uncommitted changes:<ul>%s</ul><br>",
-                                    error_icon_html, generate_html_list(selected_issue[uncommitted_selected_files])))
+                                    error_icon_html, generate_html_list(uncommitted_selected_issue)))
   }
 
-  if (length(git_files) > 0 && !any(uncommitted_selected_files)) {
+  if (length(uncommitted_git_files) > 0 && length(uncommitted_selected_issue) == 0) {
     messages <- c(messages, sprintf("%s There are local files that have uncommitted changes:<ul>%s</ul><br>",
-                                    warning_icon_html, generate_html_list(git_files)))
+                                    warning_icon_html, generate_html_list(uncommitted_git_files)))
   }
 
-  if (!gh_issue_status) {
-    messages <- c(messages, paste(error_icon_html, "There are no update comments on the issue.<br>"))
-  }
+  # if (!gh_issue_status) {
+  #   messages <- c(messages, paste(error_icon_html, "There are no update comments on the issue.<br>"))
+  # }
 
   if (length(messages) == 0) {
     return(NULL)

@@ -147,11 +147,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       extract_file_data(input, selected_items())
     })
 
-    observe({
-      req(qc_items())
-      file_names <- sapply(qc_items(), function(x) x$name)
-      print(file_names)
-    })
+
     observeEvent(input$create_qc_items, {
       req(qc_items())
       file_names <- sapply(qc_items(), function(x) x$name)

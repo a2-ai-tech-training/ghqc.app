@@ -178,7 +178,7 @@ create_big_section <- function(section_title, contents) {
 #' @export
 scrape_milestone <- function(owner, repo, milestone_name, pdf_name = NULL) {
   # issues
-  issues <- get_issues(owner, repo, milestone_name)
+  issues <- get_all_issues(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)
   summary_csv <- tempfile(fileext = ".csv")
   withr::defer_parent(fs::file_delete(summary_csv))

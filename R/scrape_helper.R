@@ -105,12 +105,12 @@ process_comments <- function(comments) {
   sapply(comments, function(comment) {
     text <- comment$body
 
-    # detect Markdown images
+    # detect markdown images
     pattern_md <- "!\\[.*?\\]\\((.*?)\\)"
     matches_md <- gregexpr(pattern_md, text, perl = TRUE)
     links_md <- regmatches(text, matches_md)
 
-    # detect HTML images
+    # detect html images
     pattern_html <- "<img[^>]+src=\"(https://[^\"]+)\"[^>]*>"
     matches_html <- gregexpr(pattern_html, text, perl = TRUE)
     links_html <- regmatches(text, matches_html)

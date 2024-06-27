@@ -41,6 +41,11 @@ get_milestones <- function(org, repo) {
   purrr::map_chr(milestones, "title")
 }
 
+get_open_milestones <- function(org, repo) {
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = org, repo = repo, state = "open", .limit = Inf)
+  purrr::map_chr(milestones, "title")
+}
+
 #' @export
 get_current_repo <- function() {
   basename(gert::git_find())
@@ -80,34 +85,74 @@ get_issue_timeline <- function(owner, repo, issue_number) {
          owner = owner, repo = repo, issue_number = issue_number)
 }
 
-# get_issues <- function(owner, repo, milestone) {
-#   params <- c(owner, repo)
-#
-#   gh::gh("GET /repos/:owner/:repo/issues",
-#          owner = owner, repo = repo, milestone = milestone_number, state = "all")
-# }
+get_issues <- function(owner, repo, milestone) {
+  params <- c(owner, repo)
+  gh::gh("GET /repos/:owner/:repo/issues",
+         owner = owner, repo = repo, milestone = milestone_number, state = "all")
+}
 
-get_all_issues <- function(owner, repo, state = "all", milestone_name = NULL) {
-  params <- list(
-    owner = owner,
-    repo = repo,
-    state = state,
-    per_page = 100,
-    page = page
-  )
+get_all_issues_in_repo <- function(owner, repo) {
+  open_issues <- list()
+  page <- 1
 
-  if (!is.null(milestone_name)) {
-    # get milestone number from name
-    milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone))
-    params$milestone <- milestone_number
+  repeat {
+    res <- gh::gh("GET /repos/:owner/:repo/issues",
+                  owner = owner,
+                  repo = repo,
+                  state = "open",
+                  per_page = 100,
+                  page = page)
+
+    # break if no more issues
+    if (length(res) == 0) break
+
+    # append to list
+    open_issues <- c(open_issues, res)
+
+    # next page
+    page <- page + 1
   }
+
+  closed_issues <- list()
+  page <- 1
+
+  repeat {
+    res <- gh::gh("GET /repos/:owner/:repo/issues",
+                  owner = owner,
+                  repo = repo,
+                  state = "open",
+                  per_page = 100,
+                  page = page)
+
+    # break if no more issues
+    if (length(res) == 0) break
+
+    # append to list
+    closed_issues <- c(closed_issues, res)
+
+    # next page
+    page <- page + 1
+  }
+
+  return(c(open_issues, closed_issues))
+}
+
+get_all_issues_in_milestone <- function(owner, repo, state = "all", milestone_name) {
+  # get milestone number from name
+  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone))
 
   issues <- list()
   page <- 1
 
   repeat {
     # get a page of issues
-    res <- gh::gh("GET /repos/:owner/:repo/issues", params)
+    gh::gh("GET /repos/:owner/:repo/issues",
+           owner = owner,
+           repo = repo,
+           state = state,
+           per_page = 100,
+           page = page,
+           milestone = milestone_number)
 
     # break if no more issues
     if (length(res) == 0) break

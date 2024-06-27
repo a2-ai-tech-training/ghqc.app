@@ -1,4 +1,4 @@
-determine_update_modal_message <- function(selected_issue, git_files, git_sync_status) {
+determine_update_modal_message <- function(selected_issue, git_files, git_sync_status, gh_issue_status) {
   messages <- c()
   uncommitted_selected_files <- selected_issue %in% git_files
 
@@ -24,6 +24,10 @@ determine_update_modal_message <- function(selected_issue, git_files, git_sync_s
   if (length(git_files) > 0 && !any(uncommitted_selected_files)) {
     messages <- c(messages, sprintf("%s There are local files that have uncommitted changes:<ul>%s</ul><br>",
                                     warning_icon_html, generate_html_list(git_files)))
+  }
+
+  if (!gh_issue_status) {
+    messages <- c(messages, paste(error_icon_html, "There are no update comments on the issue.<br>"))
   }
 
   if (length(messages) == 0) {

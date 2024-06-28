@@ -22,10 +22,13 @@ rename_file_copy <- function(file_path) {
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
-  # checkout file
   args <- c("checkout", commit_sha, "--", file_path)
-  processx::run("git", args)
-  # read file
+  result <- processx::run("git", args, error_on_status = FALSE)
+
+  if (result$status != 0) {
+    stop(result$stderr)
+  }
+
   file_content <- readLines(file_path)
   return(file_content)
 }

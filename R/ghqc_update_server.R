@@ -1,6 +1,6 @@
 #' @import shiny
 #' @importFrom shinyjs enable disable addClass removeClass
-#' @import dplyr
+#' @importFrom dplyr case_when
 NULL
 
 ghqc_update_server <- function(id) {
@@ -13,6 +13,8 @@ ghqc_update_server <- function(id) {
 
     observe({
 
+      # req(issues())
+      # milestone_list <- unique(issues()$milestone)
       milestone_list <- get_open_milestones(org = get_organization(), repo = get_current_repo())
       milestone_list <- rev(milestone_list)
 

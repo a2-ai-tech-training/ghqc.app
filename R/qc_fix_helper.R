@@ -124,7 +124,7 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   file_index_start <- {
     if (diff_lines[1] == "No visible differences between objects.") {
       #2
-      return("No difference between file versions.")
+      return("\nNo difference between file versions.\n")
     }
     else {
       1

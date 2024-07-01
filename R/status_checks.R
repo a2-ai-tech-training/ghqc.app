@@ -1,0 +1,74 @@
+generate_html_list <- function(files) {
+  paste("<li>", files, "</li>", collapse = "")
+}
+
+
+generate_sync_message <- function(git_sync_status, error_icon_html) {
+  messages <- c()
+  if (git_sync_status$ahead > 0 || git_sync_status$behind > 0) {
+    sync_messages <- c()
+    if (git_sync_status$ahead > 0) sync_messages <- c(sync_messages, "push changes to the remote repository.")
+    if (git_sync_status$behind > 0) sync_messages <- c(sync_messages, "pull updates from the remote.")
+    messages <- paste(error_icon_html, "There are local changes that need to be synchronized. Please", paste(sync_messages, collapse = " and "), "<br>")
+  }
+  return(messages)
+}
+
+generate_uncommitted_message <- function(uncommitted_files, error_icon_html, warning_icon_html) {
+  messages <- c()
+  if (length(uncommitted_files$selected) > 0) {
+    messages <- c(messages, sprintf("%s The following selected local files have uncommitted changes:<ul>%s</ul><br>",
+                                    error_icon_html, generate_html_list(uncommitted_files$selected)))
+  }
+  if (length(uncommitted_files$general) > 0 && length(uncommitted_files$selected) == 0) {
+    messages <- c(messages, sprintf("%s There are local files that have uncommitted changes:<ul>%s</ul><br>",
+                                    warning_icon_html, generate_html_list(uncommitted_files$general)))
+  }
+  return(messages)
+}
+
+generate_gh_issue_message <- function(gh_issue_status, error_icon_html) {
+  messages <- c()
+
+  if (!gh_issue_status) {
+    messages <- c(messages, paste(error_icon_html, "There are no update comments on the issue.<br>"))
+  }
+
+  return(messages)
+}
+
+#' Determine Modal Message
+#'
+#' Generates a message for a modal dialog based on the status of selected files, git synchronization status,
+#' and GitHub issue status.
+#'
+#' @param selected_files A character vector of selected files.
+#' @param uncommitted_git_files A character vector of uncommitted git files.
+#' @param untracked_selected_files A character vector of untracked selected files.
+#' @param git_sync_status Result from gert::git_ahead_behind().
+#' @param gh_issue_status A logical indicating the GitHub issue status. Defaults to \code{TRUE}.
+#'
+#' @return A list containing:
+#' \item{message}{A character string with the generated message, or \code{NULL} if no message is generated.}
+#' \item{state}{A character string indicating the state of the message, either "error" or "warning", or \code{NULL} if no state is determined.}
+#'
+#' @noRd
+determine_modal_message <- function(selected_files, uncommitted_git_files, untracked_selected_files, git_sync_status, gh_issue_status = TRUE) {
+  warning_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
+  error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
+
+  uncommitted_selected_files <- selected_files[selected_files %in% uncommitted_git_files | selected_files %in% untracked_selected_files]
+  uncommitted_files <- list(selected = uncommitted_selected_files, general = uncommitted_git_files)
+
+  messages <- c()
+  messages <- c(messages, generate_sync_message(git_sync_status, error_icon_html))
+  messages <- c(messages, generate_gh_issue_message(gh_issue_status, error_icon_html))
+  messages <- c(messages, generate_uncommitted_message(uncommitted_files, error_icon_html, warning_icon_html))
+
+  if (length(messages) == 0) {
+    return(list(message = NULL, state = NULL))
+  } else {
+    state <- if (any(grepl(error_icon_html, messages))) "error" else "warning"
+    return(list(message = paste(messages, collapse = "\n"), state = state))
+  }
+}

@@ -1,6 +1,8 @@
 #' @import shiny
 #' @importFrom shinyjs enable disable addClass removeClass
-#' @importFrom dplyr case_when
+#' @import dplyr
+#' @importFrom purrr map_df
+#' @importFrom gert git_status git_ahead_behind
 NULL
 
 ghqc_update_server <- function(id) {
@@ -9,80 +11,59 @@ ghqc_update_server <- function(id) {
     preview_trigger <- reactiveVal(FALSE)
     post_trigger <- reactiveVal(FALSE)
 
-    issues <- reactive(get_issues_info())
-
     observe({
-
-      # nest issues under milestone name group. need to set single elements as list or else won't nest https://stackoverflow.com/questions/57248427/grouped-select-input-with-only-one-item
-      # TODO: need to finish re-sort list after split so that most recent milestones are on top rather than alphabetical
-      # sorted_issues <- issues %>%
-      #   dplyr::mutate(milestone_order = as.numeric(factor(milestone_created, levels = unique(milestone_created)))) %>%
-      #   split(.$milestone) %>%
-      #   lapply(function(x) {
-      #     setNames(object = as.list(paste(x$number, x$title)),
-      #              nm = paste0("Item ", x$number, ": ", x$title))
-      # })
-
-      # req(issues())
-      # milestone_list <- unique(issues()$milestone)
       milestone_list <- get_open_milestones(org = get_organization(), repo = get_current_repo())
       milestone_list <- rev(milestone_list)
 
-      updateSelectizeInput(
+      updateSelectInput(
         session,
         "select_milestone",
-        choices =  milestone_list,
-        server = TRUE
+        choices =  c("All QC Items", milestone_list),
       )
-
-
     })
 
 
     observe({
       req(input$select_milestone)
 
-     # issues_by_milestone <- split(issues(), issues()$milestone)
-      issues_by_milestone <- get_all_issues_in_milestone(owner = get_organization(), repo = get_current_repo(), milestone_name = input$select_milestone)
-
-      # issues_choices <- issues_by_milestone[[input$select_milestone]] %>%
-      #   dplyr::mutate(label = paste0("Item ", number, ": ", title)) %>%
-      #   dplyr::pull()
-
-      issues_choices <- issues_by_milestone %>%
-          lapply(function(x) {
-            setNames(nm = paste0("Item ", x$number, ": ", x$title))
+      if(input$select_milestone == "All QC Items") {
+        all_issues <- get_all_issues_in_repo(owner = get_organization(), repo = get_current_repo())
+        issues_df <- map_df(all_issues, ~{
+          tibble(
+            number = .x$number,
+            title = .x$title,
+            state = .x$state
+          )
         })
+        issues_choices <- issues_df %>%
+          mutate(state = case_when(
+            state == "open" ~ "Open Items",
+            state == "closed" ~ "Closed Items"
+          )) %>%
+          split(.$state) %>%
+          rev() %>%
+            lapply(function(x) {
+              setNames(nm = paste0("Item ", x$number, ": ", x$title))
+          })
+      } else{
+        issues_by_milestone <- get_all_issues_in_milestone(owner = get_organization(), repo = get_current_repo(), milestone_name = input$select_milestone)
+        issues_df <- map_df(issues_by_milestone, ~{
+          tibble(
+            number = .x$number,
+            title = .x$title,
+          )
+        })
+        issues_choices <- issues_df %>%
+          mutate(label = paste0("Item ", number, ": ", title)) %>%
+          pull()
+      }
 
-      updateSelectizeInput(
+      updateSelectInput(
         session,
         "select_issue",
         choices = issues_choices,
-        server = TRUE
       )
     })
-    #checks:
-    # git sync status - same as before
-    # file status - pull issue title name and compare to see if in git panel #TODO: check if this works
-    # also keep the git file check
-    #TODO: ask jenna to have functions to check for 1. if there are no commits or comments to return false instead of error
-    # > check_if_there_are_update_comments(owner = get_organization(), repo = get_current_repo(), issue_number = 3) # this has no comments
-    # Error in UseMethod("arrange") :
-    #   no applicable method for 'arrange' applied to an object of class "NULL"
-    # > check_if_there_are_update_comments(owner = get_organization(), repo = get_current_repo(), issue_number = 5)
-    # [1] TRUE
-    # Only way this button should proceed is if
-    # 1. there are no unstaged changes in local of the file
-    # 2. git status is current
-    # 3. There is a new commit different from init commit sha
-    #  preview and post should have same proceed checks
-
-    # init/prev differences should be the same if there is no prev update comment. init should look at first comment for sha;
-    # prev should loop from latest comment until it founds most recent sha
-
-    # workflow should be (?) 1. create qc item list thru create qc app 2. assignee/qcer comments issues on gh 3. author fixes issues and pushes new commit
-    # 4. author uses update qc app to add fix comment on prev commit 5-7. repeat 2-4 as needed 8. after author addresses everything, uses init compare for final comment
-    # 9. author repeats for all qc items in list 10. author scrapes the milestone/qc item list for archive items thru a fxn
 
     issue_parts <- reactive({
       req(input$select_issue)
@@ -92,27 +73,40 @@ ghqc_update_server <- function(id) {
       list(issue_number = issue_number, issue_title = issue_title)
     })
 
-    observeEvent(input$preview, {
+    #https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
+    modal_check <- eventReactive(c(input$preview, input$post), {
       req(issue_parts())
-
       uncommitted_git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
-    #  gh_issue_status <- check_if_there_are_update_comments(owner = get_organization(), repo = get_current_repo(), issue_number = issue_parts()$issue_number)
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), issue_parts()$issue_title)
-      message <- determine_update_modal_message(selected_issue = issue_parts()$issue_title,
-                                                uncommitted_git_files = uncommitted_git_files,
-                                                untracked_selected_files = untracked_selected_files,
-                                                git_sync_status = git_sync_status)
 
-      if (!is.null(message)) {
+      gh_issue_status <- if (input$compare == "prev") {
+        check_if_there_are_update_comments(
+          owner = get_organization(),
+          repo = get_current_repo(),
+          issue_number = issue_parts()$issue_number
+        )
+      } else {
+        TRUE
+      }
+
+      determine_modal_message(
+        selected_files = issue_parts()$issue_title,
+        uncommitted_git_files = uncommitted_git_files,
+        untracked_selected_files = untracked_selected_files,
+        git_sync_status = git_sync_status,
+        gh_issue_status = gh_issue_status
+      )
+    })
+
+    observeEvent(input$preview, {
+      req(modal_check())
+
+      if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
-          HTML(message),
+          HTML(modal_check()$message),
           footer = tagList(
-            if (length(uncommitted_git_files) > 0 &&
-                !(issue_parts()$issue_title %in% untracked_selected_files) &&
-                !(issue_parts()$issue_title %in% uncommitted_git_files) &&
-                git_sync_status$ahead == 0 &&
-                git_sync_status$behind == 0) {
+            if (modal_check()$state == "warning") {
               actionButton(ns("proceed_preview"), "Proceed Anyway")
             },
             actionButton(ns("return"), "Return")
@@ -120,30 +114,17 @@ ghqc_update_server <- function(id) {
         ))
       } else {
         preview_trigger(TRUE)
-      }
+        }
     })
 
     observeEvent(input$post, {
-      req(issue_parts())
+      req(modal_check())
 
-      uncommitted_git_files <- git_status()$file
-      git_sync_status <- git_ahead_behind()
-      #  gh_issue_status <- check_if_there_are_update_comments(owner = get_organization(), repo = get_current_repo(), issue_number = issue_parts()$issue_number)
-      untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), issue_parts()$issue_title)
-      message <- determine_update_modal_message(selected_issue = issue_parts()$issue_title,
-                                                uncommitted_git_files = uncommitted_git_files,
-                                                untracked_selected_files = untracked_selected_files,
-                                                git_sync_status = git_sync_status)
-
-      if (!is.null(message)) {
+      if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
-          HTML(message),
+          HTML(modal_check()$message),
           footer = tagList(
-            if (length(uncommitted_git_files) > 0 &&
-                !(issue_parts()$issue_title %in% untracked_selected_files) &&
-                !(issue_parts()$issue_title %in% uncommitted_git_files) &&
-                git_sync_status$ahead == 0 &&
-                git_sync_status$behind == 0) {
+            if (modal_check()$state == "warning") {
               actionButton(ns("proceed_post"), "Proceed Anyway")
             },
             actionButton(ns("return"), "Return")
@@ -200,7 +181,7 @@ ghqc_update_server <- function(id) {
                                  force = TRUE)
 
       showModal(modalDialog(
-        "Commented posted."
+        "Update comment posted successfully."
       ))
     })
 

@@ -41,7 +41,7 @@ ghqc_ui <- function(id) {
       div(
         class = "button_block",
         miniButtonBlock(
-          actionButton(ns("create_qc_items"), "Create QC items")
+          actionButton(ns("create_qc_items"), "Create QC Items")
         )
       )
     )

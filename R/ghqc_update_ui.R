@@ -27,15 +27,15 @@ ghqc_update_ui <- function(id) {
         ),
         miniContentPanel(
           div(id = ns("center_content"),
-          selectizeInput(ns("select_milestone"), "Select QC Item List", choices = "", multiple = FALSE),
-          selectizeInput(ns("select_issue"), "Select QC Item", choices = "", multiple = FALSE),
+          selectInput(ns("select_milestone"), "Select QC Item List (github milestone)", choices = "", multiple = FALSE),
+          selectInput(ns("select_issue"), "Select QC Item (github issue)", choices = "", multiple = FALSE),
           textAreaInput(ns("message"), "Message", ""),
           checkboxInput(ns("show_diff"), "Show file difference?", FALSE),
           conditionalPanel(
             condition = "input.show_diff == true", ns = ns,
             radioButtons(ns("compare"), "Compare to:", inline = TRUE, choices = c(
-              "Initial QC request" = "init",
-              "Previous QC update" = "prev"
+              "Initial QC Request" = "init",
+              "Previous QC Update" = "prev"
             ))
           )
         )
@@ -43,8 +43,8 @@ ghqc_update_ui <- function(id) {
       div(
         class = "button_block",
         miniButtonBlock(
-          actionButton(ns("preview"), "Generate comment preview"),
-          actionButton(ns("post"), "Post comment")
+          actionButton(ns("preview"), "Preview Comment"),
+          actionButton(ns("post"), "Post Comment")
         )
       )
     )

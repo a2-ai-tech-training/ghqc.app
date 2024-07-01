@@ -36,7 +36,8 @@ Imports:
     shinyWidgets (>= 0.8.1),
     rstudioapi (>= 0.15.0),
     rvest (>= 1.0.3),
-    digest
+    digest,
+    readr
 Suggests: 
     testthat (>= 3.0.0),
     httptest,

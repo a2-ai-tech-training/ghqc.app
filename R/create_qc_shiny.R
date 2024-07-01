@@ -136,57 +136,6 @@ extract_file_data <- function(input, items) {
   return(file_data)
 }
 
-#' Determine Modal Message Based on Git Status and File Commit Status
-#'
-#' This function generates HTML-formatted messages indicating the synchronization status
-#' of the local git repository and the commit status of selected files. It highlights
-#' files that need to be pushed or pulled to synchronize with the remote repository, as
-#' well as local files with uncommitted changes.
-#'
-#' @param selected_files A character vector of file paths representing files selected by the user.
-#' @param uncommitted_git_files A character vector of file paths representing files with uncommitted changes in the git repository.
-#' @param git_sync_status A list containing elements `ahead` and `behind` which indicate the number
-#' of commits by which the local repository is ahead or behind the remote repository, respectively.
-#'
-#' @return A character string with HTML content detailing the status messages. If no issues are
-#' detected, the function returns `NULL`.
-#' @noRd
-determine_create_modal_message <- function(selected_files, uncommitted_git_files, untracked_selected_files, git_sync_status) {
-  messages <- c()
-
-  uncommitted_selected_files <- selected_files[selected_files %in% uncommitted_git_files | selected_files %in% untracked_selected_files]
-
-  generate_html_list <- function(files) {
-    paste("<li>", files, "</li>", collapse = "")
-  }
-
-  warning_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
-  error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
-
-  if (git_sync_status$ahead > 0 || git_sync_status$behind > 0) {
-    sync_messages <- c()
-    if (git_sync_status$ahead > 0) sync_messages <- c(sync_messages, "push changes to the remote repository.")
-    if (git_sync_status$behind > 0) sync_messages <- c(sync_messages, "pull updates from the remote.")
-    messages <- c(messages, paste(error_icon_html, "There are local changes that need to be synchronized. Please", paste(sync_messages, collapse = " and "), "<br>"))
-  }
-
-  if (length(uncommitted_selected_files) > 0) {
-    messages <- c(messages, sprintf("%s The following selected local files have uncommitted changes:<ul>%s</ul><br>",
-                                    error_icon_html, generate_html_list(uncommitted_selected_files)))
-  }
-
-  if (length(uncommitted_git_files) > 0 && length(uncommitted_selected_files) == 0) {
-    messages <- c(messages, sprintf("%s There are local files that have uncommitted changes:<ul>%s</ul><br>",
-                                    warning_icon_html, generate_html_list(uncommitted_git_files)))
-  }
-
-  if (length(messages) == 0) {
-    return(NULL)
-  } else {
-    return(paste(messages, collapse = "\n"))
-  }
-}
-
 #' Convert Directory File Paths to a Data Frame
 #'
 #' This function lists all files in the specified directory recursively,

@@ -1,6 +1,6 @@
-format_issue_body <- function(file_items, checklist_type) {
+format_issue_body <- function(file_items, checklist_type, file_path) {
   qc_checklist <- format_checklist_items(file_items)
-  metadata <- format_metadata(checklist_type)
+  metadata <- format_metadata(checklist_type, file_path)
   glue::glue("## QC Checklist
              {qc_checklist}
 
@@ -22,10 +22,10 @@ get_sha <- function() {
   commits$commit[1]
 }
 
-format_metadata <- function(checklist_type) {
+format_metadata <- function(checklist_type, file_path) {
   author <- Sys.info()[["user"]]
   qc_type <- checklist_type
-  script_hash <- "[placeholder]"
+  script_hash <- digest::digest(file = file_path)
   git_sha <- get_sha()
   glue::glue("
              * author: {author}

@@ -1,3 +1,4 @@
+#' @export
 check_if_qc_file_untracked <- function(qc_file_path) {
   status <- processx::run("git", c("status", "-u"))$stdout
   lines <- strsplit(status, "\n")[[1]]

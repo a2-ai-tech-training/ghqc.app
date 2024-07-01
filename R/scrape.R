@@ -176,7 +176,7 @@ create_big_section <- function(section_title, contents) {
 } # create_section
 
 #' @export
-scrape_milestone <- function(owner = get_organization(), repo = get_current_repo(), milestone_name, pdf_name = NULL) {
+generate_qc_report <- function(owner = get_organization(), repo = get_current_repo(), milestone_name, pdf_name = NULL) {
   # issues
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)

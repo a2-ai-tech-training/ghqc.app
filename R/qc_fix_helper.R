@@ -22,10 +22,13 @@ rename_file_copy <- function(file_path) {
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
-  # checkout file
   args <- c("checkout", commit_sha, "--", file_path)
-  processx::run("git", args)
-  # read file
+  result <- processx::run("git", args, error_on_status = FALSE)
+
+  if (result$status != 0) {
+    stop(result$stderr)
+  }
+
   file_content <- readLines(file_path)
   return(file_content)
 }
@@ -120,7 +123,8 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
   file_index_start <- {
     if (diff_lines[1] == "No visible differences between objects.") {
-      2
+      #2
+      return("No difference between file versions.")
     }
     else {
       1
@@ -144,8 +148,6 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
     diff_lines <- diff_lines[-c(length(diff_lines))]
   }
 
-
-
   format_diff_for_github <- function(diff_lines) {
     result <- c()
     for (line in diff_lines) {
@@ -163,7 +165,9 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   github_diff <- format_diff_for_github(diff_lines)
 
   diff_cat <- glue::glue_collapse(github_diff, sep = "\n")
+
   diff_with_line_numbers <- add_line_numbers(diff_cat)
+
   glue::glue("```diff\n{diff_with_line_numbers}\n```")
 }
 

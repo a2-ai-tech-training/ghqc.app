@@ -35,7 +35,8 @@ Imports:
     knitr (>= 1.43),
     shinyWidgets (>= 0.8.1),
     rstudioapi (>= 0.15.0),
-    rvest (>= 1.0.3)
+    rvest (>= 1.0.3),
+    digest
 Suggests: 
     testthat (>= 3.0.0),
     httptest,

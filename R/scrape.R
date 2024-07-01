@@ -176,7 +176,7 @@ create_big_section <- function(section_title, contents) {
 } # create_section
 
 #' @export
-generate_qc_report <- function(owner = get_organization(), repo = get_current_repo(), milestone_name, pdf_name = NULL) {
+generate_qc_report <- function(milestone_name, owner = get_organization(), repo = get_current_repo(), pdf_name = NULL) {
   # issues
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)
@@ -242,13 +242,27 @@ generate_qc_report <- function(owner = get_organization(), repo = get_current_re
   knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n",
 
   "```{{r, include=FALSE, eval=TRUE}}
+  get_text_width <- function(text, font_size = 10, font_family = \"Arial\") {
+  strwidth(text, units = \"inches\", cex = font_size/12, family = font_family)
+  }
+
   summary_df <- read.csv(\"{summary_csv}\")\n
   summary_df <- summary_df %>%
   mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
-  invisible(summary_df)\n```\n",
+  max_widths <- sapply(summary_df, function(column) {
+  max(sapply(column, get_text_width))
+})
+  invisible(summary_df)
+  \n```\n",
 
   "# Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
   ft <- flextable::flextable(summary_df)
+
+  for (i in seq_along(max_widths)) {
+  ft <- set_column_sizes(ft, i, max_widths[i])
+  }
+
+  ft <- ft %>%
   dimensions <- dim_pretty(ft)
   col_widths <- dimensions$widths * 0.8
   #row_heights <- dimensions$heights * 0.8
@@ -261,10 +275,18 @@ generate_qc_report <- function(owner = get_organization(), repo = get_current_re
   qcer = \"QCer\",
   issue_closer = \"Issue Closer\",
   close_date = \"Close Date\") %>%
-  set_table_properties(width = 1.0) %>% # , align = \"left\"
-  width(j = seq_along(col_widths), width = col_widths) %>%
-  fontsize(size = 9, part = 'all') %>%
+
+  fontsize(size = 10, part = \"all\") %>%
+  flextable::align(align = \"left\", part = \"all\") %>%
+  flextable::padding(padding.top = 2, padding.bottom = 2, padding.left = 2, padding.right = 2) %>%
+  set_table_properties(ft, width = 1, layout = \"autofit\") %>%
+  # set_table_properties(width = 1.0, layout = \"autofit\") %>% # , align = \"left\",
+  # fit_to_width(7) %>%
+  # width(j = seq_along(col_widths), width = col_widths) %>%
+
   theme_vanilla()
+  # autofit()
+  # ft <- width(ft, width = dim(ft)$widths * 6 / (flextable_dim(ft)$widths))
   ft\n```\n\\newpage\n",
   .trim = FALSE)
 

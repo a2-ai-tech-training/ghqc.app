@@ -43,8 +43,9 @@ get_checklists <- function() {
     5) The percentage of AUC(0-inf) obtained by extrapolation should be < 20%.
          Deviation from this is acceptable if clearly documented and at least 80% of the profiles in the study have <20% of the AUC(0-inf) as extrapolated area. It is unacceptable to use AUC(0-inf) data if >40% of the AUC(0-inf) has been extrapolated, except in specific situations which should be carefully justified.")
   )
-
 }
+
+
 
 
 create_file_data_structure <- function(file_name, assignees = NULL, checklist_type = NULL, checklists = get_checklists()) {

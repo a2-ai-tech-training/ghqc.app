@@ -41,8 +41,8 @@ new_qc_checklists <- function() {
     4) The associated regression coefficient (r2) should be ³ 0.85. Deviation from this is acceptable if clearly documented.
 
     5) The percentage of AUC(0-inf) obtained by extrapolation should be < 20%. Deviation from this is acceptable if clearly documented and at least 80% of the profiles in the study have <20% of the AUC(0-inf) as extrapolated area. It is unacceptable to use AUC(0-inf) data if >40% of the AUC(0-inf) has been extrapolated, except in specific situations which should be carefully justified.\n"
-  ,
-  report = "Note: This checklist is NOT an exhaustive list of all checks. User is encouraged to personalise checklist for individual study needs.
+    ,
+    report = "Note: This checklist is NOT an exhaustive list of all checks. User is encouraged to personalise checklist for individual study needs.
 ### Front page
 - [ ] Accuracy of front page
 
@@ -74,45 +74,3 @@ new_qc_checklists <- function() {
 - [ ] Tables, figures, models, scripts imported correctly\n")
 
 }
-
-
-
-format_issue_body <- function(file_items, checklist_type, file_path) {
-  qc_checklist <- format_checklist_items(file_items)
-  metadata <- format_metadata(checklist_type, file_path)
-  glue::glue("## QC Checklist
-             {qc_checklist}
-
-             ## Metadata
-             {metadata}")
-}
-
-
-# functions to format body of issue
-format_checklist_items <- function(file_items) {
-  formatted_items <- sapply(file_items, function(item) {
-    glue::glue("- [ ] {item}")
-  })
-  paste(formatted_items, collapse = "\n")
-}
-
-get_sha <- function() {
-  commits <- gert::git_log()
-  commits$commit[1]
-}
-
-format_metadata <- function(checklist_type, file_path) {
-  author <- Sys.info()[["user"]]
-  qc_type <- checklist_type
-  script_hash <- digest::digest(file = file_path)
-  git_sha <- get_sha()
-  glue::glue("
-             * author: {author}
-             * qc_type: {qc_type}
-             * script_hash: {script_hash}
-             * git_sha: {git_sha}")
-}
-
-
-
-

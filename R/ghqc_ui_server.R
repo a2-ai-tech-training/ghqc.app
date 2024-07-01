@@ -149,28 +149,29 @@ return "<div><strong>" + escape(item.username) + "</div>"
       extract_file_data(input, selected_items())
     })
 
-
-    observeEvent(input$create_qc_items, {
+    modal_check <- eventReactive(input$create_qc_items, {
       req(qc_items())
       file_names <- sapply(qc_items(), function(x) x$name)
-
       uncommitted_git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
-      message <- determine_create_modal_message(selected_files = file_names,
-                                                uncommitted_git_files = uncommitted_git_files,
-                                                untracked_selected_files = untracked_selected_files,
-                                                git_sync_status = git_sync_status)
 
-      if (!is.null(message)) {
+      determine_modal_message(
+        selected_files = file_names,
+        uncommitted_git_files = uncommitted_git_files,
+        untracked_selected_files = untracked_selected_files,
+        git_sync_status = git_sync_status
+      )
+    })
+
+    observeEvent(input$create_qc_items, {
+       req(modal_check())
+
+      if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
-          HTML(message),
+          HTML(modal_check()$message),
           footer = tagList(
-            if (length(uncommitted_git_files) > 0 &&
-                !any(file_names %in% untracked_selected_files) &&
-                !any(file_names %in% uncommitted_git_files) &&
-                git_sync_status$ahead == 0 &&
-                git_sync_status$behind == 0) {
+            if (modal_check()$state == "warning") {
               actionButton(ns("proceed"), "Proceed Anyway")
             },
             actionButton(ns("return"), "Return")
@@ -187,10 +188,10 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       w_create_qc_items$show()
       create_yaml("test",
-                  repo = get_current_repo(),
-                  milestone = input$milestone,
-                  description = input$milestone_description,
-                  files = qc_items())
+                   repo = get_current_repo(),
+                   milestone = input$milestone,
+                   description = input$milestone_description,
+                   files = qc_items())
       create_checklists("test.yaml")
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")

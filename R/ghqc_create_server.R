@@ -5,7 +5,7 @@
 #' @importFrom gert git_ahead_behind git_status
 NULL
 
-ghqc_server <- function(id) {
+ghqc_create_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     qc_trigger <- reactiveVal(FALSE)

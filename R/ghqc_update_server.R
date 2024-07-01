@@ -1,6 +1,8 @@
 #' @import shiny
 #' @importFrom shinyjs enable disable addClass removeClass
 #' @import dplyr
+#' @importFrom purrr map_df
+#' @importFrom gert git_status git_ahead_behind
 NULL
 
 ghqc_update_server <- function(id) {
@@ -26,7 +28,7 @@ ghqc_update_server <- function(id) {
 
       if(input$select_milestone == "All QC Items") {
         all_issues <- get_all_issues_in_repo(owner = get_organization(), repo = get_current_repo())
-        issues_df <- purrr::map_df(all_issues, ~{
+        issues_df <- map_df(all_issues, ~{
           tibble(
             number = .x$number,
             title = .x$title,
@@ -45,7 +47,7 @@ ghqc_update_server <- function(id) {
           })
       } else{
         issues_by_milestone <- get_all_issues_in_milestone(owner = get_organization(), repo = get_current_repo(), milestone_name = input$select_milestone)
-        issues_df <- purrr::map_df(issues_by_milestone, ~{
+        issues_df <- map_df(issues_by_milestone, ~{
           tibble(
             number = .x$number,
             title = .x$title,

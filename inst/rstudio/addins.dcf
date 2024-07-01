@@ -1,6 +1,6 @@
 Name: Create QC Items App
 Description: Use a single yaml file input to create a set of QC checklists for a set of files, each with its own Github issue.
-Binding: ghqc_app
+Binding: ghqc_create_app
 Interactive: true
 
 Name: Update QC Items App

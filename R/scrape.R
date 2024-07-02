@@ -108,7 +108,7 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_name, input_name) {
   rmd <- tempfile(fileext = ".Rmd")
   fs::file_create(rmd)
   # delete temporary rmd when it's time
-  withr::defer_parent(unlink(rmd))
+  suppressMessages({withr::defer_parent(unlink(rmd))})
   writeLines(rmd_content, con = rmd)
 
   # create pdf from rmd
@@ -176,14 +176,14 @@ create_big_section <- function(section_title, contents) {
 } # create_section
 
 #' @export
-generate_qc_report <- function(owner = get_organization(), repo = get_current_repo(), milestone_name, pdf_name = NULL) {
+generate_qc_report <- function(milestone_name, owner = get_organization(), repo = get_current_repo(), pdf_name = NULL) {
   # issues
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)
   summary_csv <- tempfile(fileext = ".csv")
-  withr::defer_parent(fs::file_delete(summary_csv))
+  suppressMessages({withr::defer_parent(fs::file_delete(summary_csv))})
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
-  withr::defer_parent(fs::file_delete(summary_csv))
+  suppressMessages({withr::defer_parent(fs::file_delete(summary_csv))})
   author <- Sys.info()[["user"]]
 
   issue_numbers <- sapply(issues, function(issue) issue$number)

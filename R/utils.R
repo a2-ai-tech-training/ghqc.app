@@ -10,4 +10,5 @@ pmx_list <- function(){
     col <- as.character(col)
     col[!is.na(col)]
   })
+  return(data_list)
 }

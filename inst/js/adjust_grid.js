@@ -35,7 +35,7 @@ export function adjust_grid() {
     console.log(`Container width: ${containerWidth}px`);
 
     const sidebarCollapsed = document.querySelector("div[id$='-sidebar']").classList.contains('collapsed');
-    const maxAllowableWidth = sidebarCollapsed ? containerWidth * 2 / 5 : containerWidth * 2 / 5;
+    const maxAllowableWidth = sidebarCollapsed ? containerWidth * 1 / 4 : containerWidth * 1 / 4;
 
 
     if (maxWidth > maxAllowableWidth) {
@@ -51,7 +51,7 @@ export function adjust_grid() {
     rows.forEach((row, index) => {
       if (row) {
         row.style.transition = 'all 0.5s ease';
-        row.style.gridTemplateColumns = `minmax(100px, ${maxWidth}px) minmax(100px, 1fr) minmax(125px, 1fr)`;
+        row.style.gridTemplateColumns = `minmax(100px, ${maxWidth}px) minmax(125px, 1fr) minmax(125px, 1fr)`;
       } else {
         console.warn(`Row ${index} is undefined`);
       }

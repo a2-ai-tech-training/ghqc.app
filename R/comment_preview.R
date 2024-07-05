@@ -1,5 +1,4 @@
 create_gfm_file <- function(comment_body) {
-
   intro <- glue::glue(
     "---
   output:
@@ -32,25 +31,44 @@ create_gfm_file <- function(comment_body) {
 }
 
 modify_html <- function(html_file) {
-  replace_css_class <- function(node, prefix, new_class) {
-    if (startsWith(xml2::xml_text(node), prefix)) {
-      xml2::xml_set_attr(node, "class", new_class)
+  # replace_css_class <- function(node, prefix, new_class) {
+  #   if (startsWith(xml2::xml_text(node), prefix)) {
+  #     xml2::xml_set_attr(node, "class", new_class)
+  #   }
+  # }
+
+  replace_css_class <- function(node) {
+    node_text <- xml2::xml_text(node)
+    if (startsWith(node_text, "@@")) {
+      xml2::xml_set_attr(node, "class", "highlighted-line")
+    } else if (startsWith(node_text, "-")) {
+      xml2::xml_set_attr(node, "class", "diff-remove")
+    } else if (startsWith(node_text, "+")) {
+      xml2::xml_set_attr(node, "class", "diff-add")
+    } else {
+      xml2::xml_set_attr(node, "class", "default-text")
+    }
+  }
+
+  apply_default_class <- function(node) {
+    current_class <- xml2::xml_attr(node, "class")
+    if (is.na(current_class)) {
+      xml2::xml_set_attr(node, "class", "default-text")
     }
   }
 
   html_content <- rvest::read_html(html_file)
 
   nodes <- rvest::html_nodes(html_content, xpath = "//*[text()]")
-  lapply(nodes, replace_css_class, prefix = "-", new_class = "diff-remove")
-  lapply(nodes, replace_css_class, prefix = "+", new_class = "diff-add")
-  lapply(nodes, replace_css_class, prefix = "@@", new_class = "highlighted-line")
+  lapply(nodes, replace_css_class)
 
   # add css to the html
   css <- "
   <style>
+  .default-text { font-weight: normal; color: black; }
+  .highlighted-line { font-weight: bold; color: #AC94F4; }
   .diff-remove { font-weight: normal; color: #a61717; background-color: #ffe6e6; }
   .diff-add { font-weight: normal; color: green; background-color: #e6ffe6; }
-  .highlighted-line { font-weight: bold; color: #AC94F4; }
   </style>
 "
   head_node <- xml2::xml_find_first(html_content, "//head")

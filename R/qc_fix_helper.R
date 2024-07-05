@@ -103,7 +103,7 @@ clean_up <- function(file_path, copied_file) {
 }
 
 format_diff_section <- function(diff_lines) {
-
+  diff_lines <- strsplit(diff_lines, "\n")[[1]]
   # extract the line numbers
   numbers <- extract_line_numbers(diff_lines[1])
   # reformat line numbers
@@ -138,7 +138,7 @@ format_diff_section <- function(diff_lines) {
 }
 
 format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
-  browser()
+
   # create copy
   copied_file <- name_file_copy(file_path)
   file.copy(file_path, copied_file)
@@ -151,7 +151,7 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   current_script <- read_file_at_commit(commit_sha_new, file_path)
 
   # get diff
-  diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
+  diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified", pager = "off", disp.width = 200)
   diff_lines <- as.character(diff_output)
 
 
@@ -164,22 +164,26 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   # delete the lines with the file names
   diff_lines <- diff_lines[-c(1, 2)]
 
-  # Identify the lines that start with @@
+  # lines that start with @@
   section_indices <- grep("^@@", diff_lines)
 
-  # Add the start and end indices to the section indices
-  section_indices <- c(1, section_indices, length(diff_lines) + 1)
+  # add the end index to the section indices
+  section_indices <- c(section_indices, length(diff_lines) + 1)
 
-  # Split the text into sections
+  # split into sections
   sections <- lapply(1:(length(section_indices) - 1), function(i) {
     start_idx <- section_indices[i]
     end_idx <- section_indices[i + 1] - 1
     paste(diff_lines[start_idx:end_idx], collapse = "\n")
   })
 
+  # apply diff to each section
   diff_sections <- lapply(sections, format_diff_section)
 
-  glue::glue("```diff\n{diff_sections}\n```")
+  # combine sections to one body of text
+  diff_sections_cat <- glue::glue_collapse(diff_sections, sep = "\n")
+
+  glue::glue("```diff\n{diff_sections_cat}\n```")
 }
 
 get_comments <- function(owner, repo, issue_number) {

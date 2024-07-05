@@ -102,46 +102,14 @@ clean_up <- function(file_path, copied_file) {
   rename_file_copy(copied_file)
 }
 
-format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
-  # create copy
-  copied_file <- name_file_copy(file_path)
-  file.copy(file_path, copied_file)
-  withr::defer_parent(
-    clean_up(file_path, copied_file)
-  )
+format_diff_section <- function(diff_lines) {
 
-  # get file contents at the specified commits
-  compared_script <- read_file_at_commit(commit_sha_orig, file_path)
-  current_script <- read_file_at_commit(commit_sha_new, file_path)
-
-  # get diff
-  diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
-  diff_lines <- as.character(diff_output)
-
-
-
-  # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
-  file_index_start <- {
-    if (diff_lines[1] == "No visible differences between objects.") {
-      #2
-      return("\nNo difference between file versions.\n")
-    }
-    else {
-      1
-    }
-  }
-
-
-  # delete the lines with the file names
-  diff_lines <- diff_lines[-c(file_index_start, file_index_start + 1)]
-
-  # now file_index_start is the index where the line numbers are
   # extract the line numbers
-  numbers <- extract_line_numbers(diff_lines[file_index_start])
+  numbers <- extract_line_numbers(diff_lines[1])
   # reformat line numbers
   context_str <- format_line_numbers(numbers)
   # replace with new context_str
-  diff_lines[file_index_start] <- context_str
+  diff_lines[1] <- context_str
 
   # check if last line is tick marks for formatting
   if (stringr::str_detect(diff_lines[length(diff_lines)], "```")) {
@@ -167,8 +135,51 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   diff_cat <- glue::glue_collapse(github_diff, sep = "\n")
 
   diff_with_line_numbers <- add_line_numbers(diff_cat)
+}
 
-  glue::glue("```diff\n{diff_with_line_numbers}\n```")
+format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
+  browser()
+  # create copy
+  copied_file <- name_file_copy(file_path)
+  file.copy(file_path, copied_file)
+  withr::defer_parent(
+    clean_up(file_path, copied_file)
+  )
+
+  # get file contents at the specified commits
+  compared_script <- read_file_at_commit(commit_sha_orig, file_path)
+  current_script <- read_file_at_commit(commit_sha_new, file_path)
+
+  # get diff
+  diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified")
+  diff_lines <- as.character(diff_output)
+
+
+  # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
+  if (diff_lines[1] == "No visible differences between objects.") {
+    #2
+    return("\nNo difference between file versions.\n")
+  }
+
+  # delete the lines with the file names
+  diff_lines <- diff_lines[-c(1, 2)]
+
+  # Identify the lines that start with @@
+  section_indices <- grep("^@@", diff_lines)
+
+  # Add the start and end indices to the section indices
+  section_indices <- c(1, section_indices, length(diff_lines) + 1)
+
+  # Split the text into sections
+  sections <- lapply(1:(length(section_indices) - 1), function(i) {
+    start_idx <- section_indices[i]
+    end_idx <- section_indices[i + 1] - 1
+    paste(diff_lines[start_idx:end_idx], collapse = "\n")
+  })
+
+  diff_sections <- lapply(sections, format_diff_section)
+
+  glue::glue("```diff\n{diff_sections}\n```")
 }
 
 get_comments <- function(owner, repo, issue_number) {

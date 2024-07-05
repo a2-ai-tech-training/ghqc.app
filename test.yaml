@@ -1,0 +1,10 @@
+report:
+  Front Page:
+  - Accuracy of front page
+  Table of Contents (if applicable):
+  - Ensure included, if applicable.
+  Summary (if applicable):
+  - Summary text, tables/figures and numerical values checked against Report Body Text.
+  Report Body Text:
+  - Numbers reported in text correspond to numbers in tables, listings and output
+  - Check that all cited references are included in the reference list

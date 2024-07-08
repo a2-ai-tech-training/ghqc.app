@@ -182,6 +182,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       }
     })
 
+
     observe({
       req(qc_trigger())
       qc_trigger(FALSE)
@@ -195,10 +196,15 @@ return "<div><strong>" + escape(item.username) + "</div>"
       create_checklists("test.yaml")
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
+      milestone_url <- get_milestone_url(get_organization(), get_current_repo(), input$milestone)
 
       w_create_qc_items$hide()
       showModal(
-        modalDialog("QC items created successfully.")
+        modalDialog(
+          tags$p("QC items created successfully."),
+          tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
+          #"QC items created successfully."
+          )
       )
     })
 

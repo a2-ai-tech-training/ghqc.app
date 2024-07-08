@@ -1,0 +1,6 @@
+"mrgsolve cpp files (both .mod and .cpp)":
+  - Model is based off of correct final NONMEM model.
+  - Parameter estimates are inputted from the correct final model either using $NMXML or $NMEXT, or are typed in correctly using $PARAM.
+  - Model code is translated correctly from NONMEM.
+  - Covariates are implemented correctly, often using the reference group as the value for the covariate in the $PARAM block.
+  - Transformations, concentration calculation and compartment scaling is correctly performed (this is not always done in NONMEM code, sometimes is behind the scenes).

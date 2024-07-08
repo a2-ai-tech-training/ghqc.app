@@ -3,7 +3,7 @@ NCA:
   - Correct dataset used. Any modifications appropriate and documented.
   - Exclusion of anomalous concentration appropriate (if applicable).
   - Correct units for time and concentration variable specified. Use CDISC SDTM Controlled Terminology UNIT. If dataset (WATSON) may not apply.
-  - Any negative pre-dose times set to zero (only if applicable)
+  - Any negative pre-dose times set to zero (only if applicable).
   - Filtered for ‘ANL03L’ to include ‘Y’ if ANL03L column (only if present in dataset).
   NCA:
   - Source data mapped correctly.

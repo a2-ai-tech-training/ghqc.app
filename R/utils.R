@@ -1,7 +1,7 @@
 #' @importFrom readr read_csv
 NULL
 
-pmx_list <- function(){
+pmx_list <- function() {
   data <- read_csv(system.file("checklists/qc-checklists(pharmacometrics).csv", package = "ghqc"), show_col_types = FALSE)
   columns_to_keep <- !is.na(unlist(data[1, ]))
   data <- data[, columns_to_keep]
@@ -10,5 +10,12 @@ pmx_list <- function(){
     col <- as.character(col)
     col[!is.na(col)]
   })
+
+
   return(data_list)
 }
+
+# list_names <- names(data_list)
+# yamls <- lapply(list_names, function(list_name) {
+#   fs::file_create()
+# })

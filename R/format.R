@@ -3,35 +3,37 @@ format_issue_body <- function(checklist_type, file_path) {
   file_items <- checklists[[checklist_type]]
   qc_checklist <- format_checklist_items(file_items)
   metadata <- format_metadata(checklist_type, file_path)
-  glue::glue("## QC Checklist
-  Note:  This checklist is NOT an exhaustive list of all checks.  User is encouraged to personalise checklist for individual study needs.
+  glue::glue("## {checklist_type}
+  Note: This checklist is NOT an exhaustive list of all checks. User is encouraged to personalise checklist for individual study needs.\n\n{qc_checklist}\n\n## Metadata\n\n{metadata}")}
 
-             {qc_checklist}
-
-             ## Metadata
-             {metadata}")
-}
-
-format_section_list <- function(section_name, section) {
-  formatted_items <- sapply(section, function(item) {
+format_items <- function(items) {
+  formatted_items <- sapply(items, function(item) {
     glue::glue("- [ ] {item}")
   })
-  formatted_items_cat <- glue::glue_collapse(formatted_items, sep = '\n')
+  glue::glue_collapse(formatted_items, sep = '\n')
+}
 
-  glue::glue("### {section_name}
+format_section_list <- function(section_name, items) {
+  formatted_items <- format_items(items)
 
-             {formatted_items_cat}
-
-             ")
+  glue::glue("### {section_name}\n\n{formatted_items}\n\n")
 }
 
 # functions to format body of issue
 format_checklist_items <- function(checklist) {
-  checklist_sections <- lapply(names(checklist), function(section_name) {
-    section <- checklist[[section_name]]
-    format_section_list(section_name, section)
-  })
-  glue::glue_collapse(checklist_sections, sep = '\n')
+  names <- names(checklist)
+  # if no sub-headers
+  if (is.null(names)) {
+    return(format_items(checklist))
+  }
+  # else, sub-headers
+  else {
+    checklist_sections <- lapply(names, function(section_name) {
+      section <- checklist[[section_name]]
+      format_section_list(section_name, section)
+    })
+    return(glue::glue_collapse(checklist_sections, sep = '\n'))
+  }
 }
 
 get_sha <- function() {

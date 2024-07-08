@@ -1,13 +1,12 @@
 #' @export
 get_checklists <- function() {
-  report <- yaml::read_yaml(system.file("checklists/report.yaml", package = "ghqc"))
-  NCA <- yaml::read_yaml(system.file("checklists/NCA.yaml", package = "ghqc"))
-  #rev(pmx_list())
-  return(c(report, NCA))
+  checklists_path <- system.file("checklists", package = "ghqc")
+  yaml_checklists <- list.files(checklists_path, pattern = "\\.ya?ml$", full.names = TRUE)
+  checklists_data <- sapply(yaml_checklists, function(yaml_checklist) {
+    yaml::read_yaml(yaml_checklist)
+  }, USE.NAMES = FALSE)
+  return(checklists_data)
 }
-
-
-
 
 create_file_data_structure <- function(file_name, assignees = NULL, checklist_type, checklists = get_checklists()) {
   # if checklist_type wasn't given, make it the file ext

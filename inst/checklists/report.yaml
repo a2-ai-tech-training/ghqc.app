@@ -1,17 +1,17 @@
-report:
+Report:
   Front Page:
-  - Accuracy of front page
+  - Accuracy of front page.
   Table of Contents (if applicable):
   - Ensure included, if applicable.
   Summary (if applicable):
   - Summary text, tables/figures and numerical values checked against Report Body Text.
   Report Body Text:
-  - Numbers reported in text correspond to numbers in tables, listings and output
-  - Check that all cited references are included in the reference list
+  - Numbers reported in text correspond to numbers in tables, listings and output.
+  - Check that all cited references are included in the reference list.
   - If changes were made to the dataset, are they documented and justified in the report?
-  - Correct units
-  - Consistent significant figures
-  - Headings correct
+  - Correct units.
+  - Consistent significant figures.
+  - Headings correct.
   - All analysis changes referred to.
   Tables/Figures/Listings:
   - Titles correct.

@@ -217,3 +217,16 @@ get_issues_info <- function() {
   return(issues_df)
 }
 
+get_milestone_url <- function(owner, repo, milestone_name) {
+  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
+
+  milestone <- gh::gh(
+    "GET /repos/:owner/:repo/milestones/:milestone_number",
+    owner = owner,
+    repo = repo,
+    milestone_number = milestone_number
+  )
+
+  milestone$html_url
+}
+

@@ -56,11 +56,6 @@ get_milestone_number <- function(params) {
   milestone_number
 } # get_milestone_number
 
-
-get_milestones <- function(owner, repo) {
-  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo)
-}
-
 get_milestone_description <- function(title, milestones) {
   for (milestone in milestones) {
     if (milestone$title == title) {

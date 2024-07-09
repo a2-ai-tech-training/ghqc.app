@@ -273,6 +273,7 @@ generate_qc_report <- function(milestone_name, owner = get_organization(), repo 
   ft <- ft %>% autofit()
 
   ft <- width(ft, width = dim(ft)$widths*6.5 /(flextable_dim(ft)$widths))
+  ft <- width(ft, j = 1, 1.5)
   ft\n```\n\\newpage\n",
     .trim = FALSE)
 

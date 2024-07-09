@@ -14,7 +14,7 @@ get_members_list <- function(org) {
     members <- tryCatch(
       {
         members_api_call <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
-        cat("Retrieved organization members successfully.\n")
+        cat("Retrieved organization members from page", page, "successfully.\n")
         members_api_call
       },
       error = function(e) {
@@ -22,9 +22,6 @@ get_members_list <- function(org) {
       },
       warning = function(w) {
         cat("Warning while retrieving members from organization", org, "\n", "on page", page, "\n", w$message, "\n")
-      },
-      finally = {
-        cat("Execution of get_members_list completed.\n")
       }
     )
 

@@ -33,9 +33,13 @@ get_repos <- function(org) {
   purrr::map_chr(repos, "name")
 }
 
-get_milestones <- function(org, repo) {
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = org, repo = repo, .limit = Inf)
+get_milestones <- function(owner, repo) {
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .limit = Inf)
   purrr::map_chr(milestones, "title")
+}
+
+get_milestone_objects <- function(owner, repo) {
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .limit = Inf)
 }
 
 get_open_milestones <- function(org, repo) {

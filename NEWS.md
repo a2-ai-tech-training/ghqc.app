@@ -12,8 +12,19 @@
 
 -   fixed bug in milestone.R function milestone_exists
 
+-   added checklists with subheaders to drop down in `ghqc_create_app()`
+
+-   added link to github milestone in `ghqc_create_app()` success pop-up
+
+-   added link to github issue in `ghqc_update_app()` success pop-up
+
+-   improved summary table formatting in `generate_qc_report()`
+
+-   fixed file difference bug in `ghqc_update_app()`
+
 # ghqc 0.0.0.9002
 
 ## Minor improvements and bug fixes
 
 -   Fixes `pmx_list()` so that it works on older versions of R.
+

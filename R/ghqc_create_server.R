@@ -80,13 +80,15 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
-      log_message(paste("Connecting to organization:", get_organization()))
-      log_message(paste("Retrieving assignees:", get_members_df(get_organization())))
+      org <- get_organization()
+      members <- get_members_df(org)
+      log_message(paste("Connecting to organization:", org))
+      log_message(paste("Retrieving assignees:", members))
       updateSelectizeInput(
         session,
         "assignees",
         server = TRUE,
-        choices = get_members_df(get_organization()),
+        choices = members,
         options = list(
           placeholder = "(optional)",
           valueField = "username",
@@ -103,13 +105,17 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         )
       )
-      log_message(paste("Connected to organization and retrieved assignees from:", get_organization()))
+      log_message(paste("Connected to organization and retrieved",
+                        nrow(members),
+                        "assignees from:",
+                        org))
     })
 
 
     output$tree_list_ui <- renderUI({
-      files_tree_df <- convert_dir_to_df(dir_path = find_root_directory())
-      log_message(paste("Creating file tree for:", find_root_directory()))
+      root_dir <- find_root_directory()
+      files_tree_df <- convert_dir_to_df(dir_path = root_dir)
+      log_message(paste("Creating file tree for:", root_dir))
 
       tree <- treeInput(
         inputId = ns("tree_list"),
@@ -122,7 +128,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         closeDepth = 0
       )
 
-      log_message(paste("Created file tree for:", find_root_directory()))
+      log_message(paste("Created file tree for", nrow(files_tree_df), "files"))
 
       return(tree)
 

@@ -51,11 +51,19 @@ ghqc_update_server <- function(id) {
           tibble(
             number = .x$number,
             title = .x$title,
+            state = .x$state
           )
         })
         issues_choices <- issues_df %>%
-          mutate(label = paste0("Item ", number, ": ", title)) %>%
-          pull()
+          mutate(state = case_when(
+            state == "open" ~ "Open Items",
+            state == "closed" ~ "Closed Items"
+          )) %>%
+          split(.$state) %>%
+          rev() %>%
+          lapply(function(x) {
+            setNames(nm = paste0("Item ", x$number, ": ", x$title))
+          })
       }
 
       updateSelectInput(

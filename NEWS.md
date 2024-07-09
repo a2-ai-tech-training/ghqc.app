@@ -1,13 +1,13 @@
 # ghqc (development version)
 
-# ghqc 0.0.0.9002
-
-## Major changes
-
--   Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+# ghqc 0.0.0.9003
 
 ## Minor improvements and bug fixes
 
--   Lorem ipsum dolor sit amet, consectetur adipiscing elit. (@githubusername, #100).
+-   Adds sorting by open/closed items to `ghqc_update_server()`/`ghqc_update_app()` for milestone specific issues.
 
--   Lorem ipsum dolor sit amet, consectetur adipiscing elit. (#200).
+# ghqc 0.0.0.9002
+
+## Minor improvements and bug fixes
+
+-   Fixes `pmx_list()` so that it works on older versions of R.

@@ -6,6 +6,8 @@
 
 -   Adds sorting by open/closed items to `ghqc_update_server()`/`ghqc_update_app()` for milestone specific issues.
 
+- fixed bug in milestone.R function milestone_exists
+
 # ghqc 0.0.0.9002
 
 ## Minor improvements and bug fixes

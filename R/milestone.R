@@ -3,10 +3,7 @@
 # check if a milestone exists
 milestone_exists <- function(title, owner, repo) {
   # list milestones
-  milestones <- gh::gh("GET /repos/{owner}/{repo}/milestones",
-    owner = owner,
-    repo = repo
-  )
+  milestones <- get_milestones(owner, repo)
 
   # return true if any matches
   any(sapply(milestones, function(milestone) milestone$title == title))

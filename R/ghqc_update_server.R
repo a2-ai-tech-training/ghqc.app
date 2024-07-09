@@ -34,7 +34,7 @@ ghqc_update_server <- function(id) {
       updateSelectInput(
         session,
         "select_milestone",
-        choices =  c("All QC Items", milestone_list),
+        choices = c("All QC Items", milestone_list),
       )
       log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
     })
@@ -43,11 +43,11 @@ ghqc_update_server <- function(id) {
     observe({
       req(input$select_milestone)
 
-      if(input$select_milestone == "All QC Items") {
+      if (input$select_milestone == "All QC Items") {
         log_message(paste("Retrieving all issues from repo:", repo()))
 
         all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
-        issues_df <- map_df(all_issues, ~{
+        issues_df <- map_df(all_issues, ~ {
           tibble(
             number = .x$number,
             title = .x$title,
@@ -61,15 +61,15 @@ ghqc_update_server <- function(id) {
           )) %>%
           split(.$state) %>%
           rev() %>%
-            lapply(function(x) {
-              setNames(nm = paste0("Item ", x$number, ": ", x$title))
+          lapply(function(x) {
+            setNames(nm = paste0("Item ", x$number, ": ", x$title))
           })
         log_message(paste("Retrieved", length(all_issues), "issues from repo:", repo()))
-      } else{
+      } else {
         log_message(paste("Retrieving all issues from milestone:", input$select_milestone))
 
         issues_by_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$select_milestone)
-        issues_df <- map_df(issues_by_milestone, ~{
+        issues_df <- map_df(issues_by_milestone, ~ {
           tibble(
             number = .x$number,
             title = .x$title,
@@ -104,7 +104,7 @@ ghqc_update_server <- function(id) {
       list(issue_number = issue_number, issue_title = issue_title)
     })
 
-    #https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
+    # https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
     modal_check <- eventReactive(c(input$preview, input$post), {
       req(issue_parts())
       uncommitted_git_files <- git_status()$file
@@ -113,8 +113,8 @@ ghqc_update_server <- function(id) {
 
       gh_issue_status <- if (input$compare == "prev") {
         check_if_there_are_update_comments(
-          owner = get_organization(),
-          repo = get_current_repo(),
+          owner = org(),
+          repo = repo(),
           issue_number = issue_parts()$issue_number
         )
       } else {
@@ -145,7 +145,7 @@ ghqc_update_server <- function(id) {
         ))
       } else {
         preview_trigger(TRUE)
-        }
+      }
     })
 
     observeEvent(input$post, {
@@ -176,13 +176,14 @@ ghqc_update_server <- function(id) {
         input$compare == "prev" ~ FALSE
       )
 
-      html_file_path <- create_gfm_file(create_comment_body(get_organization(),
-                                                            get_current_repo(),
-                                                            message = input$message,
-                                                            issue_number = issue_parts()$issue_number,
-                                                            diff = input$show_diff,
-                                                            compare_to_first = compare_to_first,
-                                                            force = TRUE))
+      html_file_path <- create_gfm_file(create_comment_body(org(),
+        repo(),
+        message = input$message,
+        issue_number = issue_parts()$issue_number,
+        diff = input$show_diff,
+        compare_to_first = compare_to_first,
+        force = TRUE
+      ))
       custom_html <- readLines(html_file_path, warn = FALSE) %>% paste(collapse = "\n")
 
 
@@ -203,15 +204,16 @@ ghqc_update_server <- function(id) {
         input$compare == "prev" ~ FALSE
       )
 
-      add_fix_comment(get_organization(),
-                                 get_current_repo(),
-                                 message = input$message,
-                                 issue_number = issue_parts()$issue_number,
-                                 diff = input$show_diff,
-                                 compare_to_first = compare_to_first,
-                                 force = TRUE)
+      add_fix_comment(org(),
+        repo(),
+        message = input$message,
+        issue_number = issue_parts()$issue_number,
+        diff = input$show_diff,
+        compare_to_first = compare_to_first,
+        force = TRUE
+      )
 
-      issue <- get_issue(get_organization(), get_current_repo(), issue_parts()$issue_number)
+      issue <- get_issue(org(), repo(), issue_parts()$issue_number)
       issue_url <- issue$html_url
 
       showModal(modalDialog(

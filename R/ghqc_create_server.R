@@ -10,6 +10,18 @@ ghqc_create_server <- function(id) {
     ns <- session$ns
     qc_trigger <- reactiveVal(FALSE)
 
+    org <- reactive({
+      get_organization()
+    })
+
+    repo <- reactive({
+      get_current_repo()
+    })
+
+    members <- reactive({
+      get_members_df(org())
+    })
+
     w_create_qc_items <- Waiter$new(
       id = ns("main_container"),
       html = tagList(
@@ -80,15 +92,13 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
-      org <- get_organization()
-      members <- get_members_df(org)
-      log_message(paste("Connecting to organization:", org))
-      log_message(paste("Retrieving assignees:", members))
+      log_message(paste("Connecting to organization:", org()))
+      log_message(paste("Retrieving assignees:", members()))
       updateSelectizeInput(
         session,
         "assignees",
         server = TRUE,
-        choices = members,
+        choices = members(),
         options = list(
           placeholder = "(optional)",
           valueField = "username",
@@ -105,10 +115,12 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         )
       )
-      log_message(paste("Connected to organization and retrieved",
-                        nrow(members),
-                        "assignees from:",
-                        org))
+      log_message(paste(
+        "Connected to organization and retrieved",
+        nrow(members()),
+        "assignees from:",
+        org()
+      ))
     })
 
 
@@ -131,7 +143,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
       log_message(paste("Created file tree for", nrow(files_tree_df), "files"))
 
       return(tree)
-
     })
 
 
@@ -152,11 +163,14 @@ return "<div><strong>" + escape(item.username) + "</div>"
       return(list)
     })
 
-    observeEvent(c(selected_items(), input$assignees), {
-      delay(300, {
-        w_load_items$hide()
-      })
-    }, ignoreInit = TRUE)
+    observeEvent(c(selected_items(), input$assignees),
+      {
+        delay(300, {
+          w_load_items$hide()
+        })
+      },
+      ignoreInit = TRUE
+    )
 
     # button behavior
     observe({
@@ -214,22 +228,23 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       w_create_qc_items$show()
       create_yaml("test",
-                   repo = get_current_repo(),
-                   milestone = input$milestone,
-                   description = input$milestone_description,
-                   files = qc_items())
+        repo = repo(),
+        milestone = input$milestone,
+        description = input$milestone_description,
+        files = qc_items()
+      )
       create_checklists("test.yaml") # added logging to fxn
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
-      milestone_url <- get_milestone_url(get_organization(), get_current_repo(), input$milestone)
+      milestone_url <- get_milestone_url(org(), repo(), input$milestone)
 
       w_create_qc_items$hide()
       showModal(
         modalDialog(
           tags$p("QC items created successfully."),
           tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
-          #"QC items created successfully."
-          )
+          # "QC items created successfully."
+        )
       )
     })
 

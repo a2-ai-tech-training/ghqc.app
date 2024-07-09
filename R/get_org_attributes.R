@@ -11,18 +11,17 @@ get_members_list <- function(org) {
   all_members <- list()
 
   repeat {
-    tryCatch(
+    members <- tryCatch(
       {
-        members <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
-        cat("Retrieved organization members successfully.")
-        return(members)
+        members_api_call <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
+        cat("Retrieved organization members successfully.\n")
+        members_api_call
       },
       error = function(e) {
-        cat("Error retrieving members from organization", org, "\n", "on page", page, "\n", e$message)
-        return(NULL)
+        cat("Error retrieving members from organization", org, "\n", "on page", page, "\n", e$message, "\n")
       },
       warning = function(w) {
-        cat("Warning while retrieving members from organization", org, "\n", "on page", page, "\n", w$message)
+        cat("Warning while retrieving members from organization", org, "\n", "on page", page, "\n", w$message, "\n")
       },
       finally = {
         cat("Execution of get_members_list completed.\n")
@@ -36,7 +35,9 @@ get_members_list <- function(org) {
     page <- page + 1
   }
 
-  purrr::map(all_members, ~ get_names_and_usernames(.x$login))
+  members_list <- purrr::map(all_members, ~ get_names_and_usernames(.x$login))
+  cat("Retrieved names from member usernames.")
+  return(members_list)
 }
 
 get_members_df <- function(org) {

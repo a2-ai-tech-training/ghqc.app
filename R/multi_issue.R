@@ -18,7 +18,7 @@ create_issue <- function(file, issue_params) {
   issue <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/issues", issue_params))
 
   # return the issue number
-  issue$number
+  list(number = issue$number, assignees = issue_params$assignees)
 } # create_issue
 
 #' @export
@@ -49,7 +49,19 @@ create_issues <- function(data) {
   }
 
   # create an issue for each file
-  lapply(data$files, create_issue, issue_params)
+  lapply(data$files, function(file) {
+    issue <- create_issue(file, issue_params)
+    cat("Created issue for file:", file$name, "\n")
+    if (!is.null(data$milestone)) {
+      cat("Milestone:", data$milestone, "\n")
+    }
+    if (!is.null(issue$assignees)) {
+      cat("Assignee:", paste(issue$assignees, collapse = ", "), "\n")
+    }
+    cat("Issue number:", issue$number, "\n")
+    return(issue)
+
+  })
 } # create_issues
 
 

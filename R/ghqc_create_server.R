@@ -27,6 +27,10 @@ ghqc_create_server <- function(id) {
       color = "white"
     )
 
+    log_message <- function(message) {
+      cat(Sys.time(), "-", message, "\n")
+    }
+
     output$sidebar <- renderUI({
       tagList(
         textInput(ns("milestone"), "Name QC Item List (github milestone)", width = "100%"),
@@ -70,6 +74,8 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
+      log_message(paste("Connecting to organization:", get_organization()))
+      log_message(paste("Retrieving assignees:", get_members_df(get_organization())))
       updateSelectizeInput(
         session,
         "assignees",
@@ -96,6 +102,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     output$tree_list_ui <- renderUI({
       files_tree_df <- convert_dir_to_df(dir_path = find_root_directory())
+      log_message(paste("Creating file tree for:", find_root_directory()))
 
       treeInput(
         inputId = ns("tree_list"),
@@ -165,7 +172,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     observeEvent(input$create_qc_items, {
-       req(modal_check())
+      req(modal_check())
 
       if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
@@ -192,7 +199,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
                    milestone = input$milestone,
                    description = input$milestone_description,
                    files = qc_items())
-      create_checklists("test.yaml")
+      create_checklists("test.yaml") # added logging to fxn
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
 

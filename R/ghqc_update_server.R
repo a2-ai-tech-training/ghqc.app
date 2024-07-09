@@ -10,8 +10,16 @@ ghqc_update_server <- function(id) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)
     post_trigger <- reactiveVal(FALSE)
+    start_time <- Sys.time()
+
+    log_message <- function(message) {
+      cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
+    }
 
     observe({
+      log_message(paste("Connecting to organization:", get_organization()))
+      log_message(paste("Retrieving open milestones from repo:", get_current_repo()))
+
       milestone_list <- get_open_milestones(org = get_organization(), repo = get_current_repo())
       milestone_list <- rev(milestone_list)
 
@@ -20,6 +28,7 @@ ghqc_update_server <- function(id) {
         "select_milestone",
         choices =  c("All QC Items", milestone_list),
       )
+      log_message(paste("Connected to organization and retrieved open milestones from repo:", get_current_repo()))
     })
 
 
@@ -27,6 +36,8 @@ ghqc_update_server <- function(id) {
       req(input$select_milestone)
 
       if(input$select_milestone == "All QC Items") {
+        log_message(paste("Retrieving all issues from repo:", get_current_repo()))
+
         all_issues <- get_all_issues_in_repo(owner = get_organization(), repo = get_current_repo())
         issues_df <- map_df(all_issues, ~{
           tibble(
@@ -45,7 +56,10 @@ ghqc_update_server <- function(id) {
             lapply(function(x) {
               setNames(nm = paste0("Item ", x$number, ": ", x$title))
           })
+        log_message(paste("Retrieved all issues from repo:", get_current_repo()))
       } else{
+        log_message(paste("Retrieving all issues from milestone:", input$select_milestone))
+
         issues_by_milestone <- get_all_issues_in_milestone(owner = get_organization(), repo = get_current_repo(), milestone_name = input$select_milestone)
         issues_df <- map_df(issues_by_milestone, ~{
           tibble(
@@ -64,6 +78,7 @@ ghqc_update_server <- function(id) {
           lapply(function(x) {
             setNames(nm = paste0("Item ", x$number, ": ", x$title))
           })
+        log_message(paste("Retrieved all issues from milestone:", input$select_milestone))
       }
 
       updateSelectInput(

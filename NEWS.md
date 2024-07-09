@@ -7,6 +7,8 @@
 -   Adds sorting by open/closed items to `ghqc_update_server()`/`ghqc_update_app()` for milestone specific issues.
 -   Adds logging messages and timers to app initialization items and logging messages to gh api interactions.
 
+- fixed bug in milestone.R function milestone_exists
+
 # ghqc 0.0.0.9002
 
 ## Minor improvements and bug fixes

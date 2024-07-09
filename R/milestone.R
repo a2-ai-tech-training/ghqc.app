@@ -3,10 +3,7 @@
 # check if a milestone exists
 milestone_exists <- function(title, owner, repo) {
   # list milestones
-  milestones <- gh::gh("GET /repos/{owner}/{repo}/milestones",
-    owner = owner,
-    repo = repo
-  )
+  milestones <- get_milestones(owner, repo)
 
   # return true if any matches
   any(sapply(milestones, function(milestone) milestone$title == title))
@@ -15,10 +12,7 @@ milestone_exists <- function(title, owner, repo) {
 # look up number for milestone that exists - return null if it can't be found
 look_up_existing_milestone_number <- function(params) {
   # list milestones
-  milestones <- gh::gh("GET /repos/{owner}/{repo}/milestones",
-    owner = params$owner,
-    repo = params$repo
-  )
+  milestones <- get_milestones(owner = params$owner, repo = params$repo)
 
   # try to get milestone number
   milestone <- sapply(milestones, function(milestone) {
@@ -61,11 +55,6 @@ get_milestone_number <- function(params) {
 
   milestone_number
 } # get_milestone_number
-
-
-get_milestones <- function(owner, repo) {
-  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo)
-}
 
 get_milestone_description <- function(title, milestones) {
   for (milestone in milestones) {

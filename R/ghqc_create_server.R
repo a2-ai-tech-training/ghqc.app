@@ -27,6 +27,13 @@ ghqc_create_server <- function(id) {
       color = "white"
     )
 
+    start_time <- Sys.time()
+
+    log_message <- function(message) {
+      cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
+    }
+
+
     output$sidebar <- renderUI({
       tagList(
         textInput(ns("milestone"), "Name QC Item List (github milestone)", width = "100%"),
@@ -41,7 +48,10 @@ ghqc_create_server <- function(id) {
           "Select assignees for QC",
           choices = "",
           multiple = TRUE,
-          width = "100%"
+          width = "100%",
+          options = list(
+            closeAfterSelect = TRUE
+          )
         ),
         uiOutput(ns("tree_list_ui")),
       )
@@ -70,6 +80,8 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
+      log_message(paste("Connecting to organization:", get_organization()))
+      log_message(paste("Retrieving assignees:", get_members_df(get_organization())))
       updateSelectizeInput(
         session,
         "assignees",
@@ -91,13 +103,15 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         )
       )
+      log_message(paste("Connected to organization and retrieved assignees from:", get_organization()))
     })
 
 
     output$tree_list_ui <- renderUI({
       files_tree_df <- convert_dir_to_df(dir_path = find_root_directory())
+      log_message(paste("Creating file tree for:", find_root_directory()))
 
-      treeInput(
+      tree <- treeInput(
         inputId = ns("tree_list"),
         label = div(
           "Select files for QC",
@@ -107,6 +121,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
         returnValue = "text", # neither id or all gives pathing
         closeDepth = 0
       )
+
+      log_message(paste("Created file tree for:", find_root_directory()))
+
+      return(tree)
+
     })
 
 
@@ -165,7 +184,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     observeEvent(input$create_qc_items, {
-       req(modal_check())
+      req(modal_check())
 
       if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
@@ -192,7 +211,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
                    milestone = input$milestone,
                    description = input$milestone_description,
                    files = qc_items())
-      create_checklists("test.yaml")
+      create_checklists("test.yaml") # added logging to fxn
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
 

@@ -3,7 +3,7 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
   issue_comments <- get_issue_comments(owner, repo, issue_number)
   issue_events <- get_issue_events(owner, repo, issue_number)
-  milestones <- get_milestones(owner, repo)
+  milestones <- get_all_milestone_objects(owner, repo)
   timeline <- get_issue_timeline(owner, repo, issue_number)
 
   # issue

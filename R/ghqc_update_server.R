@@ -20,7 +20,7 @@ ghqc_update_server <- function(id) {
       log_message(paste("Connecting to organization:", get_organization()))
       log_message(paste("Retrieving open milestones from repo:", get_current_repo()))
 
-      milestone_list <- get_open_milestones(org = get_organization(), repo = get_current_repo())
+      milestone_list <- get_open_milestone_names(org = get_organization(), repo = get_current_repo())
       milestone_list <- rev(milestone_list)
 
       updateSelectInput(

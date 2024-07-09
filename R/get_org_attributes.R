@@ -27,22 +27,20 @@ get_members_df <- function(org) {
   purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
 }
 
-
 get_repos <- function(org) {
   repos <- gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
   purrr::map_chr(repos, "name")
 }
 
-get_milestones <- function(owner, repo) {
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .limit = Inf)
-  purrr::map_chr(milestones, "title")
+get_open_milestone_objects <- function(owner, repo) {
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
 }
 
-get_milestone_objects <- function(owner, repo) {
-  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .limit = Inf)
+get_all_milestone_objects <- function(owner, repo) {
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "all", .limit = Inf)
 }
 
-get_open_milestones <- function(org, repo) {
+get_open_milestone_names <- function(org, repo) {
   milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = org, repo = repo, state = "open", .limit = Inf)
   purrr::map_chr(milestones, "title")
 }

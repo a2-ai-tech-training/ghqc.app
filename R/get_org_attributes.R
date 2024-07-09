@@ -14,7 +14,7 @@ get_members_list <- function(org) {
     members <- tryCatch(
       {
         members_api_call <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
-        cat("Retrieved organization members from page", page, "successfully.\n")
+        #cat("Retrieved organization members from page", page, "successfully.\n")
         members_api_call
       },
       error = function(e) {
@@ -33,7 +33,7 @@ get_members_list <- function(org) {
   }
 
   members_list <- purrr::map(all_members, ~ get_names_and_usernames(.x$login))
-  cat("Retrieved names from member usernames.")
+  #cat("Retrieved names from member usernames.")
   return(members_list)
 }
 
@@ -48,7 +48,7 @@ get_repos <- function(org) {
       gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
     },
     error = function(e) {
-      cat("An error occcured")
+      cat("An error occcured:", e$message, "\n")
     }
   )
 

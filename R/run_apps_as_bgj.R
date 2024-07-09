@@ -1,3 +1,4 @@
+#' @export
 run_app_in_background <- function(app_name, pkg_path = "~/ghqc") {
   script <- tempfile("background", tmpdir = getwd(), fileext = ".R")
 

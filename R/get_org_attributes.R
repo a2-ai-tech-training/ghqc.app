@@ -8,11 +8,28 @@ get_names_and_usernames <- function(username) {
 
 get_members_list <- function(org) {
   page <- 1
-  # start with empty list of members
   all_members <- list()
 
   repeat {
-    members <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
+    tryCatch(
+      {
+        members <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
+        cat("Retrieved organization members successfully.")
+        return(members)
+      },
+      error = function(e) {
+        cat("Error retrieving members from organization", org, "\n", "on page", page, "\n", e$message)
+        return(NULL)
+      },
+      warning = function(w) {
+        cat("Warning while retrieving members from organization", org, "\n", "on page", page, "\n", w$message)
+      },
+      finally = {
+        cat("Execution of get_members_list completed.\n")
+      }
+    )
+
+    #members <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
     if (length(members) == 0) break
     # concatenate list of members as you loop through
     all_members <- c(all_members, members)
@@ -27,9 +44,16 @@ get_members_df <- function(org) {
   purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
 }
 
-
 get_repos <- function(org) {
-  repos <- gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
+  repos <- tryCatch(
+    {
+      gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
+    },
+    error = function(e) {
+      cat("An error occcured")
+    }
+  )
+
   purrr::map_chr(repos, "name")
 }
 

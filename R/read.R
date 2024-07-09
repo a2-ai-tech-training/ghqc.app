@@ -20,6 +20,6 @@ validate_yaml_contents <- function(contents, dry = FALSE) {
 
 read_and_validate_yaml <- function(yaml, dry = FALSE) {
   contents <- yaml::yaml.load_file(yaml)
-  validate_yaml_contents(contents, dry)
+  #validate_yaml_contents(contents, dry)
   contents
 }

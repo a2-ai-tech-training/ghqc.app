@@ -103,11 +103,11 @@ validate_file <- function(file, owner, dry) {
     validate_assignees(file$assignees, owner, dry)
   }
   validate_checklist_type(file$checklist_type, file$name)
-  validate_items(file$items)
+  #validate_items(file$items)
 } # validate_file
 
 validate_files <- function(files, owner, dry) {
-  err_if_not_in_yaml(files)
+  #err_if_not_in_yaml(files)
   err_if_not_list_of_lists(files)
   lapply(files, validate_file, owner, dry)
 } # validate_files

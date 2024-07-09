@@ -1,9 +1,3 @@
-start_time <- Sys.time()
-
-log_message <- function(message) {
-  cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
-}
-
 error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
 
@@ -42,7 +36,7 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
   # get issue
   issue <- get_issue(owner, repo, issue_number)
 
-  log_message(glue::glue("Creating comment body for issue #{issue_number} in {owner}/{repo}"))
+  cat(glue::glue("Creating comment body for issue #{issue_number} in {owner}/{repo}"), "\n")
 
   qc_commit <- {
     comments <- get_comments(owner, repo, issue_number)
@@ -115,14 +109,14 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
                              "* current QC request commit: {last_commit}",
                              .trim = FALSE
                              )
-  log_message(glue::glue("Comment body created for issue #{issue_number} with assignees: {paste(assignees_vec, collapse = ', ')}"))
+  cat(glue::glue("Comment body created for issue #{issue_number} with assignees: {paste(assignees_vec, collapse = ', ')}"), "\n")
 
   as.character(comment_body)
 }
 
 #' @export
 post_comment <- function(owner, repo, issue_number, body) {
-  log_message(glue::glue("Posting comment to issue #{issue_number} in {owner}/{repo}"))
+  cat(glue::glue("Posting comment to issue #{issue_number} in {owner}/{repo}"), "\n")
 
   comment <- gh::gh("POST /repos/:owner/:repo/issues/:issue_number/comments",
                     owner = owner,
@@ -130,12 +124,12 @@ post_comment <- function(owner, repo, issue_number, body) {
                     issue_number = issue_number,
                     body = body
   )
-  log_message(glue::glue("Comment posted to issue #{issue_number} in {owner}/{repo}"))
+  cat(glue::glue("Comment posted to issue #{issue_number} in {owner}/{repo}"), "\n")
 
 }
 
 add_fix_comment <- function(owner, repo, issue_number, message = NULL, diff = FALSE, force = FALSE, compare_to_first = TRUE) {
-  log_message(glue::glue("Adding fix comment to issue #{issue_number} in {owner}/{repo}"))
+  cat(glue::glue("Adding fix comment to issue #{issue_number} in {owner}/{repo}"), "\n")
 
   body <- create_comment_body(owner = owner,
                               repo = repo,
@@ -147,7 +141,7 @@ add_fix_comment <- function(owner, repo, issue_number, message = NULL, diff = FA
 
   post_comment(owner, repo, issue_number, body)
 
-  log_message(glue::glue("Fix comment added to issue #{issue_number} in {owner}/{repo}"))
+  cat(glue::glue("Fix comment added to issue #{issue_number} in {owner}/{repo}"), "\n")
 
 }
 

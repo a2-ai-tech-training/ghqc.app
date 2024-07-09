@@ -27,9 +27,12 @@ ghqc_create_server <- function(id) {
       color = "white"
     )
 
+    start_time <- Sys.time()
+
     log_message <- function(message) {
-      cat(Sys.time(), "-", message, "\n")
+      cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
     }
+
 
     output$sidebar <- renderUI({
       tagList(
@@ -97,6 +100,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         )
       )
+      log_message(paste("Connected to organization and retrieved assignees from:", get_organization()))
     })
 
 
@@ -104,7 +108,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       files_tree_df <- convert_dir_to_df(dir_path = find_root_directory())
       log_message(paste("Creating file tree for:", find_root_directory()))
 
-      treeInput(
+      tree <- treeInput(
         inputId = ns("tree_list"),
         label = div(
           "Select files for QC",
@@ -114,6 +118,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
         returnValue = "text", # neither id or all gives pathing
         closeDepth = 0
       )
+
+      log_message(paste("Created file tree for:", find_root_directory()))
+
+      return(tree)
+
     })
 
 

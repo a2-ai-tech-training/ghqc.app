@@ -21,12 +21,13 @@ ghqc_update_ui <- function(id) {
     ),
     div(
       id = ns("main_container"),
-        gadgetTitleBar(
-          title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "Update QC Shiny Tool"),
-          right = actionButton(ns("reset"), "Reset", class = "btn-sm")
-        ),
-        miniContentPanel(
-          div(id = ns("center_content"),
+      gadgetTitleBar(
+        title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "Update QC Shiny Tool"),
+        right = actionButton(ns("reset"), "Reset", class = "btn-sm")
+      ),
+      miniContentPanel(
+        div(
+          id = ns("center_content"),
           selectInput(ns("select_milestone"), "Select QC Item List (github milestone)", choices = "", multiple = FALSE),
           selectInput(ns("select_issue"), "Select QC Item (github issue)", choices = "", multiple = FALSE),
           textAreaInput(ns("message"), "Message", ""),

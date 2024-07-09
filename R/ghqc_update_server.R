@@ -16,52 +16,38 @@ ghqc_update_server <- function(id) {
       cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
     }
 
-    observe({
-      log_message(paste("Connecting to organization:", get_organization()))
-      log_message(paste("Retrieving open milestones from repo:", get_current_repo()))
+    org <- reactive({
+      get_organization()
+    })
 
-      milestone_list <- get_open_milestone_names(org = get_organization(), repo = get_current_repo())
+    repo <- reactive({
+      get_current_repo()
+    })
+
+    observe({
+      log_message(paste("Connecting to organization:", org()))
+      log_message(paste("Retrieving open milestones from repo:", repo()))
+
+      milestone_list <- get_open_milestone_names(org = org(), repo = repo())
       milestone_list <- rev(milestone_list)
 
       updateSelectInput(
         session,
         "select_milestone",
-        choices =  c("All QC Items", milestone_list),
+        choices = c("All QC Items", milestone_list),
       )
-      log_message(paste("Connected to organization and retrieved open milestones from repo:", get_current_repo()))
+      log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
     })
 
 
     observe({
       req(input$select_milestone)
 
-      if(input$select_milestone == "All QC Items") {
-        log_message(paste("Retrieving all issues from repo:", get_current_repo()))
+      if (input$select_milestone == "All QC Items") {
+        log_message(paste("Retrieving all issues from repo:", repo()))
 
-        all_issues <- get_all_issues_in_repo(owner = get_organization(), repo = get_current_repo())
-        issues_df <- map_df(all_issues, ~{
-          tibble(
-            number = .x$number,
-            title = .x$title,
-            state = .x$state
-          )
-        })
-        issues_choices <- issues_df %>%
-          mutate(state = case_when(
-            state == "open" ~ "Open Items",
-            state == "closed" ~ "Closed Items"
-          )) %>%
-          split(.$state) %>%
-          rev() %>%
-            lapply(function(x) {
-              setNames(nm = paste0("Item ", x$number, ": ", x$title))
-          })
-        log_message(paste("Retrieved all issues from repo:", get_current_repo()))
-      } else{
-        log_message(paste("Retrieving all issues from milestone:", input$select_milestone))
-
-        issues_by_milestone <- get_all_issues_in_milestone(owner = get_organization(), repo = get_current_repo(), milestone_name = input$select_milestone)
-        issues_df <- map_df(issues_by_milestone, ~{
+        all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
+        issues_df <- map_df(all_issues, ~ {
           tibble(
             number = .x$number,
             title = .x$title,
@@ -78,7 +64,29 @@ ghqc_update_server <- function(id) {
           lapply(function(x) {
             setNames(nm = paste0("Item ", x$number, ": ", x$title))
           })
-        log_message(paste("Retrieved all issues from milestone:", input$select_milestone))
+        log_message(paste("Retrieved", length(all_issues), "issues from repo:", repo()))
+      } else {
+        log_message(paste("Retrieving all issues from milestone:", input$select_milestone))
+
+        issues_by_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$select_milestone)
+        issues_df <- map_df(issues_by_milestone, ~ {
+          tibble(
+            number = .x$number,
+            title = .x$title,
+            state = .x$state
+          )
+        })
+        issues_choices <- issues_df %>%
+          mutate(state = case_when(
+            state == "open" ~ "Open Items",
+            state == "closed" ~ "Closed Items"
+          )) %>%
+          split(.$state) %>%
+          rev() %>%
+          lapply(function(x) {
+            setNames(nm = paste0("Item ", x$number, ": ", x$title))
+          })
+        log_message(paste("Retrieved", length(issues_by_milestone), "issues from milestone:", input$select_milestone))
       }
 
       updateSelectInput(
@@ -96,7 +104,7 @@ ghqc_update_server <- function(id) {
       list(issue_number = issue_number, issue_title = issue_title)
     })
 
-    #https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
+    # https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
     modal_check <- eventReactive(c(input$preview, input$post), {
       req(issue_parts())
       uncommitted_git_files <- git_status()$file
@@ -105,8 +113,8 @@ ghqc_update_server <- function(id) {
 
       gh_issue_status <- if (input$compare == "prev") {
         check_if_there_are_update_comments(
-          owner = get_organization(),
-          repo = get_current_repo(),
+          owner = org(),
+          repo = repo(),
           issue_number = issue_parts()$issue_number
         )
       } else {
@@ -137,7 +145,7 @@ ghqc_update_server <- function(id) {
         ))
       } else {
         preview_trigger(TRUE)
-        }
+      }
     })
 
     observeEvent(input$post, {
@@ -168,13 +176,14 @@ ghqc_update_server <- function(id) {
         input$compare == "prev" ~ FALSE
       )
 
-      html_file_path <- create_gfm_file(create_comment_body(get_organization(),
-                                                            get_current_repo(),
-                                                            message = input$message,
-                                                            issue_number = issue_parts()$issue_number,
-                                                            diff = input$show_diff,
-                                                            compare_to_first = compare_to_first,
-                                                            force = TRUE))
+      html_file_path <- create_gfm_file(create_comment_body(org(),
+        repo(),
+        message = input$message,
+        issue_number = issue_parts()$issue_number,
+        diff = input$show_diff,
+        compare_to_first = compare_to_first,
+        force = TRUE
+      ))
       custom_html <- readLines(html_file_path, warn = FALSE) %>% paste(collapse = "\n")
 
 
@@ -195,15 +204,16 @@ ghqc_update_server <- function(id) {
         input$compare == "prev" ~ FALSE
       )
 
-      add_fix_comment(get_organization(),
-                                 get_current_repo(),
-                                 message = input$message,
-                                 issue_number = issue_parts()$issue_number,
-                                 diff = input$show_diff,
-                                 compare_to_first = compare_to_first,
-                                 force = TRUE)
+      add_fix_comment(org(),
+        repo(),
+        message = input$message,
+        issue_number = issue_parts()$issue_number,
+        diff = input$show_diff,
+        compare_to_first = compare_to_first,
+        force = TRUE
+      )
 
-      issue <- get_issue(get_organization(), get_current_repo(), issue_parts()$issue_number)
+      issue <- get_issue(org(), repo(), issue_parts()$issue_number)
       issue_url <- issue$html_url
 
       showModal(modalDialog(

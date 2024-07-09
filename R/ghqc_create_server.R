@@ -48,7 +48,10 @@ ghqc_create_server <- function(id) {
           "Select assignees for QC",
           choices = "",
           multiple = TRUE,
-          width = "100%"
+          width = "100%",
+          options = list(
+            closeAfterSelect = TRUE
+          )
         ),
         uiOutput(ns("tree_list_ui")),
       )

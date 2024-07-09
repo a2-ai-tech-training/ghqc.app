@@ -47,7 +47,7 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
     )
 
     # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)
-    modified_name <- gsub("([^a-zA-Z0-9])", "\\1<wbr>", generate_input_id(name=name))
+    modified_name <- gsub("([^a-zA-Z0-9])", "\\1<wbr>", generate_input_id(name = name))
 
     ul <- tagAppendChild(ul, div(
       class = "grid-items",
@@ -130,7 +130,7 @@ extract_file_data <- function(input, items) {
       return(NULL)
     }
 
-    file_data <- append(file_data, list(create_file_data_structure(file_name = generate_input_id(name=name), assignees = assignee_input_value, checklist_type = checklist_input_value)))
+    file_data <- append(file_data, list(create_file_data_structure(file_name = generate_input_id(name = name), assignees = assignee_input_value, checklist_type = checklist_input_value)))
   }
 
   return(file_data)
@@ -210,4 +210,3 @@ find_root_directory <- function() {
 
   return(project_root)
 }
-

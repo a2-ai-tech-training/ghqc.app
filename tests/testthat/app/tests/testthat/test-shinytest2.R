@@ -3,7 +3,7 @@ library(shinytest2)
 library(ghqc)
 
 test_that("{shinytest2} recording: convert_dir_to_df renders from treeInput", {
-  app <- AppDriver$new(variant = platform_variant(),name = "empty_tree", height = 728, width = 609)
+  app <- AppDriver$new(variant = platform_variant(), name = "empty_tree", height = 728, width = 609)
   app$set_inputs(`ghqc_create_app-assignees` = character(0), wait_ = FALSE)
   app$set_inputs(`ghqc_create_app-milestone_description` = "", wait_ = FALSE)
   app$set_inputs(`ghqc_create_app-milestone` = "", wait_ = FALSE)
@@ -17,8 +17,10 @@ test_that("{shinytest2} recording: convert_dir_to_df renders from treeInput", {
 })
 
 test_that("{shinytest2} recording: render_selected_list renders from treeInput and tree_paths.js", {
-  app <- AppDriver$new(variant = platform_variant(), name = "file_selected", height = 727,
-      width = 609)
+  app <- AppDriver$new(
+    variant = platform_variant(), name = "file_selected", height = 727,
+    width = 609
+  )
   app$set_inputs(`ghqc_create_app-assignees` = character(0), wait_ = FALSE)
   app$set_inputs(`ghqc_create_app-milestone_description` = "", wait_ = FALSE)
   app$set_inputs(`ghqc_create_app-milestone` = "", wait_ = FALSE)
@@ -34,8 +36,10 @@ test_that("{shinytest2} recording: render_selected_list renders from treeInput a
 
 
 test_that("{shinytest2} recording: file_info button works", {
-  app <- AppDriver$new(variant = platform_variant(), name = "file_info", height = 727,
-      width = 609)
+  app <- AppDriver$new(
+    variant = platform_variant(), name = "file_info", height = 727,
+    width = 609
+  )
   app$set_inputs(`ghqc_create_app-assignees` = character(0), wait_ = FALSE)
   app$set_inputs(`ghqc_create_app-milestone_description` = "", wait_ = FALSE)
   app$set_inputs(`ghqc_create_app-milestone` = "", wait_ = FALSE)

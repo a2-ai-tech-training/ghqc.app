@@ -15,7 +15,7 @@ ghqc_create_ui <- function(id) {
       tags$script(type = "module", src = "ghqc/js/adjust_grid.js"),
       tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js"),
       tags$script(type = "module", src = "ghqc/js/tree_paths.js")
-      ),
+    ),
     waiter_preloader(
       html = tagList(
         spin_1(),

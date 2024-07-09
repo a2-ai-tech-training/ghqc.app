@@ -3,7 +3,7 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
   issue_comments <- get_issue_comments(owner, repo, issue_number)
   issue_events <- get_issue_events(owner, repo, issue_number)
-  milestones <- get_milestones(owner, repo)
+  milestones <- get_all_milestone_objects(owner, repo)
   timeline <- get_issue_timeline(owner, repo, issue_number)
 
   # issue
@@ -130,7 +130,7 @@ get_summary_table_col_vals <- function(issue) {
   file_path <- issue$title
   author <- ifelse(!is.null(metadata$author), metadata$author, "NA")
   qc_type <- ifelse(!is.null(metadata$qc_type), metadata$qc_type, "NA")
-  file_name <- basename(file_path)
+  #file_name <- basename(file_path)
   #git_sha <- ifelse(!is.null(metadata$git_sha), metadata$git_sha, NA)
   qcer <- ifelse(length(issue$assignees) > 0, issue$assignees[[1]], "NA")
   issue_closer <- ifelse(!is.null(close_data$closer), close_data$closer, "NA")
@@ -140,7 +140,7 @@ get_summary_table_col_vals <- function(issue) {
     file_path = file_path,
     author = author,
     qc_type = qc_type,
-    file_name = file_name,
+    #file_name = file_name,
     #git_sha = git_sha,
     qcer = qcer,
     issue_closer = issue_closer,
@@ -157,29 +157,29 @@ get_summary_df <- function(issues) {
   df <- dplyr::bind_rows(list_of_vectors)
 }
 
-get_summary_table <- function(df) {
-  ft <- flextable::flextable(df) %>%
-    set_header_labels(file_path = "File Path",
-                      author = "Author",
-                      qc_type = "QC Type",
-                      file_name = "File Name",
-                      qcer = "QCer",
-                      issue_closer = "Issue Closer",
-                      close_date = "Close Date") %>%
-    autofit() %>%
-    theme_vanilla()
-  ft
-}
 
 create_big_section <- function(section_title, contents) {
   glue::glue("# {section_title}\n{contents}\n\n\\newpage\n\n", .trim = FALSE)
 } # create_section
+
+insert_breaks <- function(text, width) {
+  sapply(text, function(x) {
+    if (nchar(x) > width) {
+      # insert spaces into long words
+      paste(strsplit(x, paste0("(?<=.{", width, "})"), perl = TRUE)[[1]], collapse = " ")
+    } else {
+      x
+    }
+  })
+}
 
 #' @export
 generate_qc_report <- function(milestone_name, owner = get_organization(), repo = get_current_repo(), pdf_name = NULL) {
   # issues
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
   summary_df <- get_summary_df(issues)
+  # wrap file paths
+  summary_df$file_path <- insert_breaks(summary_df$file_path, 20)
   summary_csv <- tempfile(fileext = ".csv")
   suppressMessages({withr::defer_parent(fs::file_delete(summary_csv))})
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
@@ -256,15 +256,23 @@ generate_qc_report <- function(milestone_name, owner = get_organization(), repo 
   set_header_labels(file_path = \"File Path\",
   author = \"Author\",
   qc_type = \"QC Type\",
-  file_name = \"File Name\",
+  # file_name = \"File Name\",
   # git_sha = \"Git SHA\",
   qcer = \"QCer\",
   issue_closer = \"Issue Closer\",
   close_date = \"Close Date\") %>%
+
   set_table_properties(width = 1.0) %>% # , align = \"left\"
-  width(j = seq_along(col_widths), width = col_widths) %>%
-  fontsize(size = 9, part = 'all') %>%
+  #width(j = seq_along(col_widths), width = col_widths) %>%
+
+  padding(padding = 35, part = \"all\") %>%
+  fit_to_width(9) %>%
+  #fontsize(size = 9, part = 'all') %>%
   theme_vanilla()
+
+  ft <- ft %>% autofit()
+
+  ft <- width(ft, width = dim(ft)$widths*6.5 /(flextable_dim(ft)$widths))
   ft\n```\n\\newpage\n",
     .trim = FALSE)
 

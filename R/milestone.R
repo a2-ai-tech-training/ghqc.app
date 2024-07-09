@@ -3,7 +3,7 @@
 # check if a milestone exists
 milestone_exists <- function(title, owner, repo) {
   # list milestones
-  milestones <- get_milestones(owner, repo)
+  milestones <- get_all_milestone_objects(owner, repo)
 
   # return true if any matches
   any(sapply(milestones, function(milestone) milestone$title == title))
@@ -12,7 +12,7 @@ milestone_exists <- function(title, owner, repo) {
 # look up number for milestone that exists - return null if it can't be found
 look_up_existing_milestone_number <- function(params) {
   # list milestones
-  milestones <- get_milestones(owner = params$owner, repo = params$repo)
+  milestones <- get_all_milestone_objects(owner = params$owner, repo = params$repo)
 
   # try to get milestone number
   milestone <- sapply(milestones, function(milestone) {

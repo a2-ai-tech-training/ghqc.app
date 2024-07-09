@@ -1,0 +1,14 @@
+"NONMEM control streams ($EST or $SIM) (both .mod and .ctl)":
+  - $PROB decription corresponds to current run number and model description.
+  - $DATA uses the correct dataset.
+  - $INPUT reflects the correct order of variable names consistent with the dataset and uses DROP appropriately for character columns.
+  - ADVAN and TRANS selections reflect model purpose and parameterisation.
+  - Model parameters (e.g. THETA, ETA, SIGMA) are numbered correctly and used consistently.
+  - The scale value corresponds to the sampling compartment volume e.g. S2=V2, S2=V2/1000.
+  - Log transformations are appropriately applied.
+  - Derivations are performed correctly, e.g. AUC.
+  - If $PRED used, equations are defined correctly including link between independent and dependent variables.
+  - If $PK is used, required PK model parameters and inter-individual variance models are defined correctly.
+  - If $DES is used, all compartments and differential equations are defined correctly.
+  - If performing $SIM, the correct MSF file is used or parameters are fixed from the correct final model.
+  - Model ran without critical errors.

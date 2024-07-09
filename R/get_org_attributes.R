@@ -8,18 +8,33 @@ get_names_and_usernames <- function(username) {
 
 get_members_list <- function(org) {
   page <- 1
-  # start with empty list of members
   all_members <- list()
 
   repeat {
-    members <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
+    members <- tryCatch(
+      {
+        members_api_call <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
+        #cat("Retrieved organization members from page", page, "successfully.\n")
+        members_api_call
+      },
+      error = function(e) {
+        cat("Error retrieving members from organization", org, "\n", "on page", page, "\n", e$message, "\n")
+      },
+      warning = function(w) {
+        cat("Warning while retrieving members from organization", org, "\n", "on page", page, "\n", w$message, "\n")
+      }
+    )
+
+    #members <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
     if (length(members) == 0) break
     # concatenate list of members as you loop through
     all_members <- c(all_members, members)
     page <- page + 1
   }
 
-  purrr::map(all_members, ~ get_names_and_usernames(.x$login))
+  members_list <- purrr::map(all_members, ~ get_names_and_usernames(.x$login))
+  #cat("Retrieved names from member usernames.")
+  return(members_list)
 }
 
 get_members_df <- function(org) {
@@ -27,18 +42,28 @@ get_members_df <- function(org) {
   purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
 }
 
-
 get_repos <- function(org) {
-  repos <- gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
+  repos <- tryCatch(
+    {
+      gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
+    },
+    error = function(e) {
+      cat("An error occcured:", e$message, "\n")
+    }
+  )
+
   purrr::map_chr(repos, "name")
 }
 
-get_milestones <- function(org, repo) {
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = org, repo = repo, .limit = Inf)
-  purrr::map_chr(milestones, "title")
+get_open_milestone_objects <- function(owner, repo) {
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
 }
 
-get_open_milestones <- function(org, repo) {
+get_all_milestone_objects <- function(owner, repo) {
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "all", .limit = Inf)
+}
+
+get_open_milestone_names <- function(org, repo) {
   milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = org, repo = repo, state = "open", .limit = Inf)
   purrr::map_chr(milestones, "title")
 }
@@ -215,5 +240,18 @@ get_issues_info <- function() {
   issues_df <- issues_df %>% dplyr::filter(!is.na(milestone))
 
   return(issues_df)
+}
+
+get_milestone_url <- function(owner, repo, milestone_name) {
+  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
+
+  milestone <- gh::gh(
+    "GET /repos/:owner/:repo/milestones/:milestone_number",
+    owner = owner,
+    repo = repo,
+    milestone_number = milestone_number
+  )
+
+  milestone$html_url
 }
 

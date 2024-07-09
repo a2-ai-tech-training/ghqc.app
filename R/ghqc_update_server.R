@@ -28,7 +28,7 @@ ghqc_update_server <- function(id) {
       log_message(paste("Connecting to organization:", org()))
       log_message(paste("Retrieving open milestones from repo:", repo()))
 
-      milestone_list <- get_open_milestones(org = org(), repo = repo())
+      milestone_list <- get_open_milestone_names(org = org(), repo = repo())
       milestone_list <- rev(milestone_list)
 
       updateSelectInput(
@@ -211,8 +211,12 @@ ghqc_update_server <- function(id) {
                                  compare_to_first = compare_to_first,
                                  force = TRUE)
 
+      issue <- get_issue(get_organization(), get_current_repo(), issue_parts()$issue_number)
+      issue_url <- issue$html_url
+
       showModal(modalDialog(
-        "Update comment posted successfully."
+        tags$p("Update comment posted successfully."),
+        tags$a(href = issue_url, "Click here to visit the QC Checklist on Github", target = "_blank")
       ))
     })
 

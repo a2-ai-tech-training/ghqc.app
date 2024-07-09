@@ -64,11 +64,11 @@ err_if_file_attr_missing <- function(file) {
                  x = file)
   } # name
 
-  if (is.null(file$items)) {
-    rlang::abort(message = glue::glue("file {file$name} missing items attribute"),
-                 class = "input_error",
-                 x = file)
-  } # items
+  # if (is.null(file$items)) {
+  #   rlang::abort(message = glue::glue("file {file$name} missing items attribute"),
+  #                class = "input_error",
+  #                x = file)
+ # } # items
 }
 
 err_if_not_list_of_lists <- function(files) {

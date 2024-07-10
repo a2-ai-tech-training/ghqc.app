@@ -1,13 +1,3 @@
-#' @export
-get_checklists <- function() {
-  checklists_path <- system.file("checklists", package = "ghqc")
-  yaml_checklists <- list.files(checklists_path, pattern = "\\.ya?ml$", full.names = TRUE)
-  checklists_data <- sapply(yaml_checklists, function(yaml_checklist) {
-    yaml::read_yaml(yaml_checklist)
-  }, USE.NAMES = FALSE)
-  return(checklists_data)
-}
-
 format_issue_body <- function(checklist_type, file_path) {
   checklists <- get_checklists()
   file_items <- checklists[[checklist_type]]

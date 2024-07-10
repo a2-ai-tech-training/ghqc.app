@@ -55,6 +55,19 @@ get_repos <- function(org) {
   purrr::map_chr(repos, "name")
 }
 
+get_open_milestone_objects <- function(owner, repo) {
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
+}
+
+get_all_milestone_objects <- function(owner, repo) {
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "all", .limit = Inf)
+}
+
+get_open_milestone_names <- function(org, repo) {
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = org, repo = repo, state = "open", .limit = Inf)
+  purrr::map_chr(milestones, "title")
+}
+
 #' @export
 get_current_repo <- function() {
   basename(gert::git_find())
@@ -229,9 +242,16 @@ get_issues_info <- function() {
   return(issues_df)
 }
 
-#' @export
-list_repos <- function(org) {
-  repos <- gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
-  return(lapply(repos, function(repo) repo$name))
+get_milestone_url <- function(owner, repo, milestone_name) {
+  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
+
+  milestone <- gh::gh(
+    "GET /repos/:owner/:repo/milestones/:milestone_number",
+    owner = owner,
+    repo = repo,
+    milestone_number = milestone_number
+  )
+
+  milestone$html_url
 }
 

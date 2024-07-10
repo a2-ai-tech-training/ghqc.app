@@ -94,9 +94,16 @@ div[id$="-main_container"] {
   background-color: transparent; /* modal ui changes workaround: https://stackoverflow.com/questions/63938194/r-shiny-app-width-shrinks-after-i-close-the-modal */
 }
 
+
+
 .selectize-input {
   word-wrap: break-word;
   word-break: break-word;
+}
+
+/*https://github.com/selectize/selectize.js/issues/377#issuecomment-189724525 different ways to hide overflow */
+.selectize-input .item {
+  max-width: 90%;
 }
 
 .selectize-dropdown {

@@ -69,22 +69,19 @@ ghqc_create_server <- function(id) {
       )
     })
 
-
     observeEvent(input$file_info, {
+      checklists <- get_checklists()
       showModal(
         modalDialog(
           "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
           "See below for a reference of all types and their items.",
           br(),
           br(),
-          selectInput(ns("checklist_info"), NULL, choices = names(get_checklists())),
+          selectInput(ns("checklist_info"), NULL, choices = names(checklists)),
           renderUI({
-            info <- get_checklists()[[input$checklist_info]]
-            tags$ul(
-              lapply(info, function(item) {
-                tags$li(item)
-              })
-            )
+            info <- checklists[[input$checklist_info]]
+            list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+            tags$ul(list)
           }),
           easyClose = TRUE
         )

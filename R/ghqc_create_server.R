@@ -192,11 +192,14 @@ return "<div><strong>" + escape(item.username) + "</div>"
       git_sync_status <- git_ahead_behind()
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
 
+      issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+
       determine_modal_message(
         selected_files = file_names,
         uncommitted_git_files = uncommitted_git_files,
         untracked_selected_files = untracked_selected_files,
-        git_sync_status = git_sync_status
+        git_sync_status = git_sync_status,
+        issues_in_milestone = issues_in_milestone
       )
     })
 

@@ -114,6 +114,18 @@ div[id$="-main_container"] {
   padding-left: 5px;
 }
 
+.inline-selectize {
+  display: flex;
+  gap: 10px;
+}
+
+.shiny-panel-conditional{
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+
 .grid-container-depth-0 {
   display: grid;
   align-items: center;

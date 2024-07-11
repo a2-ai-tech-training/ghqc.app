@@ -1,6 +1,9 @@
-error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_number) {
+get_init_qc_commit <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
+  get_metadata(issue$body)$git_sha
+}
 
+error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_number) {
   qc_commit <- {
     # get comments
     comments <- get_comments(owner, repo, issue_number)
@@ -14,7 +17,7 @@ error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_num
     }
     # else, if not updates, get sha from original qc request
     else {
-      get_metadata(issue$body)$git_sha
+      get_init_qc_commit(owner, repo, issue_number)
     }
   }
 

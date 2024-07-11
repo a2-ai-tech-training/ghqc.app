@@ -1,7 +1,7 @@
-get_init_qc_commit <- function(owner, repo, issue_number) {
-  issue <- get_issue(owner, repo, issue_number)
-  get_metadata(issue$body)$git_sha
-}
+# get_init_qc_commit <- function(owner, repo, issue_number) {
+#   issue <- get_issue(owner, repo, issue_number)
+#   get_metadata(issue$body)$git_sha
+# }
 
 # error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_number) {
 #   qc_commit <- {
@@ -35,7 +35,13 @@ get_init_qc_commit <- function(owner, repo, issue_number) {
 # } # error_if_repo_unchanged_since_last_qc_request
 
 #' @export
-create_comment_body <- function(owner, repo, issue_number, message = NULL, diff = FALSE, comparator = "original", reference = "previous") {
+create_comment_body <- function(owner,
+                                repo,
+                                issue_number,
+                                message = NULL,
+                                diff = FALSE,
+                                comparator_commit = "original",
+                                reference_commit = "previous") {
   # get issue
   issue <- get_issue(owner, repo, issue_number)
 
@@ -57,26 +63,31 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
     else glue::glue("{message}\n\n\n")
   }
 
+  # get vals if default
+  if (comparator_commit == "original" && reference_commit == "previous") {
+    # reference_commit is most recent commit
+    reference_commit <- gert::git_log(max = 1)$commit
+    # comparator_commit is original qc commit
+    comparator_commit <- get_metadata(issue$body)$git_sha
+  }
+
+  # get script contents
+  script_contents <- get_script_contents(issue$title, comparator_commit, reference_commit)
+  reference_script_hash <- digest::digest(script_contents$reference)
+  comparator_script_hash <- digest::digest(script_contents$comparator)
+
   # format diff
   diff <- {
     if (!diff) ""
 
     else {
-      # get vals if default
-      if (comparator == "original" && reference == "previous") {
-        # reference is most recent commit
-        reference <- gert::git_log(max = 1)$commit
-        # comparator is original qc commit
-        comparator <- get_metadata(issue$body)$git_sha
-      }
-
       # get context for diff
       context <- glue::glue(
-        "reference commit (previous version): {reference}\n
-        comparator commit (current version): {comparator}\n"
+        "reference commit (previous version): {reference_commit}\n
+        comparator commit (current version): {comparator_commit}\n"
       )
 
-      diff_formatted <- format_diff(issue$title, comparator, reference)
+      diff_formatted <- format_diff(script_content$comparator, script_content$reference)
       glue::glue("## File Difference\n",
                  "{context}\n",
                  "{diff_formatted}\n\n",)
@@ -88,10 +99,13 @@ create_comment_body <- function(owner, repo, issue_number, message = NULL, diff 
                              "{message_body}",
                              "{diff}",
                              "## Metadata\n",
-                             "* reference commit: {reference}\n",
-                             "* comparator commit: {comparator}\n",
+                             "* reference commit: {reference_commit}\n",
+                             "* reference script hash: {reference_script_hash}\n",
+                             "* comparator commit: {comparator_commit}\n",
+                             "* comparator script hash: {comparator_script_hash}\n",
                              .trim = FALSE
                              )
+
   cat(glue::glue("Comment body created for issue #{issue_number} with assignees: {paste(assignees_vec, collapse = ', ')}"), "\n")
 
   as.character(comment_body)
@@ -125,4 +139,3 @@ add_fix_comment <- function(owner, repo, issue_number, message = NULL, diff = FA
 
   cat(glue::glue("Update comment added to issue #{issue_number} in {owner}/{repo}"), "\n")
 }
-

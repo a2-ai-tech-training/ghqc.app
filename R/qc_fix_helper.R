@@ -137,7 +137,7 @@ format_diff_section <- function(diff_lines) {
   diff_with_line_numbers <- add_line_numbers(diff_cat)
 }
 
-format_diff <- function(file_path, reference, comparator) {
+get_script_contents <- function(file_path, reference, comparator) {
   # create copy
   copied_file <- name_file_copy(file_path)
   file.copy(file_path, copied_file)
@@ -149,6 +149,10 @@ format_diff <- function(file_path, reference, comparator) {
   reference_script <- read_file_at_commit(reference, file_path)
   comparator_script <- read_file_at_commit(comparator, file_path)
 
+  c(reference_script = reference_script, comparator_script = comparator_script)
+}
+
+format_diff <- function(reference_script, comparator_script) {
   # get diff
   diff_output <- diffobj::diffChr(reference_script, comparator_script, format = "raw", mode = "unified", pager = "off", disp.width = 200)
   diff_lines <- as.character(diff_output)

@@ -73,8 +73,8 @@ create_comment_body <- function(owner,
 
   # get script contents
   script_contents <- get_script_contents(issue$title, comparator_commit, reference_commit)
-  reference_script_hash <- digest::digest(script_contents$reference)
-  comparator_script_hash <- digest::digest(script_contents$comparator)
+  reference_script_hash <- digest::digest(script_contents$reference_script)
+  comparator_script_hash <- digest::digest(script_contents$comparator_script)
 
   # format diff
   diff <- {

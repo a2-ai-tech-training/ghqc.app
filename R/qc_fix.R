@@ -124,16 +124,22 @@ post_comment <- function(owner, repo, issue_number, body) {
   cat(glue::glue("Comment posted to issue #{issue_number} in {owner}/{repo}"), "\n")
 }
 
-add_fix_comment <- function(owner, repo, issue_number, message = NULL, diff = FALSE, force = FALSE, compare_to_first = TRUE) {
+add_fix_comment <- function(owner,
+                            repo,
+                            issue_number,
+                            message = NULL,
+                            diff = FALSE,
+                            comparator_commit = "original",
+                            reference_commit = "previous") {
   cat(glue::glue("Adding update comment to issue #{issue_number} in {owner}/{repo}"), "\n")
 
-  body <- create_comment_body(owner = owner,
-                              repo = repo,
-                              issue_number = issue_number,
-                              message = message,
-                              diff = diff,
-                              force = force,
-                              compare_to_first = compare_to_first)
+  body <- create_comment_body(owner,
+                              repo,
+                              issue_number,
+                              message,
+                              diff,
+                              comparator_commit,
+                              reference_commit)
 
   post_comment(owner, repo, issue_number, body)
 

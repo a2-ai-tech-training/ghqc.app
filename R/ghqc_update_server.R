@@ -39,33 +39,6 @@ ghqc_update_server <- function(id) {
       log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
     })
 
-    observe({
-      req(issue_parts()$issue_number)
-      ref_commits <- get_reference_df(issue_number = issue_parts()$issue_number)
-      ref_commits <- ref_commits %>%
-        split(.$date) %>%
-        rev() %>%
-        lapply(function(x) {
-          setNames(nm = x$display)
-        })
-
-      updateSelectizeInput(session, "ref_commits", choices = ref_commits)
-
-    })
-
-    observe({
-      req(issue_parts()$issue_number)
-      req(input$ref_commits)
-      comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
-                                        selected_reference_display = input$ref_commits)
-      comp_commits <- comp_commits %>%
-        split(.$date) %>%
-        rev() %>%
-        lapply(function(x) {
-          setNames(nm = x$display)
-        })
-      updateSelectizeInput(session, "comp_commits", choices = comp_commits)
-    })
 
     observe({
       req(input$select_milestone)
@@ -133,7 +106,7 @@ ghqc_update_server <- function(id) {
 
     # https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
     modal_check <- eventReactive(c(input$preview, input$post), {
-      req(issue_parts()$issue_title)
+      req(issue_parts())
       uncommitted_git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), issue_parts()$issue_title)
@@ -194,13 +167,13 @@ ghqc_update_server <- function(id) {
     })
 
     observe({
-      req(issue_parts()$issue_number)
+      req(issue_parts())
       req(preview_trigger())
       preview_trigger(FALSE)
 
       compare_to_first <- case_when(
         input$compare == "init" ~ TRUE,
-        input$compare == "comparators" ~ FALSE
+        input$compare == "prev" ~ FALSE
       )
 
       html_file_path <- create_gfm_file(create_comment_body(org(),
@@ -222,13 +195,13 @@ ghqc_update_server <- function(id) {
 
 
     observe({
-      req(issue_parts()$issue_number)
+      req(issue_parts())
       req(post_trigger())
       post_trigger(FALSE)
 
       compare_to_first <- case_when(
         input$compare == "init" ~ TRUE,
-        input$compare == "comparators" ~ FALSE
+        input$compare == "prev" ~ FALSE
       )
 
       add_fix_comment(org(),

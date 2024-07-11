@@ -37,7 +37,7 @@ extract_line_numbers <- function(text) {
   match <- stringr::str_match(text, "@@ ([^@]+) @@")[2]
   first_set <- stringr::str_match(match, "^\\s*(\\d+)(?:,(\\d+))?")[,2:3]
   second_set <- stringr::str_match(match, "/\\s*(\\d+)(?:,(\\d+))?\\s*$")[,2:3]
-  list(previous = as.numeric(first_set), current = as.numeric(second_set))
+  list(reference = as.numeric(first_set), comparator = as.numeric(second_set))
 }
 
 format_line_numbers <- function(numbers) {
@@ -47,44 +47,44 @@ format_line_numbers <- function(numbers) {
   # ("@@ 1,1 / 1,5 @@"
   # to not be verbose
   # so this fixes it to be verbose for parsing ease
-  if (is.na(numbers$previous[2])) {numbers$previous[2] <- 1}
-  if (is.na(numbers$current[2])) {numbers$current[2] <- 1}
+  if (is.na(numbers$reference[2])) {numbers$reference[2] <- 1}
+  if (is.na(numbers$comparator[2])) {numbers$comparator[2] <- 1}
 
-  previous <- glue::glue("{numbers$previous[1]}-{numbers$previous[1]+numbers$previous[2]-1}")
-  current <- glue::glue("{numbers$current[1]}-{numbers$current[1]+numbers$current[2]-1}")
+  reference <- glue::glue("{numbers$reference[1]}-{numbers$reference[1]+numbers$reference[2]-1}")
+  comparator <- glue::glue("{numbers$comparator[1]}-{numbers$comparator[1]+numbers$comparator[2]-1}")
 
-  glue::glue("@@ previous script: lines {previous} @@\n@@  current script: lines {current} @@")
+  glue::glue("@@ - reference: lines {reference} @@\n@@ + comparator: lines {comparator} @@")
 }
 
 add_line_numbers <- function(text) {
-  # get start and end lines for prev and current scripts
-  prev_lines <- stringr::str_match(text, "@@ previous script: lines (\\d+)-(\\d+) @@")[,2:3]
-  current_lines <- stringr::str_match(text, "@@  current script: lines (\\d+)-(\\d+) @@")[,2:3]
+  # get start and end lines for ref and comp
+  reference_lines <- stringr::str_match(text, "@@ \\- reference: lines (\\d+)-(\\d+) @@")[,2:3]
+  comparator_lines <- stringr::str_match(text, "@@ \\+ comparator: lines (\\d+)-(\\d+) @@")[,2:3]
 
-  prev_start <- as.numeric(prev_lines[1])
-  current_start <- as.numeric(current_lines[1])
+  reference_lines_start <- as.numeric(reference_lines[1])
+  comparator_lines_start <- as.numeric(comparator_lines[1])
 
   # get lines from text
   lines <- stringr::str_split(text, "\n")[[1]]
 
-  # increment on prev and current lines
-  prev_line_num <- prev_start
-  current_line_num <- current_start
+  # increment on ref and comp lines
+  ref_line_num <- reference_lines_start
+  comp_line_num <- comparator_lines_start
 
   new_lines <- sapply(lines, function(line) {
     if (stringr::str_detect(line, "^- ")) {
       # prev script line
-      new_line <- stringr::str_replace(line, "^- ", glue::glue("- {prev_line_num} "))
-      prev_line_num <<- prev_line_num + 1
+      new_line <- stringr::str_replace(line, "^- ", glue::glue("- {ref_line_num} "))
+      ref_line_num <<- ref_line_num + 1
     } else if (stringr::str_detect(line, "^\\+ ")) {
       # current script line
-      new_line <- stringr::str_replace(line, "^\\+ ", glue::glue("+ {current_line_num} "))
-      current_line_num <<- current_line_num + 1
+      new_line <- stringr::str_replace(line, "^\\+ ", glue::glue("+ {comp_line_num} "))
+      comp_line_num <<- comp_line_num + 1
     } else if (stringr::str_detect(line, "^  ")) {
       # unmodified line
-      new_line <- stringr::str_replace(line, "^  ", glue::glue("  {current_line_num} "))
-      current_line_num <<- current_line_num + 1
-      prev_line_num <<- prev_line_num + 1
+      new_line <- stringr::str_replace(line, "^  ", glue::glue("  {comp_line_num} "))
+      comp_line_num <<- comp_line_num + 1
+      ref_line_num <<- ref_line_num + 1
     } else {
       # empty line
       new_line <- line
@@ -137,8 +137,7 @@ format_diff_section <- function(diff_lines) {
   diff_with_line_numbers <- add_line_numbers(diff_cat)
 }
 
-format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
-
+format_diff <- function(file_path, reference, comparator) {
   # create copy
   copied_file <- name_file_copy(file_path)
   file.copy(file_path, copied_file)
@@ -147,13 +146,12 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   )
 
   # get file contents at the specified commits
-  compared_script <- read_file_at_commit(commit_sha_orig, file_path)
-  current_script <- read_file_at_commit(commit_sha_new, file_path)
+  reference_script <- read_file_at_commit(reference, file_path)
+  comparator_script <- read_file_at_commit(comparator, file_path)
 
   # get diff
-  diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified", pager = "off", disp.width = 200)
+  diff_output <- diffobj::diffChr(reference_script, comparator_script, format = "raw", mode = "unified", pager = "off", disp.width = 200)
   diff_lines <- as.character(diff_output)
-
 
   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
   if (diff_lines[1] == "No visible differences between objects.") {
@@ -198,32 +196,32 @@ get_comments <- function(owner, repo, issue_number) {
 
 # returns true if the user can check "compare to most recent qc fix"
 # false otherwise
-check_if_there_are_update_comments <- function(owner, repo, issue_number) {
-  comments <- get_comments(owner, repo, issue_number)
-  if (length(comments) == 0) return(FALSE)
-  most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
-  if (is.na(most_recent_qc_commit)) return(FALSE)
-  else return(TRUE)
-}
+# check_if_there_are_update_comments <- function(owner, repo, issue_number) {
+#   comments <- get_comments(owner, repo, issue_number)
+#   if (length(comments) == 0) return(FALSE)
+#   most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
+#   if (is.na(most_recent_qc_commit)) return(FALSE)
+#   else return(TRUE)
+# }
 
 # gets the most recent qc update commit from the comments in the issue
 # if there are no update comments from the author, it returns NA
-get_commit_from_most_recent_update_comment <- function(comments_df) {
-  # sort by descending creation time
-  comments_df <- comments_df %>% dplyr::arrange(dplyr::desc(created_at))
+# get_commit_from_most_recent_update_comment <- function(comments_df) {
+#   # sort by descending creation time
+#   comments_df <- comments_df %>% dplyr::arrange(dplyr::desc(created_at))
+#
+#   # loop through comments, grab the first one
+#   for (i in seq_len(nrow(comments_df))) {
+#     comment <- comments_df[i, ]
+#     commit_from_comment <- get_current_commit_from_comment(comment$body)
+#     if (!is.na(commit_from_comment)) {
+#       return(commit_from_comment)
+#     }
+#   }
+#
+#   return(NA)
+# }
 
-  # loop through comments, grab the first one
-  for (i in seq_len(nrow(comments_df))) {
-    comment <- comments_df[i, ]
-    commit_from_comment <- get_current_commit_from_comment(comment$body)
-    if (!is.na(commit_from_comment)) {
-      return(commit_from_comment)
-    }
-  }
-
-  return(NA)
-}
-
-get_current_commit_from_comment <- function(body) {
-  stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
-}
+# get_current_commit_from_comment <- function(body) {
+#   stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
+# }

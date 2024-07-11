@@ -34,33 +34,10 @@ ghqc_update_ui <- function(id) {
           checkboxInput(ns("show_diff"), "Show file difference?", FALSE),
           conditionalPanel(
             condition = "input.show_diff == true", ns = ns,
-            radioButtons(ns("compare"), "Compare to:",
-              inline = TRUE,
-              choices = c(
-                "Compare original with most recent" = "init",
-                "Select commit comparators" = "comparators"
-              )
-            ),
-            conditionalPanel(
-              condition = "input.compare === 'comparators'", ns = ns,
-              div(
-                class = "inline-selectize",
-                selectizeInput(ns("ref_commits"), "Reference",
-                  choices = "",
-                  multiple = FALSE,
-                  options = list(
-                    placeholder = "No commits found."
-                  )
-                ),
-                selectizeInput(ns("comp_commits"), "Comparator",
-                  choices = "",
-                  multiple = FALSE,
-                  options = list(
-                    placeholder = "No commits found."
-                  )
-                )
-              )
-            )
+            radioButtons(ns("compare"), "Compare to:", inline = TRUE, choices = c(
+              "Initial QC Request" = "init",
+              "Previous QC Update" = "prev"
+            ))
           )
         )
       ),

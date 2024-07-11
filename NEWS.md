@@ -1,11 +1,5 @@
 # ghqc (development version)
 
-# ghqc 0.0.0.9004
-
-## Minor improvements and bug fixes
-
--   Adds additional status check to prevent issue creation in `ghqc_create_app()` if there is already an existing issue name of the selected file in the same milestone name.
-
 # ghqc 0.0.0.9003
 
 ## Minor improvements and bug fixes
@@ -33,3 +27,4 @@
 ## Minor improvements and bug fixes
 
 -   Fixes `pmx_list()` so that it works on older versions of R.
+

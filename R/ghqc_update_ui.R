@@ -43,6 +43,14 @@ ghqc_update_ui <- function(id) {
             ),
             conditionalPanel(
               condition = "input.compare === 'comparators'", ns = ns,
+              # shinyWidgets::pickerInput(inputId = ns("itemrange"),
+              #                           label = "Select Items",
+              #                           choices = "",
+              #                           multiple = TRUE,
+              #                         #  width = "auto",
+              #                           options = list(`multiple-separator` = " <-> ",
+              #                                          "max-options" = 2)
+              # )
               div(
                 class = "inline-selectize",
                 selectizeInput(ns("ref_commits"), "Reference",

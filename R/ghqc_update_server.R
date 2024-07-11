@@ -40,34 +40,6 @@ ghqc_update_server <- function(id) {
     })
 
     observe({
-      req(issue_parts()$issue_number)
-      ref_commits <- get_reference_df(issue_number = issue_parts()$issue_number)
-      ref_commits <- ref_commits %>%
-        split(.$date) %>%
-        rev() %>%
-        lapply(function(x) {
-          setNames(nm = x$display)
-        })
-
-      updateSelectizeInput(session, "ref_commits", choices = ref_commits)
-
-    })
-
-    observe({
-      req(issue_parts()$issue_number)
-      req(input$ref_commits)
-      comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
-                                        selected_reference_display = input$ref_commits)
-      comp_commits <- comp_commits %>%
-        split(.$date) %>%
-        rev() %>%
-        lapply(function(x) {
-          setNames(nm = x$display)
-        })
-      updateSelectizeInput(session, "comp_commits", choices = comp_commits)
-    })
-
-    observe({
       req(input$select_milestone)
 
       if (input$select_milestone == "All QC Items") {
@@ -121,6 +93,35 @@ ghqc_update_server <- function(id) {
         "select_issue",
         choices = issues_choices,
       )
+    })
+
+
+    observe({
+      req(issue_parts()$issue_number)
+      ref_commits <- get_reference_df(issue_number = issue_parts()$issue_number)
+      ref_commits <- ref_commits %>%
+        split(.$date) %>%
+        rev() %>%
+        lapply(function(x) {
+          setNames(nm = x$display)
+        })
+
+      updateSelectizeInput(session, "ref_commits", choices = ref_commits)
+
+    })
+
+    observe({
+      req(issue_parts()$issue_number)
+      req(input$ref_commits)
+      comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
+                                        selected_reference_display = input$ref_commits)
+      comp_commits <- comp_commits %>%
+        split(.$date) %>%
+        rev() %>%
+        lapply(function(x) {
+          setNames(nm = x$display)
+        })
+      updateSelectizeInput(session, "comp_commits", choices = comp_commits)
     })
 
     issue_parts <- reactive({
@@ -198,9 +199,9 @@ ghqc_update_server <- function(id) {
       req(preview_trigger())
       preview_trigger(FALSE)
 
-      compare_to_first <- case_when(
-        input$compare == "init" ~ TRUE,
-        input$compare == "comparators" ~ FALSE
+      commits_for_compare <- case_when(
+        input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
+        input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
       )
 
       html_file_path <- create_gfm_file(create_comment_body(org(),
@@ -208,8 +209,8 @@ ghqc_update_server <- function(id) {
         message = input$message,
         issue_number = issue_parts()$issue_number,
         diff = input$show_diff,
-        compare_to_first = compare_to_first,
-        force = TRUE
+        comparator_commit = commits_for_compare$comparator_commit,
+        reference_commit = commits_for_compare$reference_commit
       ))
       custom_html <- readLines(html_file_path, warn = FALSE) %>% paste(collapse = "\n")
 
@@ -220,24 +221,39 @@ ghqc_update_server <- function(id) {
       ))
     })
 
+    # observe({
+    #
+    #   commits <- get_commits_df(issue_number = issue_parts()$issue_number)
+    #   commits <-  commits %>%
+    #     split(.$date) %>%
+    #     rev() %>%
+    #     lapply(function(x) {
+    #       setNames(nm = x$display)
+    #     })
+    #
+    #   shinyWidgets::updatePickerInput(session, "itemrange",
+    #                         choices = commits)
+    # })
+
 
     observe({
       req(issue_parts()$issue_number)
       req(post_trigger())
       post_trigger(FALSE)
 
-      compare_to_first <- case_when(
-        input$compare == "init" ~ TRUE,
-        input$compare == "comparators" ~ FALSE
+      commits_for_compare <- case_when(
+        input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
+        input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
       )
 
-      add_fix_comment(org(),
+      add_fix_comment(
+        org(),
         repo(),
         message = input$message,
         issue_number = issue_parts()$issue_number,
         diff = input$show_diff,
-        compare_to_first = compare_to_first,
-        force = TRUE
+        comparator_commit = commits_for_compare$comparator_commit,
+        reference_commit = commits_for_compare$reference_commit
       )
 
       issue <- get_issue(org(), repo(), issue_parts()$issue_number)

@@ -1,7 +1,7 @@
-# get_init_qc_commit <- function(owner, repo, issue_number) {
-#   issue <- get_issue(owner, repo, issue_number)
-#   get_metadata(issue$body)$git_sha
-# }
+get_init_qc_commit <- function(owner, repo, issue_number) {
+  issue <- get_issue(owner, repo, issue_number)
+  get_metadata(issue$body)$git_sha
+}
 
 # error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_number) {
 #   qc_commit <- {

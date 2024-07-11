@@ -134,7 +134,7 @@ ghqc_update_server <- function(id) {
 
     # https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
     modal_check <- eventReactive(c(input$preview, input$post), {
-      req(issue_parts()$issue_title)
+      req(issue_parts())
       uncommitted_git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), issue_parts()$issue_title)
@@ -195,14 +195,13 @@ ghqc_update_server <- function(id) {
     })
 
     observe({
-      req(issue_parts()$issue_number)
+      req(issue_parts())
       req(preview_trigger())
       preview_trigger(FALSE)
 
       commits_for_compare <- case_when(
         input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
         input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
-      )
 
       html_file_path <- create_gfm_file(create_comment_body(org(),
         repo(),
@@ -237,7 +236,7 @@ ghqc_update_server <- function(id) {
 
 
     observe({
-      req(issue_parts()$issue_number)
+      req(issue_parts())
       req(post_trigger())
       post_trigger(FALSE)
 

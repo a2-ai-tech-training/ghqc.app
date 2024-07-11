@@ -149,7 +149,7 @@ get_script_contents <- function(file_path, reference, comparator) {
   reference_script <- read_file_at_commit(reference, file_path)
   comparator_script <- read_file_at_commit(comparator, file_path)
 
-  c(reference_script = reference_script, comparator_script = comparator_script)
+  list(reference_script = reference_script, comparator_script = comparator_script)
 }
 
 format_diff <- function(reference_script, comparator_script) {
@@ -188,15 +188,15 @@ format_diff <- function(reference_script, comparator_script) {
   glue::glue("```diff\n{diff_sections_cat}\n```")
 }
 
-get_comments <- function(owner, repo, issue_number) {
-  comments <- gh::gh(
-    "GET /repos/:owner/:repo/issues/:issue_number/comments",
-    owner = owner,
-    repo = repo,
-    issue_number = issue_number
-  )
-  comments_df <- do.call(rbind, lapply(comments, function(x) as.data.frame(t(unlist(x)), stringsAsFactors = FALSE)))
-}
+# get_comments <- function(owner, repo, issue_number) {
+#   comments <- gh::gh(
+#     "GET /repos/:owner/:repo/issues/:issue_number/comments",
+#     owner = owner,
+#     repo = repo,
+#     issue_number = issue_number
+#   )
+#   comments_df <- do.call(rbind, lapply(comments, function(x) as.data.frame(t(unlist(x)), stringsAsFactors = FALSE)))
+# }
 
 # returns true if the user can check "compare to most recent qc fix"
 # false otherwise

@@ -1,9 +1,9 @@
 # get list of all shas
-# make sure sorted chronilogically
+# make sure sorted chronologically
 # get up to point of sha at initial QC commit
 # get commit messages
 # get dates
-# add numbering to df for easy comparison of chronilogicallness
+# add numbering to df for easy comparison of chronologicallness
 # add "second most recent commit", "most recent commit" and "original qc commit" identifiers
 # format in table
 
@@ -24,7 +24,7 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
     dplyr::mutate(display = glue::glue("{message} | {short_sha}"))
 
   last_row <- nrow(commit_log)
-  commit_log$display[last_row] <- glue::glue("{commit_log$display[last_row]}\n(initial qc commit)")
+  commit_log$display[last_row] <- glue::glue("{commit_log$display[last_row]}") # \n(initial qc commit)
 
   commit_log
 }
@@ -34,15 +34,15 @@ get_reference_df <- function(issue_number, owner = get_organization(), repo = ge
   # remove first row, the most recent commit (because there's nothing older to compare it to)
   ref_df <- commits_df[-1, ]
   # label new first row as recond most recent commit
-  ref_df$display[1] <- glue::glue("{ref_df$display[1]}\n(second most recent commit)")
+  ref_df$display[1] <- glue::glue("{ref_df$display[1]}") # \n(second most recent commit)
 
   ref_df
 }
 
 get_comparator_df <- function(issue_number, owner = get_organization(), repo = get_current_repo(), selected_reference_display) {
   commits_df <- get_commits_df(issue_number, owner, repo)
-  selected_reference_display <- stringr::str_remove(selected_reference_display, "\\\n\\(second most recent commit\\)")
-  commits_df$display[1] <- glue::glue("{commits_df$display[1]}\n(most recent commit)")
+  # selected_reference_display <- stringr::str_remove(selected_reference_display, "\\\n\\(second most recent commit\\)")
+  commits_df$display[1] <- glue::glue("{commits_df$display[1]}") # \n(most recent commit)
   # next need to cut off at selected reference commits
   cutoff_position <- which(commits_df$display == selected_reference_display)
   # - 1 to not include the selected commit

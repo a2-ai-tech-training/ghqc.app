@@ -149,7 +149,7 @@ get_script_contents <- function(file_path, reference, comparator) {
   reference_script <- read_file_at_commit(reference, file_path)
   comparator_script <- read_file_at_commit(comparator, file_path)
 
-  c(reference_script = reference_script, comparator_script = comparator_script)
+  list(reference_script = reference_script, comparator_script = comparator_script)
 }
 
 format_diff <- function(reference_script, comparator_script) {

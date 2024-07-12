@@ -73,8 +73,12 @@ create_comment_body <- function(owner,
 
   # get script contents
   script_contents <- get_script_contents(issue$title, comparator_commit, reference_commit)
-  reference_script_hash <- digest::digest(script_contents$reference_script)
-  comparator_script_hash <- digest::digest(script_contents$comparator_script)
+  reference_script <- script_contents$reference_script
+  comparator_script <- script_contents$comparator_script
+
+  # get script hashes
+  reference_script_hash <- digest::digest(reference_script)
+  comparator_script_hash <- digest::digest(comparator_script)
 
   # format diff
   diff <- {
@@ -87,7 +91,7 @@ create_comment_body <- function(owner,
         comparator commit (current version): {comparator_commit}\n"
       )
 
-      diff_formatted <- format_diff(script_content$comparator, script_content$reference)
+      diff_formatted <- format_diff(reference_script, comparator_script)
       glue::glue("## File Difference\n",
                  "{context}\n",
                  "{diff_formatted}\n\n",)

@@ -60,7 +60,7 @@ ghqc_create_server <- function(id) {
         selectizeInput(
           ns("assignees"),
           "Select assignees for QC",
-          choices = "",
+          choices = "No Assignee",
           multiple = TRUE,
           width = "100%",
           options = list(
@@ -132,7 +132,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         inputId = ns("tree_list"),
         label = div(
           "Select files for QC",
-          actionButton(ns("file_info"), NULL, icon = icon("question"), class = "question-action-button")
+          actionButton(ns("file_info"), "checklist info", class = "review-checklist-button")
         ),
         choices = create_tree(files_tree_df),
         returnValue = "text", # neither id or all gives pathing

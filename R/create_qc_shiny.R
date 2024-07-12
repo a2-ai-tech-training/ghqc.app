@@ -41,9 +41,9 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
     assignee_input <- selectizeInput(
       ns(assignee_input_id),
       label = NULL,
-      choices = input$assignees,
+      choices = c("No Assignee", input$assignees),
       width = "100%",
-      options = list(placeholder = "no assignees")
+      options = list(placeholder = "No Assignee")
     )
 
     # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)
@@ -85,21 +85,12 @@ isolate_rendered_list <- function(input, session, items) {
       checklist_input_id,
       selected = isolate(input[[checklist_input_id]])
     )
-    if (length(input$assignees) == 1) {
       updateSelectizeInput(
         session,
         assignee_input_id,
-        choices = input$assignees,
-        selected = input$assignees
-      )
-    } else {
-      updateSelectizeInput(
-        session,
-        assignee_input_id,
-        choices = input$assignees,
+        choices = c("No Assignee", input$assignees),
         selected = isolate(input[[assignee_input_id]])
       )
-    }
   }
 }
 
@@ -122,7 +113,7 @@ extract_file_data <- function(input, items) {
     checklist_input_value <- input[[checklist_input_id]]
     assignee_input_value <- input[[assignee_input_id]]
 
-    if (!isTruthy(assignee_input_value)) {
+    if (!isTruthy(assignee_input_value) || assignee_input_value == "No Assignee") {
       assignee_input_value <- NULL
     }
     # requires the widget and input to be available before proceeding

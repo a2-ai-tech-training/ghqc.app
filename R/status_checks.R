@@ -37,6 +37,15 @@ generate_gh_issue_message <- function(gh_issue_status, error_icon_html) {
   return(messages)
 }
 
+generate_existing_issue_message <- function(existing_issues, error_icon_html) {
+  messages <- c()
+  if (length(existing_issues) > 0) {
+    messages <- c(messages, sprintf("%s The following selected files are already associated with issues in the milestone:<ul>%s</ul><br>",
+                                    error_icon_html, generate_html_list(existing_issues)))
+  }
+  return(messages)
+}
+
 #' Determine Modal Message
 #'
 #' Generates a message for a modal dialog based on the status of selected files, git synchronization status,
@@ -47,23 +56,32 @@ generate_gh_issue_message <- function(gh_issue_status, error_icon_html) {
 #' @param untracked_selected_files A character vector of untracked selected files.
 #' @param git_sync_status Result from gert::git_ahead_behind().
 #' @param gh_issue_status A logical indicating the GitHub issue status. Defaults to \code{TRUE}.
+#' @param issues_in_milestone A list containing existing issues already found in a milestone. Defaults to empty list.
 #'
 #' @return A list containing:
 #' \item{message}{A character string with the generated message, or \code{NULL} if no message is generated.}
 #' \item{state}{A character string indicating the state of the message, either "error" or "warning", or \code{NULL} if no state is determined.}
 #'
 #' @noRd
-determine_modal_message <- function(selected_files, uncommitted_git_files, untracked_selected_files, git_sync_status, gh_issue_status = TRUE) {
+determine_modal_message <- function(selected_files,
+                                    uncommitted_git_files,
+                                    untracked_selected_files,
+                                    git_sync_status,
+                                    gh_issue_status = TRUE,
+                                    issues_in_milestone = list()) {
   warning_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
   error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
 
   uncommitted_selected_files <- selected_files[selected_files %in% uncommitted_git_files | selected_files %in% untracked_selected_files]
   uncommitted_files <- list(selected = uncommitted_selected_files, general = uncommitted_git_files)
+  issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
+  existing_issues <- selected_files[selected_files %in% issue_titles]
 
   messages <- c()
   messages <- c(messages, generate_sync_message(git_sync_status, error_icon_html))
   messages <- c(messages, generate_gh_issue_message(gh_issue_status, error_icon_html))
   messages <- c(messages, generate_uncommitted_message(uncommitted_files, error_icon_html, warning_icon_html))
+  messages <- c(messages, generate_existing_issue_message(existing_issues, error_icon_html))
 
   if (length(messages) == 0) {
     return(list(message = NULL, state = NULL))

@@ -71,22 +71,19 @@ ghqc_create_server <- function(id) {
       )
     })
 
-
     observeEvent(input$file_info, {
+      checklists <- get_checklists()
       showModal(
         modalDialog(
           "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
           "See below for a reference of all types and their items.",
           br(),
           br(),
-          selectInput(ns("checklist_info"), NULL, choices = names(get_checklists())),
+          selectInput(ns("checklist_info"), NULL, choices = names(checklists)),
           renderUI({
-            info <- get_checklists()[[input$checklist_info]]
-            tags$ul(
-              lapply(info, function(item) {
-                tags$li(item)
-              })
-            )
+            info <- checklists[[input$checklist_info]]
+            list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+            tags$ul(list)
           }),
           easyClose = TRUE
         )
@@ -197,11 +194,14 @@ return "<div><strong>" + escape(item.username) + "</div>"
       git_sync_status <- git_ahead_behind()
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
 
+      issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+
       determine_modal_message(
         selected_files = file_names,
         uncommitted_git_files = uncommitted_git_files,
         untracked_selected_files = untracked_selected_files,
-        git_sync_status = git_sync_status
+        git_sync_status = git_sync_status,
+        issues_in_milestone = issues_in_milestone
       )
     })
 

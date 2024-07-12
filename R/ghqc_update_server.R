@@ -39,7 +39,6 @@ ghqc_update_server <- function(id) {
       log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
     })
 
-
     observe({
       req(input$select_milestone)
 
@@ -96,6 +95,35 @@ ghqc_update_server <- function(id) {
       )
     })
 
+
+    observe({
+      req(issue_parts()$issue_number)
+      ref_commits <- get_reference_df(issue_number = issue_parts()$issue_number)
+      ref_commits <- ref_commits %>%
+        split(.$date) %>%
+        rev() %>%
+        lapply(function(x) {
+          setNames(nm = x$display)
+        })
+
+      updateSelectizeInput(session, "ref_commits", choices = ref_commits)
+
+    })
+
+    observe({
+      req(issue_parts()$issue_number)
+      req(input$ref_commits)
+      comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
+                                        selected_reference_display = input$ref_commits)
+      comp_commits <- comp_commits %>%
+        split(.$date) %>%
+        rev() %>%
+        lapply(function(x) {
+          setNames(nm = x$display)
+        })
+      updateSelectizeInput(session, "comp_commits", choices = comp_commits)
+    })
+
     issue_parts <- reactive({
       req(input$select_issue)
       issue_parts <- strsplit(sub("Item ", "", input$select_issue), ": ")[[1]]
@@ -106,7 +134,7 @@ ghqc_update_server <- function(id) {
 
     # https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
     modal_check <- eventReactive(c(input$preview, input$post), {
-      req(issue_parts())
+      req(issue_parts()$issue_title)
       uncommitted_git_files <- git_status()$file
       git_sync_status <- git_ahead_behind()
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), issue_parts()$issue_title)
@@ -167,13 +195,13 @@ ghqc_update_server <- function(id) {
     })
 
     observe({
-      req(issue_parts())
+      req(issue_parts()$issue_number)
       req(preview_trigger())
       preview_trigger(FALSE)
 
-      compare_to_first <- case_when(
-        input$compare == "init" ~ TRUE,
-        input$compare == "prev" ~ FALSE
+      commits_for_compare <- case_when(
+        input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
+        input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
       )
 
       html_file_path <- create_gfm_file(create_comment_body(org(),
@@ -181,8 +209,8 @@ ghqc_update_server <- function(id) {
         message = input$message,
         issue_number = issue_parts()$issue_number,
         diff = input$show_diff,
-        compare_to_first = compare_to_first,
-        force = TRUE
+        comparator_commit = commits_for_compare$comparator_commit,
+        reference_commit = commits_for_compare$reference_commit
       ))
       custom_html <- readLines(html_file_path, warn = FALSE) %>% paste(collapse = "\n")
 
@@ -193,24 +221,39 @@ ghqc_update_server <- function(id) {
       ))
     })
 
+    # observe({
+    #
+    #   commits <- get_commits_df(issue_number = issue_parts()$issue_number)
+    #   commits <-  commits %>%
+    #     split(.$date) %>%
+    #     rev() %>%
+    #     lapply(function(x) {
+    #       setNames(nm = x$display)
+    #     })
+    #
+    #   shinyWidgets::updatePickerInput(session, "itemrange",
+    #                         choices = commits)
+    # })
+
 
     observe({
-      req(issue_parts())
+      req(issue_parts()$issue_number)
       req(post_trigger())
       post_trigger(FALSE)
 
-      compare_to_first <- case_when(
-        input$compare == "init" ~ TRUE,
-        input$compare == "prev" ~ FALSE
+      commits_for_compare <- case_when(
+        input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
+        input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
       )
 
-      add_fix_comment(org(),
+      add_fix_comment(
+        org(),
         repo(),
         message = input$message,
         issue_number = issue_parts()$issue_number,
         diff = input$show_diff,
-        compare_to_first = compare_to_first,
-        force = TRUE
+        comparator_commit = commits_for_compare$comparator_commit,
+        reference_commit = commits_for_compare$reference_commit
       )
 
       issue <- get_issue(org(), repo(), issue_parts()$issue_number)

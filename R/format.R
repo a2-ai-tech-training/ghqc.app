@@ -41,16 +41,21 @@ get_sha <- function() {
   commits$commit[1]
 }
 
+get_git_user <- function() {
+  git_user_info <- gert::git_config_global()
+  user_name <- git_user_info[git_user_info$name == "user.name", "value"]
+}
+
 format_metadata <- function(checklist_type, file_path) {
-  author <- Sys.info()[["user"]]
+  author <- get_git_user()
   qc_type <- checklist_type
   script_hash <- digest::digest(file = file_path)
   git_sha <- get_sha()
   glue::glue("
              * author: {author}
-             * qc_type: {qc_type}
-             * script_hash: {script_hash}
-             * git_sha: {git_sha}")
+             * qc type: {qc_type}
+             * script hash: {script_hash}
+             * git sha: {git_sha}")
 }
 
 

@@ -39,11 +39,27 @@ check_if_git_initialized <- function(path = getwd()) {
   }
 }
 
+error_if_git_not_initialized <- function(path = getwd()) {
+  git_inited <- check_if_git_initialized(path)
+  if (!git_inited) {
+    rlang::abort(message = "Git not initialized; push repo to Github first.")
+  }
+}
+
 
 # use this for the update app
 # this has been added to get_open_milestone_objects
 check_that_milestone_is_non_empty <- function(milestone) {
   if (milestone$open_issues == 0 && milestone$closed_issues == 0) {
+    FALSE
+  }
+  else TRUE
+}
+
+check_if_updates_since_init <- function(commits_df) {
+  if (nrow(commits_df) < 2) {
+    # if there's only the initial commit in the df
+    # i.e. there needs to be at least 2 commits to make a comparison
     FALSE
   }
   else TRUE

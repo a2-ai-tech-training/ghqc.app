@@ -1,6 +1,6 @@
 get_init_qc_commit <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
-  get_metadata(issue$body)$git_sha
+  get_metadata(issue$body)$`git sha`
 }
 
 create_assignees_list <- function(assignees) {
@@ -74,7 +74,7 @@ create_comment_body <- function(owner,
   # get vals if default
   if (comparator_commit == "original") {
     # comparator_commit is original qc commit
-    comparator_commit <- get_metadata(issue$body)$`git sha`
+    comparator_commit <- get_init_qc_commit(owner, repo, issue_number)
   }
 
   if (reference_commit == "previous") {

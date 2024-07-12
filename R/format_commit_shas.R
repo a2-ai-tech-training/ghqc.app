@@ -23,9 +23,8 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
     dplyr::mutate(short_sha = stringr::str_extract(commit, "^.{1,7}")) %>%
     dplyr::mutate(display = glue::glue("{message} | {short_sha}"))
 
-  last_row <- nrow(commit_log)
+  #last_row <- nrow(commit_log)
   # commit_log$display[last_row] <- glue::glue("{commit_log$display[last_row]}") # \n(initial qc commit)
-
   commit_log
 }
 

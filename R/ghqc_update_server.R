@@ -6,6 +6,8 @@
 NULL
 
 ghqc_update_server <- function(id) {
+  error_if_git_not_initialized()
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)

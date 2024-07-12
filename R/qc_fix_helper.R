@@ -22,6 +22,7 @@ rename_file_copy <- function(file_path) {
 }
 
 read_file_at_commit <- function(commit_sha, file_path) {
+  browser()
   args <- c("checkout", commit_sha, "--", file_path)
   result <- processx::run("git", args, error_on_status = FALSE)
 

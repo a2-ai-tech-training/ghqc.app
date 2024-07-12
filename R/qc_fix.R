@@ -74,7 +74,7 @@ create_comment_body <- function(owner,
   # get vals if default
   if (comparator_commit == "original") {
     # comparator_commit is original qc commit
-    comparator_commit <- get_metadata(issue$body)$git_sha
+    comparator_commit <- get_metadata(issue$body)$`git sha`
   }
 
   if (reference_commit == "previous") {

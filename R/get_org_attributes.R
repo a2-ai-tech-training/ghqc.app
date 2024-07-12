@@ -56,7 +56,15 @@ get_repos <- function(org) {
 }
 
 get_open_milestone_objects <- function(owner, repo) {
-  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
+  non_empty_milestones <- lapply(milestones, function(milestone) {
+    if (check_that_milestone_is_non_empty(milestone)) {
+      milestone
+    }
+    else NULL
+  })
+  # delete NULLs from list
+  non_empty_milestones <- Filter(Negate(is.null), non_empty_milestones)
 }
 
 get_all_milestone_objects <- function(owner, repo) {
@@ -64,7 +72,7 @@ get_all_milestone_objects <- function(owner, repo) {
 }
 
 get_open_milestone_names <- function(org, repo) {
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = org, repo = repo, state = "open", .limit = Inf)
+  milestones <- get_open_milestone_objects(org, repo)
   purrr::map_chr(milestones, "title")
 }
 

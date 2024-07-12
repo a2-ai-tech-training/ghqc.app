@@ -1,5 +1,13 @@
 # ghqc (development version)
 
+# ghqc 0.0.0.9004
+
+-   author in metadata is now the git user who published
+
+-   file hashes for reference and comparator added to comment metadata
+
+-   removes empty milestones in `get_open_milestone_objects()` and `get_open_milestone_object_names()`
+
 # ghqc 0.0.0.9003
 
 ## Minor improvements and bug fixes

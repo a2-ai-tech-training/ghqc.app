@@ -24,3 +24,27 @@ check_if_issue_name_already_in_milestone <- function(owner, repo, issue_title_in
   if (issue_title_in %in% issue_titles) TRUE
   else FALSE
 }
+
+check_if_git_initialized <- function(path = getwd()) {
+  while (TRUE) {
+    if (file.exists(file.path(path, ".git"))) {
+      return(TRUE)
+    } else {
+      parent_path <- dirname(path)
+      if (identical(parent_path, path)) {
+        return(FALSE)
+      }
+      path <- parent_path
+    }
+  }
+}
+
+
+# use this for the update app
+# this has been added to get_open_milestone_objects
+check_that_milestone_is_non_empty <- function(milestone) {
+  if (milestone$open_issues == 0 && milestone$closed_issues == 0) {
+    FALSE
+  }
+  else TRUE
+}

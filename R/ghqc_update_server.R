@@ -202,6 +202,7 @@ ghqc_update_server <- function(id) {
       commits_for_compare <- case_when(
         input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
         input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
+        )
 
       html_file_path <- create_gfm_file(create_comment_body(org(),
         repo(),

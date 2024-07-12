@@ -14,3 +14,53 @@ check_if_qc_file_untracked <- function(qc_file_path) {
   # if "Untracked files" not found, return false
   return(FALSE)
 }
+
+check_if_issue_name_already_in_milestone <- function(owner, repo, issue_title_in, milestone_name) {
+  # get issues in milestone
+  issues_in_milestone <- get_all_issues_in_milestone(owner, repo, milestone_name)
+  # get issue titles
+  issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
+  # see if issue_title_in is in issue_titles
+  if (issue_title_in %in% issue_titles) TRUE
+  else FALSE
+}
+
+check_if_git_initialized <- function(path = getwd()) {
+  while (TRUE) {
+    if (file.exists(file.path(path, ".git"))) {
+      return(TRUE)
+    } else {
+      parent_path <- dirname(path)
+      if (identical(parent_path, path)) {
+        return(FALSE)
+      }
+      path <- parent_path
+    }
+  }
+}
+
+error_if_git_not_initialized <- function(path = getwd()) {
+  git_inited <- check_if_git_initialized(path)
+  if (!git_inited) {
+    rlang::abort(message = "Git not initialized; push repo to Github first.")
+  }
+}
+
+
+# use this for the update app
+# this has been added to get_open_milestone_objects
+check_that_milestone_is_non_empty <- function(milestone) {
+  if (milestone$open_issues == 0 && milestone$closed_issues == 0) {
+    FALSE
+  }
+  else TRUE
+}
+
+check_if_updates_since_init <- function(commits_df) {
+  if (nrow(commits_df) < 2) {
+    # if there's only the initial commit in the df
+    # i.e. there needs to be at least 2 commits to make a comparison
+    FALSE
+  }
+  else TRUE
+}

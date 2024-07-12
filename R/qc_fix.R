@@ -1,6 +1,6 @@
 get_init_qc_commit <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
-  get_metadata(issue$body)$git_sha
+  get_metadata(issue$body)$`git sha`
 }
 
 # error_if_repo_unchanged_since_last_qc_request <- function(owner, repo, issue_number) {
@@ -68,13 +68,17 @@ create_comment_body <- function(owner,
     # reference_commit is most recent commit
     reference_commit <- gert::git_log(max = 1)$commit
     # comparator_commit is original qc commit
-    comparator_commit <- get_metadata(issue$body)$git_sha
+    comparator_commit <- get_init_qc_commit(owner, repo, issue_number)
   }
 
   # get script contents
   script_contents <- get_script_contents(issue$title, comparator_commit, reference_commit)
-  reference_script_hash <- digest::digest(script_contents$reference_script)
-  comparator_script_hash <- digest::digest(script_contents$comparator_script)
+  reference_script <- script_contents$reference_script
+  comparator_script <- script_contents$comparator_script
+
+  # get script hashes
+  reference_script_hash <- digest::digest(reference_script)
+  comparator_script_hash <- digest::digest(comparator_script)
 
   # format diff
   diff <- {
@@ -87,7 +91,7 @@ create_comment_body <- function(owner,
         comparator commit (current version): {comparator_commit}\n"
       )
 
-      diff_formatted <- format_diff(script_content$comparator, script_content$reference)
+      diff_formatted <- format_diff(reference_script, comparator_script)
       glue::glue("## File Difference\n",
                  "{context}\n",
                  "{diff_formatted}\n\n",)

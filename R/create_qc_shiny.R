@@ -30,6 +30,7 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
   for (name in items) {
     checklist_input_id <- generate_input_id("checklist", name)
     assignee_input_id <- generate_input_id("assignee", name)
+    button_input_id <- generate_input_id("button", name)
 
     checklist_input <- selectizeInput(
       ns(checklist_input_id),
@@ -45,13 +46,18 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
       width = "100%",
       options = list(placeholder = "No Assignee")
     )
+    button_input <- actionButton(
+      ns(button_input_id),
+      label = "preview",
+      class = "preview-button"
+    )
 
     # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)
     modified_name <- gsub("([^a-zA-Z0-9])", "\\1<wbr>", generate_input_id(name = name))
 
     ul <- tagAppendChild(ul, div(
       class = "grid-items",
-      div(class = "item-a", HTML(modified_name)),
+      div(class = "item-a", HTML(modified_name), button_input),
       div(class = "item-b", checklist_input),
       div(class = "item-c", assignee_input)
     ))

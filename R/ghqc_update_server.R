@@ -103,25 +103,27 @@ ghqc_update_server <- function(id) {
         split(.$date) %>%
         rev() %>%
         lapply(function(x) {
-          setNames(nm = x$display)
+          setNames(object = x$commit,
+                   nm = x$display)
         })
 
       updateSelectizeInput(session, "ref_commits", choices = ref_commits)
-
     })
 
     observe({
       req(issue_parts()$issue_number)
       req(input$ref_commits)
-      comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
-                                        selected_reference_display = input$ref_commits)
-      comp_commits <- comp_commits %>%
-        split(.$date) %>%
-        rev() %>%
-        lapply(function(x) {
-          setNames(nm = x$display)
-        })
-      updateSelectizeInput(session, "comp_commits", choices = comp_commits)
+      print(input$ref_commits)
+      # comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
+      #                                   selected_reference_display = input$ref_commits)
+      # comp_commits <- comp_commits %>%
+      #   split(.$date) %>%
+      #   rev() %>%
+      #   lapply(function(x) {
+      #     setNames(object = x$commit,
+      #              nm = x$display)
+      #   })
+      # updateSelectizeInput(session, "comp_commits", choices = comp_commits)
     })
 
     issue_parts <- reactive({

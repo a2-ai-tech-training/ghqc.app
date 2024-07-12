@@ -69,25 +69,6 @@ ghqc_create_server <- function(id) {
       )
     })
 
-    observeEvent(input$file_info, {
-      checklists <- get_checklists()
-      showModal(
-        modalDialog(
-          "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
-          "See below for a reference of all types and their items.",
-          br(),
-          br(),
-          selectInput(ns("checklist_info"), NULL, choices = names(checklists)),
-          renderUI({
-            info <- checklists[[input$checklist_info]]
-            list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
-            tags$ul(list)
-          }),
-          easyClose = TRUE
-        )
-      )
-    })
-
     observe({
       log_message(paste("Connecting to organization:", org()))
       log_message(paste("Retrieving assignees:", members()))
@@ -130,7 +111,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         inputId = ns("tree_list"),
         label = div(
           "Select files for QC",
-          actionButton(ns("file_info"), "checklist info", class = "review-checklist-button")
+          actionButton(ns("file_info"), "checklist info", class = "preview-button")
         ),
         choices = create_tree(files_tree_df),
         returnValue = "text", # neither id or all gives pathing
@@ -148,6 +129,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
       session$sendCustomMessage("process_tree_list", message = list(ns = id)) # pass in ns id for new input
 
       input$paths # input needs to be set through js because treeInput not built to give pathing info
+    })
+
+    qc_items <- reactive({
+      req(selected_items())
+      extract_file_data(input, selected_items())
     })
 
     output$main_panel <- renderUI({
@@ -180,9 +166,44 @@ return "<div><strong>" + escape(item.username) + "</div>"
       }
     })
 
-    qc_items <- reactive({
-      req(selected_items())
-      extract_file_data(input, selected_items())
+    observeEvent(input$file_info, {
+      checklists <- get_checklists()
+      showModal(
+        modalDialog(
+          "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
+          "See below for a reference of all types and their items.",
+          br(),
+          br(),
+          selectInput(ns("checklist_info"), NULL, choices = names(checklists)),
+          renderUI({
+            info <- checklists[[input$checklist_info]]
+            list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+            tags$ul(list)
+          }),
+          easyClose = TRUE
+        )
+      )
+    })
+
+    #     button_input_id <- generate_input_id("button", name)
+
+    observeEvent(input$file_info, {
+      checklists <- get_checklists()
+      showModal(
+        modalDialog(
+          "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
+          "See below for a reference of all types and their items.",
+          br(),
+          br(),
+          selectInput(ns("checklist_info"), NULL, choices = names(checklists)),
+          renderUI({
+            info <- checklists[[input$checklist_info]]
+            list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+            tags$ul(list)
+          }),
+          easyClose = TRUE
+        )
+      )
     })
 
     modal_check <- eventReactive(input$create_qc_items, {

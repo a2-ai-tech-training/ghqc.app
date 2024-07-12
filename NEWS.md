@@ -8,6 +8,8 @@
 
 -   removes empty milestones in `get_open_milestone_objects()` and `get_open_milestone_object_names()`
 
+-   `check_if_updates_since_init()` function 
+
 # ghqc 0.0.0.9003
 
 ## Minor improvements and bug fixes

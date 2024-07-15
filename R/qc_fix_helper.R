@@ -100,6 +100,11 @@ clean_up <- function(file_path, copied_file) {
   fs::file_delete(file_path)
   # rename file to original name
   rename_file_copy(copied_file)
+
+  # finally, just read the file at the most recent commit to avoid
+  # having untracked changes
+  most_recent_commit <- gert::git_log(max = 1)$commit
+  read_file_at_commit(most_recent_commit, file_path)
 }
 
 format_diff_section <- function(diff_lines) {

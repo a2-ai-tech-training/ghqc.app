@@ -56,10 +56,8 @@ check_that_milestone_is_non_empty <- function(milestone) {
   else TRUE
 }
 
-check_if_updates_since_init <- function(commits_df) {
-  if (nrow(commits_df) < 2) {
-    # if there's only the initial commit in the df
-    # i.e. there needs to be at least 2 commits to make a comparison
+check_if_updates_since_init <- function(comparator_df) {
+  if (nrow(comparator_df) == 0) {
     FALSE
   }
   else TRUE

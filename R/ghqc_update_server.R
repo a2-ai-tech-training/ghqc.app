@@ -105,23 +105,25 @@ ghqc_update_server <- function(id) {
         split(.$date) %>%
         rev() %>%
         lapply(function(x) {
-          setNames(nm = x$display)
+          setNames(object = x$commit,
+                   nm = x$display)
         })
 
       updateSelectizeInput(session, "ref_commits", choices = ref_commits)
-
     })
 
     observe({
       req(issue_parts()$issue_number)
       req(input$ref_commits)
+
       comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
-                                        selected_reference_display = input$ref_commits)
+                                        selected_reference_commit = input$ref_commits)
       comp_commits <- comp_commits %>%
         split(.$date) %>%
         rev() %>%
         lapply(function(x) {
-          setNames(nm = x$display)
+          setNames(object = x$commit,
+                   nm = x$display)
         })
       updateSelectizeInput(session, "comp_commits", choices = comp_commits)
     })
@@ -202,7 +204,7 @@ ghqc_update_server <- function(id) {
       preview_trigger(FALSE)
 
       commits_for_compare <- case_when(
-        input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
+        input$compare == "init" ~ list(comparator_commit = "current", reference_commit = "original"),
         input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
       )
 
@@ -223,28 +225,13 @@ ghqc_update_server <- function(id) {
       ))
     })
 
-    # observe({
-    #
-    #   commits <- get_commits_df(issue_number = issue_parts()$issue_number)
-    #   commits <-  commits %>%
-    #     split(.$date) %>%
-    #     rev() %>%
-    #     lapply(function(x) {
-    #       setNames(nm = x$display)
-    #     })
-    #
-    #   shinyWidgets::updatePickerInput(session, "itemrange",
-    #                         choices = commits)
-    # })
-
-
     observe({
       req(issue_parts()$issue_number)
       req(post_trigger())
       post_trigger(FALSE)
 
       commits_for_compare <- case_when(
-        input$compare == "init" ~ list(comparator_commit = "original", reference_commit = "previous"),
+        input$compare == "init" ~ list(comparator_commit = "current", reference_commit = "original"),
         input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
       )
 
@@ -254,8 +241,8 @@ ghqc_update_server <- function(id) {
         message = input$message,
         issue_number = issue_parts()$issue_number,
         diff = input$show_diff,
-        comparator_commit = commits_for_compare$comparator_commit,
-        reference_commit = commits_for_compare$reference_commit
+        reference_commit = commits_for_compare$reference_commit,
+        comparator_commit = commits_for_compare$comparator_commit
       )
 
       issue <- get_issue(org(), repo(), issue_parts()$issue_number)

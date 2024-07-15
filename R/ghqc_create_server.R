@@ -172,6 +172,9 @@ return "<div><strong>" + escape(item.username) + "</div>"
       checklists <- get_checklists()
       showModal(
         modalDialog(
+          title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+          footer = NULL,
+          easyClose = TRUE,
           "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
           "See below for a reference of all types and their items.",
           br(),
@@ -181,8 +184,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
             info <- checklists[[input$checklist_info]]
             list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
             tags$ul(list)
-          }),
-          easyClose = TRUE
+          })
         )
       )
     })
@@ -217,13 +219,15 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
-          HTML(modal_check()$message),
-          footer = tagList(
+          title = tags$div(tagList(
             if (modal_check()$state == "warning") {
               actionButton(ns("proceed"), "Proceed Anyway")
             },
             actionButton(ns("return"), "Return")
-          )
+          ), style = "text-align: right;"),
+          HTML(modal_check()$message),
+          footer = NULL,
+          easyClose = TRUE
         ))
       } else {
         qc_trigger(TRUE)
@@ -250,9 +254,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items$hide()
       showModal(
         modalDialog(
+          title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+          footer = NULL,
+          easyClose = TRUE,
           tags$p("QC items created successfully."),
           tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
-          # "QC items created successfully."
         )
       )
     })

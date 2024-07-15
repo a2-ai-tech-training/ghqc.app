@@ -167,13 +167,15 @@ ghqc_update_server <- function(id) {
 
       if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
-          HTML(modal_check()$message),
-          footer = tagList(
+          title = tags$div(tagList(
             if (modal_check()$state == "warning") {
               actionButton(ns("proceed_preview"), "Proceed Anyway")
             },
             actionButton(ns("return"), "Return")
-          )
+          ), style = "text-align: right;"),
+          HTML(modal_check()$message),
+          footer = NULL,
+          easyClose = TRUE
         ))
       } else {
         preview_trigger(TRUE)
@@ -185,13 +187,15 @@ ghqc_update_server <- function(id) {
 
       if (!is.null(modal_check()$message)) {
         showModal(modalDialog(
-          HTML(modal_check()$message),
-          footer = tagList(
+          title = tags$div(tagList(
             if (modal_check()$state == "warning") {
               actionButton(ns("proceed_post"), "Proceed Anyway")
             },
             actionButton(ns("return"), "Return")
-          )
+          ), style = "text-align: right;"),
+          HTML(modal_check()$message),
+          footer = NULL,
+          easyClose = TRUE
         ))
       } else {
         post_trigger(TRUE)
@@ -220,7 +224,15 @@ ghqc_update_server <- function(id) {
 
 
       showModal(modalDialog(
-        title = "Comment Preview",
+        title = tags$div(
+          style = "display: flex;
+          justify-content: space-between;
+          align-items: center;",
+          "Comment Preview",
+          modalButton("Dismiss")
+        ),
+        footer = NULL,
+        easyClose = TRUE,
         HTML(custom_html)
       ))
     })
@@ -249,6 +261,9 @@ ghqc_update_server <- function(id) {
       issue_url <- issue$html_url
 
       showModal(modalDialog(
+        title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+        footer = NULL,
+        easyClose = TRUE,
         tags$p("Update comment posted successfully."),
         tags$a(href = issue_url, "Click here to visit the QC Checklist on Github", target = "_blank")
       ))

@@ -40,8 +40,8 @@ create_comment_body <- function(owner,
                                 issue_number,
                                 message = NULL,
                                 diff = FALSE,
-                                comparator_commit = "original",
-                                reference_commit = "previous") {
+                                reference_commit = "original",
+                                comparator_commit = "current") {
   # get issue
   issue <- get_issue(owner, repo, issue_number)
 
@@ -64,7 +64,7 @@ create_comment_body <- function(owner,
   }
 
   # get vals if default
-  if (comparator_commit == "original" && reference_commit == "previous") {
+  if (reference_commit == "original" && comparator_commit == "current") {
     # reference_commit is most recent commit
     reference_commit <- gert::git_log(max = 1)$commit
     # comparator_commit is original qc commit
@@ -87,8 +87,8 @@ create_comment_body <- function(owner,
     else {
       # get context for diff
       context <- glue::glue(
-        "reference commit (previous version): {reference_commit}\n
-        comparator commit (current version): {comparator_commit}\n"
+        "reference commit (older version): {reference_commit}\n
+        comparator commit (newer version): {comparator_commit}\n"
       )
 
       diff_formatted <- format_diff(reference_script, comparator_script)
@@ -133,8 +133,8 @@ add_fix_comment <- function(owner,
                             issue_number,
                             message = NULL,
                             diff = FALSE,
-                            comparator_commit = "original",
-                            reference_commit = "previous") {
+                            reference_commit = "original",
+                            comparator_commit = "current") {
   cat(glue::glue("Adding update comment to issue #{issue_number} in {owner}/{repo}"), "\n")
 
   body <- create_comment_body(owner,

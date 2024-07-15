@@ -65,10 +65,10 @@ create_comment_body <- function(owner,
 
   # get vals if default
   if (reference_commit == "original" && comparator_commit == "current") {
-    # reference_commit is most recent commit
-    reference_commit <- gert::git_log(max = 1)$commit
-    # comparator_commit is original qc commit
-    comparator_commit <- get_init_qc_commit(owner, repo, issue_number)
+    # reference = oldest
+    reference_commit <- get_init_qc_commit(owner, repo, issue_number)
+    # comparator = newest
+    comparator_commit <- gert::git_log(max = 1)$commit
   }
 
   # get script contents

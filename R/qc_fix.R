@@ -139,8 +139,8 @@ add_fix_comment <- function(owner,
                               issue_number,
                               message,
                               diff,
-                              comparator_commit,
-                              reference_commit)
+                              reference_commit = reference_commit,
+                              comparator_commit = comparator_commit)
 
   post_comment(owner, repo, issue_number, body)
 

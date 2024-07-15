@@ -47,5 +47,6 @@ get_comparator_df <- function(issue_number, owner = get_organization(), repo = g
   # - 1 to not include the selected commit
   comp_df <- commits_df[1:cutoff_position - 1, ]
 
-  comp_df
+  if (check_if_updates_since_init(comp_df)) NULL
+  else comp_df
 }

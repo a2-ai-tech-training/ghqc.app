@@ -187,25 +187,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
     })
 
-    #     button_input_id <- generate_input_id("button", name)
-
-    observeEvent(input$file_info, {
-      checklists <- get_checklists()
-      showModal(
-        modalDialog(
-          "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
-          "See below for a reference of all types and their items.",
-          br(),
-          br(),
-          selectInput(ns("checklist_info"), NULL, choices = names(checklists)),
-          renderUI({
-            info <- checklists[[input$checklist_info]]
-            list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
-            tags$ul(list)
-          }),
-          easyClose = TRUE
-        )
-      )
+    observeEvent(selected_items(), {
+      items <- selected_items()
+      for (name in items) {
+        create_button_preview_event(input, name = name)
+      }
     })
 
     modal_check <- eventReactive(input$create_qc_items, {

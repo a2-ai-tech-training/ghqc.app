@@ -248,3 +248,18 @@ convert_list_to_ui <- function(checklists, parent_name = NULL, is_first = TRUE) 
 
   return(ui_elements)
 }
+
+create_button_preview_event <- function(input, name) {
+  button_input_id <- generate_input_id("button", name)
+  clean_name <- generate_input_id(name = name)
+
+  observeEvent(input[[button_input_id]], {
+    showModal(
+      modalDialog(
+        renderUI({
+          renderPrint(cat(readLines(clean_name), sep = "\n"))
+        })
+      )
+    )
+  }, ignoreInit = TRUE)
+}

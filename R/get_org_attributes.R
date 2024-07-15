@@ -7,6 +7,7 @@ get_names_and_usernames <- function(username) {
 }
 
 get_members_list <- function(org) {
+  browser()
   page <- 1
   all_members <- list()
 
@@ -81,10 +82,25 @@ get_current_repo <- function() {
   basename(gert::git_find())
 }
 
-get_organization_name_from_url <- function(url) {
-  pattern <- "https://[^/]+/([^/]+)/[^/]+\\.git"
-  org_name <- sub(pattern, "\\1", url)
-  return(org_name)
+get_organization_name_from_url <- function(remote_url) {
+  if (grepl("https://", remote_url)) {
+    # For HTTPS URLs
+    matches <- regmatches(remote_url, regexec("https://[^/]+/([^/]+)/[^/]+", remote_url))
+  } else if (grepl("git@", remote_url)) {
+    # For SSH URLs
+    matches <- regmatches(remote_url, regexec("git@[^:]+:([^/]+)/[^/]+", remote_url))
+  } else {
+    stop("Unknown remote URL format")
+  }
+
+  if (length(matches[[1]]) < 2) {
+    stop("Unable to parse organization name from URL")
+  }
+
+  return(matches[[1]][2])
+  # pattern <- "https://[^/]+/([^/]+)/[^/]+\\.git"
+  # org_name <- sub(pattern, "\\1", url)
+  # return(org_name)
 }
 
 get_organization <- function() {

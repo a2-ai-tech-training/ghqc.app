@@ -9,12 +9,13 @@
 -   removes empty milestones in `get_open_milestone_objects()` and `get_open_milestone_object_names()`
 
 -   `check_if_updates_since_init()` function
- 
+
 ## Minor improvements and bug fixes
 
 -   Adds additional status check to prevent issue creation in `ghqc_create_app()` if there is already an existing issue name of the selected file in the same milestone name.
 -   Changes the checklist info button in `ghqc_create_app()` from a question mark symbol to text ("checklist info") to better show what it is for.
 -   Adds "No Assignee" to dropdown selection for the individual file selection assignee and now defaults to it rather than first available assignee in `ghqc_create_app()`.
+-   Adds a "preview" button for each selected qc file to allow users to preview the contents of the file in `ghqc_create_app()`.
 
 # ghqc 0.0.0.9003
 

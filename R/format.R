@@ -41,23 +41,61 @@ get_sha <- function() {
   commits$commit[1]
 }
 
-get_author <- function(file_path) {
-  #git log --follow --diff-filter=A --find-renames=40% -- file_path
-  log <- processx::run("git", c("log", "--follow", "--diff-filter=A", "--find-renames=40%", "--", file_path))$stdout
-  author_line <- stringr::str_extract(log, "Author:.*")
-  stringr::str_remove(author_line, "Author: ")
+
+get_authors <- function(file_path) {
+  # https://stackoverflow.com/questions/11533199/how-to-find-the-commit-in-which-a-given-file-was-added
+
+  # shell out
+  # git log --follow --diff-filter=A --find-renames=40% -- file_path
+  log <- processx::run("git", c("log", "--follow", "--", file_path))$stdout
+  # get lines with author
+  author_lines <- unlist(stringr::str_extract_all(log, "Author:.*"))
+  # remove "Author: " prefix
+  authors <- stringr::str_remove(author_lines, "Author: ")
+  # get most recent author
+  latest_author <- authors[1]
+  # get unique authors
+  unique_authors <- unique(stringr::str_remove(authors, "Author: "))
+  # get collaborators besides most recent author
+  other_collaborators <- unique_authors[unique_authors != latest_author]
+
+  list(latest = latest_author,
+       collaborators = other_collaborators)
+}
+
+format_collaborators <- function(collaborators, prefix = "") {
+  if (length(collaborators) > 0) {
+    collaborators_cat <- glue::glue_collapse(collaborators, ", ")
+    glue::glue("{prefix}{collaborators_cat}")
+  }
+  else {
+    ""
+  }
 }
 
 format_metadata <- function(checklist_type, file_path) {
-  author <- get_author(file_path)
+  authors <- get_authors(file_path)
+  latest_author <- authors$latest
+  author_section <- glue::glue("* author: {latest_author}")
+  metadata <- c(author_section)
+
+  collaborators_section <- format_collaborators(authors$collaborators, prefix = "* collaborators: ")
+  if (collaborators_section != "") {
+    metadata <- c(metadata, collaborators_section)
+  }
+
   qc_type <- checklist_type
+  qc_type_section <- glue::glue("* qc type: {qc_type}")
+
   script_hash <- digest::digest(file = file_path)
+  script_hash_section <- glue::glue("* script hash: {script_hash}")
+
   git_sha <- get_sha()
-  glue::glue("
-             * author: {author}
-             * qc type: {qc_type}
-             * script hash: {script_hash}
-             * git sha: {git_sha}")
+  git_sha_section <- glue::glue("* git sha: {git_sha}")
+
+  metadata <- c(metadata, qc_type_section, script_hash_section, git_sha_section)
+
+  glue::glue_collapse(metadata, "\n")
 }
 
 

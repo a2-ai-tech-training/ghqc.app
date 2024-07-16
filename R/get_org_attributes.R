@@ -81,19 +81,23 @@ get_current_repo <- function() {
   basename(gert::git_find())
 }
 
+
+
 get_organization_name_from_url <- function(remote_url) {
   if (grepl("https://", remote_url)) {
-    # For HTTPS URLs
+    # https url
     matches <- regmatches(remote_url, regexec("https://[^/]+/([^/]+)/[^/]+", remote_url))
-  } else if (grepl("git@", remote_url)) {
-    # For SSH URLs
+  }
+  else if (grepl("git@", remote_url)) {
+    # ssh url
     matches <- regmatches(remote_url, regexec("git@[^:]+:([^/]+)/[^/]+", remote_url))
-  } else {
-    stop("Unknown remote URL format")
+  }
+  else {
+    stop("Unknown remote url format")
   }
 
   if (length(matches[[1]]) < 2) {
-    stop("Unable to parse organization name from URL")
+    stop("Unable to parse organization from url")
   }
 
   return(matches[[1]][2])

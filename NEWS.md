@@ -26,7 +26,9 @@
 
 -   Moves all modalDialog (pop-ups) buttons to the top right for ease of closing without scrolling.
 
--   author in metadata is now the git user who published
+-   author in metadata is now the git user who published the most recent version of the script
+
+-   file history url in the metadata
 
 -   file hashes for reference and comparator added to comment metadata
 

@@ -1,66 +1,64 @@
-issue_to_markdown <- function(owner, repo, issue_number) {
-  # collect issue info
-  issue <- get_issue(owner, repo, issue_number)
-  issue_comments <- get_issue_comments(owner, repo, issue_number)
-  issue_events <- get_issue_events(owner, repo, issue_number)
-  milestones <- get_all_milestone_objects(owner, repo)
-  timeline <- get_issue_timeline(owner, repo, issue_number)
+create_issue_section <- function(issue_creation_time, issue_creator, issue_title, issue_number, repo) {
+  # get qc_initializer
+  humanized_creation_time <- humanize_time(issue_creation_time)
+  qc_initializer <- glue::glue("{issue_creator} at {humanized_creation_time}")
 
-  # issue
-  creation_time <- humanize_time(issue$created_at)
-  creator <- issue$user$login
-  created_by <- glue::glue("{creator} at {creation_time}")
+  # get file author
+  file_author <- get_author(issue_title)
+
+  # create body
   issue_body <- glue::glue("
-    **File:** {issue$title}
+    **File:** {issue_title}
 
-    **Issue number:** {issue$number}
+    **File author:** {file_author}
+
+    **Issue number:** {issue_number}
 
     **Repository:** {repo}
 
-    **QC Issue Created by:** {created_by}
+    **QC initializer:** {qc_initializer}
   ")
   issue_section <- create_section("Issue", issue_body)
+}
 
-  # milestone
-  milestone_section <- {
-    if (!is.null(issue$milestone$title)) {
-      milestone_body <- {
-        description <- get_milestone_description(issue$milestone$title, milestones)
-        if (!is.null(description)) {
-          glue::glue("{issue$milestone$title}: {description}")
-        }
-        else {
-          issue$milestone$title
-        }
+create_milestone_section <- function(milestone_title, milestones) { # issue$milestone$title
+  if (!is.null(milestone_title)) {
+    milestone_body <- {
+      description <- get_milestone_description(milestone_title, milestones)
+      if (!is.null(description)) {
+        glue::glue("{milestone_title}: {description}")
       }
-      create_section("QC Identifier", milestone_body)
+      else {
+        milestone_title
+      }
     }
-    else ""
+    create_section("QC Identifier", milestone_body)
   }
+  else ""
+}
 
-  # assignees
-  assignees_list <- sapply(issue$assignees, function(assignee) glue::glue("- {assignee$login}"))
+create_assignees_section <- function(assignees) {
+  assignees_list <- sapply(assignees, function(assignee) glue::glue("- {assignee$login}"))
   assignees_body <- glue::glue_collapse(assignees_list, sep = "\n\n")
   assignees_section <- create_section("Assignees", assignees_body)
-
-  # checklist
-  checklist_section <- create_section("Issue Body", issue$body)
-
-  # comments
+}
+create_comments_section <- function(issue_comments) {
   comments_list <- process_comments(issue_comments)
   comments_body <- glue::glue_collapse(comments_list, sep = "\n\n")
   comments_section <- create_section("Comments", comments_body)
+}
 
-  # events
-  events_list <- get_events_list(issue_events)
+create_events_section <- function(events_list) {
   events_body <- glue::glue_collapse(events_list, sep = "\n")
   events_section <- create_section("Events", events_body)
+}
 
+create_status_section <- function(events_list, issue_state) {
   # status
   closures <- events_list[grep("closed", events_list)]
 
   status <- {
-    if (length(closures) == 0) {issue$state} # should be open (in theory)
+    if (length(closures) == 0) {issue_state} # should be open (in theory)
     else {
       # get the last time it was closed, which is the current status
       last_closure <- closures[length(closures)]
@@ -68,10 +66,46 @@ issue_to_markdown <- function(owner, repo, issue_number) {
     }
   }
   status_section <- create_section("Issue Status", status)
+}
 
+create_timeline_section <- function(timeline) {
   timeline_list <- get_timeline_list(timeline)
   timeline_body <- glue::glue_collapse(timeline_list, sep = "\n")
   timeline_section <- create_section("Detailed Timeline", timeline_body)
+}
+
+issue_to_markdown <- function(owner, repo, issue_number) {
+  # collect issue info
+  issue <- get_issue(owner, repo, issue_number)
+  milestones <- get_all_milestone_objects(owner, repo)
+
+  issue_comments <- get_issue_comments(owner, repo, issue_number)
+
+  issue_events <- get_issue_events(owner, repo, issue_number)
+  events_list <- get_events_list(issue_events)
+
+  timeline <- get_issue_timeline(owner, repo, issue_number)
+
+  # create sections
+  issue_section <- create_issue_section(issue_creation_time = issue$created_at,
+                                        issue_creator = issue$user$login,
+                                        issue_title = issue$title,
+                                        issue_number = issue$number,
+                                        repo = repo)
+
+  milestone_section <- create_milestone_section(issue$milestone$title, milestones)
+
+  assignees_section <- create_assignees_section(issue$assignees)
+
+  status_section <- create_status_section(events_list, issue$state)
+
+  checklist_section <- create_section("Issue Body", issue$body)
+
+  comments_section <- create_comments_section(issue_comments)
+
+  events_section <- create_events_section(events_list)
+
+  timeline_section <- create_timeline_section(timeline)
 
   # put it all together
   paste0(
@@ -173,26 +207,39 @@ insert_breaks <- function(text, width) {
   })
 }
 
-#' @export
-generate_qc_report <- function(milestone_name, owner = get_organization(), repo = get_current_repo(), pdf_name = NULL) {
-  # issues
-  issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
+create_summary_csv <- function(issues) {
   summary_df <- get_summary_df(issues)
   # wrap file paths
   summary_df$file_path <- insert_breaks(summary_df$file_path, 20)
   summary_csv <- tempfile(fileext = ".csv")
   suppressMessages({withr::defer_parent(fs::file_delete(summary_csv))})
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
-  suppressMessages({withr::defer_parent(fs::file_delete(summary_csv))})
+}
+
+create_intro <- function(repo, milestone_name, header_path) {
   author <- Sys.info()[["user"]]
+  date <- format(Sys.Date(), '%B %d, %Y')
 
-  issue_numbers <- sapply(issues, function(issue) issue$number)
-  issue_markdown_strings <- sapply(issues, function(issue) issue_to_markdown(owner, repo, issue$number))
-  issue_section_strs <- mapply(function(issue_str, issue) {
-    create_big_section(issue$title, issue_str)
-  }, issue_markdown_strings, issues)
-  issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
+  intro <- glue::glue(
+    "---
+  title: GSK QC Report
+  subtitle: {repo}, {milestone_name}
+  author: {author}
+  date: {date}
+  output:
+    pdf_document:
+      toc: true
+      toc_depth: 1
+      includes:
+        in_header: {header_path}
+  ---
 
+  \\newpage
+
+  ")
+}
+
+create_header <- function() {
   header_path <- system.file("header.tex", package = "ghqc")
   image_path <- system.file("gsk.png", package = "ghqc")
 
@@ -212,42 +259,24 @@ generate_qc_report <- function(milestone_name, owner = get_organization(), repo 
   )
   writeLines(header_tex, header_path)
 
-  date <- format(Sys.Date(), '%B %d, %Y')
+  return(header_path)
+}
 
-  # doc intro
-  intro <- glue::glue(
-  "---
-  title: GSK QC Report
-  subtitle: {repo}, {milestone_name}
-  author: {author}
-  date: {date}
-  output:
-    pdf_document:
-      toc: true
-      toc_depth: 1
-      includes:
-        in_header: {header_path}
-  ---
-
-  \\newpage
-
-  ")
-
-  # summary table
-  summary_table_section <- glue::glue(
-  "```{{r setup, include=FALSE}}
+create_summary_table_section <- function(summary_csv) {
+  glue::glue(
+    "```{{r setup, include=FALSE}}
   library(knitr)
   library(dplyr)
   library(flextable)
   knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n",
 
-  "```{{r, include=FALSE, eval=TRUE}}
+    "```{{r, include=FALSE, eval=TRUE}}
   summary_df <- read.csv(\"{summary_csv}\")\n
   summary_df <- summary_df %>%
   mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
   invisible(summary_df)\n```\n",
 
-  "# Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+    "# Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
   ft <- flextable::flextable(summary_df)
   dimensions <- dim_pretty(ft)
   col_widths <- dimensions$widths * 0.8
@@ -276,21 +305,58 @@ generate_qc_report <- function(milestone_name, owner = get_organization(), repo 
   ft <- width(ft, j = 1, 1.5)
   ft\n```\n\\newpage\n",
     .trim = FALSE)
+}
 
-  # appendix
+create_set_of_issue_sections <- function(issues, owner, repo) {
+  issue_numbers <- sapply(issues, function(issue) issue$number)
+  issue_markdown_strings <- sapply(issues, function(issue) issue_to_markdown(owner, repo, issue$number))
+  issue_section_strs <- mapply(function(issue_str, issue) {
+    create_big_section(issue$title, issue_str)
+  }, issue_markdown_strings, issues)
+  issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
+}
 
+create_milestone_report_section <- function(owner, repo, milestone_name) {
+  issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
 
+  # intro
+  header_path <- create_header()
+  intro <- create_intro(repo, milestone_name, header_path)
+
+  # summary table
+  summary_csv <- create_summary_csv(issues)
+  summary_table_section <- create_summary_table_section(summary_csv)
+
+  # issues
+  issue_sections <- create_set_of_issue_sections(issues, owner, repo)
+
+  # put it all together
   rmd <- paste0(
     intro,
     summary_table_section,
     issue_sections
   )
+}
 
- #result <- suppressWarnings({
- capture.output({
-      output <- markdown_to_pdf(rmd, repo, milestone_name, pdf_name)
+#' @export
+generate_qc_report <- function(milestone_names, owner = get_organization(), repo = get_current_repo(), pdf_name = NULL) {
+  browser()
+  milestone_sections <- lapply(milestone_names, function(milestone_name) {
+    milestone_body <- create_milestone_report_section(owner, repo, milestone_name)
+    create_big_section(milestone_name, milestone_body)
+    })
+
+  # appendix
+
+  rmd <- glue::glue_collapse(milestone_sections)
+
+
+  # create pdf from markdown
+
+  #result <- suppressWarnings({
+  capture.output({
+    output <- markdown_to_pdf(rmd, repo, milestone_name, pdf_name)
   })
   output
  # })
-
 }

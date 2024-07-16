@@ -50,7 +50,10 @@ ghqc_create_server <- function(id) {
 
     output$sidebar <- renderUI({
       tagList(
-        textInput(ns("milestone"), "Name QC Item List (github milestone)", width = "100%"),
+        textInput(ns("milestone"),
+                  "Name QC Item List (github milestone)",
+                  placeholder = "(required)",
+                  width = "100%"),
         textAreaInput(
           ns("milestone_description"),
           "Create a description for the QC Item List",

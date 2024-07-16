@@ -46,7 +46,7 @@ get_authors <- function(file_path) {
   # https://stackoverflow.com/questions/11533199/how-to-find-the-commit-in-which-a-given-file-was-added
 
   # shell out
-  # git log --follow --diff-filter=A --find-renames=40% -- file_path
+  # git log --follow -- file_path
   log <- processx::run("git", c("log", "--follow", "--", file_path))$stdout
   # get lines with author
   author_lines <- unlist(stringr::str_extract_all(log, "Author:.*"))
@@ -93,11 +93,24 @@ format_metadata <- function(checklist_type, file_path) {
   git_sha <- get_sha()
   git_sha_section <- glue::glue("* git sha: {git_sha}")
 
-  metadata <- c(metadata, qc_type_section, script_hash_section, git_sha_section)
+  file_history_url <- get_file_history_url(file_path)
+  file_history_url_section <- glue::glue("* file history: {file_history_url}")
+
+  metadata <- c(metadata, qc_type_section, script_hash_section, git_sha_section, file_history_url_section)
 
   glue::glue_collapse(metadata, "\n")
 }
 
+get_file_history_url <- function(file_path) {
+  # get branch
+  branch <- gert::git_branch()
+  # get remote url
+  remote_url <- gert::git_remote_list()$url
+  # take out .git
+  repo_html_url <- sub(".git$", "", remote_url)
 
+  # get something like https://github.com/A2-ai/project_x/commits/main/scripts/DA.R
+  commit_history_url <- paste0(repo_html_url, "/commits/", branch, "/", file_path)
+}
 
 

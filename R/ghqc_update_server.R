@@ -97,35 +97,79 @@ ghqc_update_server <- function(id) {
       )
     })
 
-
-    observe({
+    ref_commits <- reactive({
       req(issue_parts()$issue_number)
       ref_commits <- get_reference_df(issue_number = issue_parts()$issue_number)
-      ref_commits <- ref_commits %>%
-        split(.$date) %>%
-        rev() %>%
-        lapply(function(x) {
-          setNames(object = x$commit,
-                   nm = x$display)
-        })
-
-      updateSelectizeInput(session, "ref_commits", choices = ref_commits)
     })
 
     observe({
-      req(issue_parts()$issue_number)
-      req(input$ref_commits)
+      if (nrow(ref_commits()) == 0) {
+        return(updateSelectizeInput(session, "ref_commits", choices = "",
+                                    options = list(
+                                      placeholder = "No commits since QC initialization."
+                                    )))
+      }
 
-      comp_commits <- get_comparator_df(issue_number = issue_parts()$issue_number,
-                                        selected_reference_commit = input$ref_commits)
-      comp_commits <- comp_commits %>%
+      ref_commits <- ref_commits() %>%
         split(.$date) %>%
         rev() %>%
         lapply(function(x) {
-          setNames(object = x$commit,
-                   nm = x$display)
+          setNames(
+            object = x$commit,
+            nm = x$display
+          )
         })
-      updateSelectizeInput(session, "comp_commits", choices = comp_commits)
+
+      # to prevent empty inputs (which errors comment fxn) on selection focus lost, autoset to first choice if otherwise empty
+      updateSelectizeInput(session, "ref_commits", choices = ref_commits,
+                           options = list(
+                             onBlur = I("function() {
+                             var selectize = this;
+                             if (selectize.getValue() === '') {
+                                 selectize.setValue(selectize.options[Object.keys(selectize.options)[0]].value);
+                             }
+                         }")
+                           ))
+    })
+
+    comp_commits <- reactive({
+      req(issue_parts()$issue_number)
+      req(input$ref_commits)
+
+      comp_commits <- get_comparator_df(
+        issue_number = issue_parts()$issue_number,
+        selected_reference_commit = input$ref_commits
+      )
+    })
+
+    observe({
+      if (!isTruthy(comp_commits())) {
+        return(updateSelectizeInput(session, "comp_commits", choices = "",
+                                    options = list(
+                                      placeholder = "No commits since reference commit."
+                                    )))
+      }
+
+      comp_commits <- comp_commits() %>%
+        split(.$date) %>%
+        rev() %>%
+        lapply(function(x) {
+          setNames(
+            object = x$commit,
+            nm = x$display
+          )
+        })
+
+      # to prevent empty inputs (which errors comment fxn) on selection focus lost, autoset to first choice if otherwise empty
+      updateSelectizeInput(session, "comp_commits", choices = comp_commits,
+                           options = list(
+                             onBlur = I("function() {
+                             var selectize = this;
+                             if (selectize.getValue() === '') {
+                                 selectize.setValue(selectize.options[Object.keys(selectize.options)[0]].value);
+                             }
+                         }")
+                           ))
     })
 
     issue_parts <- reactive({
@@ -143,22 +187,14 @@ ghqc_update_server <- function(id) {
       git_sync_status <- git_ahead_behind()
       untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), issue_parts()$issue_title)
 
-      gh_issue_status <- if (input$compare == "prev") {
-        check_if_there_are_update_comments(
-          owner = org(),
-          repo = repo(),
-          issue_number = issue_parts()$issue_number
-        )
-      } else {
-        TRUE
-      }
+      commit_update_status <- check_if_updates_since_init(get_reference_df(issue_number = issue_parts()$issue_number))
 
       determine_modal_message(
         selected_files = issue_parts()$issue_title,
         uncommitted_git_files = uncommitted_git_files,
         untracked_selected_files = untracked_selected_files,
         git_sync_status = git_sync_status,
-        gh_issue_status = gh_issue_status
+        commit_update_status = commit_update_status
       )
     })
 
@@ -290,7 +326,7 @@ ghqc_update_server <- function(id) {
       removeClass("post", "enabled-btn")
       addClass("post", "disabled-btn")
 
-
+      # TODO block buttons if show file diff is checked + commit checks if they exist
       if (isTruthy(input$select_issue)) {
         removeClass("preview", "disabled-btn")
         addClass("preview", "enabled-btn")

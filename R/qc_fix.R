@@ -107,7 +107,9 @@ create_comment_body <- function(owner,
                              .trim = FALSE)
 
   # log
-  cat(glue::glue("Comment body created for issue #{issue_number} with assignees: {paste(assignees_list, collapse = ', ')}"), "\n")
+  log_assignees <- if (length(assignees_list) == 0) "None" else paste(assignees_list, collapse = ', ')
+
+  cat(glue::glue("Comment body created for issue #{issue_number}: Assignees: {log_assignees}, Reference commit: {reference_commit}, Comparator commit: {comparator_commit}"), "\n")
 
   as.character(comment_body)
 }
@@ -144,5 +146,5 @@ add_fix_comment <- function(owner,
 
   post_comment(owner, repo, issue_number, body)
 
-  cat(glue::glue("Update comment added to issue #{issue_number} in {owner}/{repo}"), "\n")
+  cat(glue::glue("Update comment added to issue #{issue_number} in {owner}/{repo}. Reference commit: {reference_commit}, Comparator commit: {comparator_commit}"), "\n")
 }

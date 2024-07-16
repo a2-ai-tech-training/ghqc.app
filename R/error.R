@@ -56,8 +56,8 @@ check_that_milestone_is_non_empty <- function(milestone) {
   else TRUE
 }
 
-check_if_updates_since_init <- function(comparator_df) {
-  if (nrow(comparator_df) == 0) {
+check_if_updates_since_init <- function(ref_df) {
+  if (nrow(ref_df) == 0) {
     FALSE
   }
   else TRUE

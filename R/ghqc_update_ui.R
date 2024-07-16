@@ -32,41 +32,30 @@ ghqc_update_ui <- function(id) {
           selectInput(ns("select_issue"), "Select QC Item (github issue)", choices = "", multiple = FALSE),
           textAreaInput(ns("message"), "Message", ""),
           checkboxInput(ns("show_diff"), "Show file difference?", FALSE),
+          radioButtons(ns("compare"), "Compare to:",
+                       inline = TRUE,
+                       choices = c(
+                         "Compare original with most recent" = "init",
+                         "Select commit comparators" = "comparators"
+                       )
+          ),
           conditionalPanel(
-            condition = "input.show_diff == true", ns = ns,
-            radioButtons(ns("compare"), "Compare to:",
-              inline = TRUE,
-              choices = c(
-                "Compare original with most recent" = "init",
-                "Select commit comparators" = "comparators"
-              )
-            ),
-            conditionalPanel(
-              condition = "input.compare === 'comparators'", ns = ns,
-              # shinyWidgets::pickerInput(inputId = ns("itemrange"),
-              #                           label = "Select Items",
-              #                           choices = "",
-              #                           multiple = TRUE,
-              #                         #  width = "auto",
-              #                           options = list(`multiple-separator` = " <-> ",
-              #                                          "max-options" = 2)
-              # )
-              div(
-                class = "inline-selectize",
-                selectizeInput(ns("ref_commits"), "Reference",
-                  choices = "",
-                  multiple = FALSE,
-                  options = list(
-                    placeholder = "No commits found."
-                  )
-                ),
-                selectizeInput(ns("comp_commits"), "Comparator",
-                  choices = "",
-                  multiple = FALSE,
-                  options = list(
-                    placeholder = "No commits found."
-                  )
-                )
+            condition = "input.compare === 'comparators'", ns = ns,
+            div(
+              class = "inline-selectize",
+              selectizeInput(ns("ref_commits"), "Reference",
+                             choices = "",
+                             multiple = FALSE,
+                             options = list(
+                               placeholder = "No commits since QC initialization."
+                             )
+              ),
+              selectizeInput(ns("comp_commits"), "Comparator",
+                             choices = "",
+                             multiple = FALSE,
+                             options = list(
+                               placeholder = "No commits since reference commit."
+                             )
               )
             )
           )

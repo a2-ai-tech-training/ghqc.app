@@ -256,6 +256,9 @@ create_button_preview_event <- function(input, name) {
   observeEvent(input[[button_input_id]], {
     showModal(
       modalDialog(
+        title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+        footer = NULL,
+        easyClose = TRUE,
         renderUI({
           renderPrint(cat(readLines(clean_name), sep = "\n"))
         })

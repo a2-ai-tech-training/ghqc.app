@@ -2,6 +2,30 @@
 
 # ghqc 0.0.0.9004
 
+## New features
+
+-   Changes the available commits comparison in `ghqc_update_app()` from:
+
+    1.  Initial QC commit and most recent QC issue update comment commit
+    2.  Previous QC issue update comment commit and most recent QC issue update comment commit
+
+    to:
+
+    1.  Initial QC commit and most recent commit
+    2.  Selectable "Reference" and "Comparator" commits (where Comparator is newer/more recent chronologically)
+
+-   Adds a "preview" button for each selected QC file to allow users to preview the contents of the file in `ghqc_create_app()`.
+
+## Minor improvements and bug fixes
+
+-   Adds additional status check to prevent issue creation in `ghqc_create_app()` if there is already an existing issue name of the selected file in the same milestone name.
+
+-   Changes the checklist info button in `ghqc_create_app()` from a question mark symbol to text ("checklist info") to better show what it is for.
+
+-   Adds "No Assignee" to dropdown selection for the individual file selection assignee and now defaults to it rather than first available assignee in `ghqc_create_app()`.
+
+-   Moves all modalDialog (pop-ups) buttons to the top right for ease of closing without scrolling.
+
 -   author in metadata is now the git user who published
 
 -   file hashes for reference and comparator added to comment metadata
@@ -9,13 +33,6 @@
 -   removes empty milestones in `get_open_milestone_objects()` and `get_open_milestone_object_names()`
 
 -   `check_if_updates_since_init()` function
-
-## Minor improvements and bug fixes
-
--   Adds additional status check to prevent issue creation in `ghqc_create_app()` if there is already an existing issue name of the selected file in the same milestone name.
--   Changes the checklist info button in `ghqc_create_app()` from a question mark symbol to text ("checklist info") to better show what it is for.
--   Adds "No Assignee" to dropdown selection for the individual file selection assignee and now defaults to it rather than first available assignee in `ghqc_create_app()`.
--   Adds a "preview" button for each selected qc file to allow users to preview the contents of the file in `ghqc_create_app()`.
 
 # ghqc 0.0.0.9003
 

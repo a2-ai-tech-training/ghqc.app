@@ -44,6 +44,10 @@ get_comparator_df <- function(issue_number, owner = get_organization(), repo = g
   # commits_df$display[1] <- glue::glue("{commits_df$display[1]}") # \n(most recent commit)
   # next need to cut off at selected reference commits
   cutoff_position <- which(commits_df$commit == selected_reference_commit)
+
+  if(length(cutoff_position) == 0){
+    return(NULL)
+  }
   # - 1 to not include the selected commit
   comp_df <- commits_df[1:cutoff_position - 1, ]
 

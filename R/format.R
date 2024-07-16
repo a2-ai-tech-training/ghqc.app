@@ -41,13 +41,15 @@ get_sha <- function() {
   commits$commit[1]
 }
 
-get_git_user <- function() {
-  git_user_info <- gert::git_config_global()
-  user_name <- git_user_info[git_user_info$name == "user.name", "value"]
+get_author <- function(file_path) {
+  #git log --follow --diff-filter=A --find-renames=40% -- file_path
+  log <- processx::run("git", c("log", "--follow", "--diff-filter=A", "--find-renames=40%", "--", file_path))$stdout
+  author_line <- stringr::str_extract(log, "Author:.*")
+  stringr::str_remove(author_line, "Author: ")
 }
 
 format_metadata <- function(checklist_type, file_path) {
-  author <- get_git_user()
+  author <- get_author(file_path)
   qc_type <- checklist_type
   script_hash <- digest::digest(file = file_path)
   git_sha <- get_sha()

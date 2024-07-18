@@ -7,6 +7,7 @@ get_names_and_usernames <- function(username) {
 }
 
 get_members_list <- function(org) {
+  browser()
   page <- 1
   all_members <- list()
 

@@ -104,13 +104,24 @@ format_metadata <- function(checklist_type, file_path) {
 get_file_history_url <- function(file_path) {
   # get branch
   branch <- gert::git_branch()
-  # get remote url
-  remote_url <- gert::git_remote_list()$url
-  # take out .git
-  repo_html_url <- sub(".git$", "", remote_url)
+
+  # get remote url (assume first row)
+  remote_url <- gert::git_remote_list()$url[1]
+
+  # if it's an ssh, construct manually
+  if (grepl("^git@", remote_url)) {
+    # get the domain and repo
+    domain <- sub("git@(.*):.*", "\\1", remote_url)
+    repo_path <- sub("git@.*:(.*)", "\\1", remote_url)
+
+    remote_url <- glue::glue("https://{domain}/{repo_path}")
+  }
+
+  # take out .git at the end
+  https_url <- sub(".git$", "", remote_url)
 
   # get something like https://github.com/A2-ai/project_x/commits/main/scripts/DA.R
-  commit_history_url <- paste0(repo_html_url, "/commits/", branch, "/", file_path)
+  file_history_url <- glue::glue("{https_url}/commits/{branch}/{file_path}")
 }
 
 

@@ -7,7 +7,6 @@ get_names_and_usernames <- function(username) {
 }
 
 get_members_list <- function(org) {
-  browser()
   page <- 1
   all_members <- list()
 
@@ -56,8 +55,7 @@ get_repos <- function(org) {
   purrr::map_chr(repos, "name")
 }
 
-get_open_milestone_objects <- function(owner, repo) {
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
+filter_for_non_empty_milestones <- function(milestones) {
   non_empty_milestones <- lapply(milestones, function(milestone) {
     if (check_that_milestone_is_non_empty(milestone)) {
       milestone
@@ -68,6 +66,11 @@ get_open_milestone_objects <- function(owner, repo) {
   non_empty_milestones <- Filter(Negate(is.null), non_empty_milestones)
 }
 
+get_open_milestone_objects <- function(owner, repo) {
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
+  non_empty_milestones <- filter_for_non_empty_milestones(milestones)
+}
+
 get_all_milestone_objects <- function(owner, repo) {
   gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "all", .limit = Inf)
 }
@@ -75,6 +78,13 @@ get_all_milestone_objects <- function(owner, repo) {
 get_open_milestone_names <- function(org, repo) {
   milestones <- get_open_milestone_objects(org, repo)
   purrr::map_chr(milestones, "title")
+}
+
+#' @export
+list_milestones <- function(org = get_organization(), repo = get_current_repo()) {
+  milestones <- get_all_milestone_objects(org, repo)
+  non_empty_milestones <- filter_for_non_empty_milestones(milestones)
+  purrr::map_chr(non_empty_milestones, "title")
 }
 
 #' @export

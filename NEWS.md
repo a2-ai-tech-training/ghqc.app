@@ -16,6 +16,8 @@
 
 -   Adds a "preview" button for each selected QC file to allow users to preview the contents of the file in `ghqc_create_app()`.
 
+-   generate_qc_report() can take a vector milestones as its input, as well as an optional just_tables flag that will only output the tables in the report.
+
 ## Minor improvements and bug fixes
 
 -   Adds additional status check to prevent issue creation in `ghqc_create_app()` if there is already an existing issue name of the selected file in the same milestone name.
@@ -28,13 +30,19 @@
 
 -   author in metadata is now the git user who published the most recent version of the script
 
--   file history url in the metadata
-
 -   file hashes for reference and comparator added to comment metadata
 
 -   removes empty milestones in `get_open_milestone_objects()` and `get_open_milestone_object_names()`
 
 -   `check_if_updates_since_init()` function
+
+-   generate_qc_report() errors if any inputted milestones don't exist or are empty
+
+-   in issue body metadata and report: author is the most recent modifier of a script on github and collaborators are other editors of the script (only appears if there are any collaborators)
+
+-   in issue body metadata, file history url is now listed
+
+-   in generate_qc_report(), Issue section renamed to QC data - file name removed (because that's the section name, and is thus redundant), milestone description is listed if it exists. 
 
 # ghqc 0.0.0.9003
 

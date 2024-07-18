@@ -367,24 +367,50 @@ create_milestone_report_section <- function(owner, repo, milestone_name, env, ju
   } # else
 } # create_milestone_report_section
 
+get_inputted_milestone_names <- function(repo) {
+  print(glue::glue("Non-empty milestones in {repo}:\n\n"))
+  milestones <- list_milestones()
+  print(milestones)
+  # read in milestones
+  milestones_in <- readline(prompt = glue::glue("\nInput milestone names separated by commas; e.g. milestone1, milestone2, milestone3"))
+  # remove all quotes if any
+  milestones_in_clean <- gsub('"', '', milestones_in)
+  # make comma-separated str into vector
+  milestones_list <- strsplit(milestones_in_clean, ",\\s*")
+  milestones_vector <- unlist(milestones_list)
+  milestone_names <- milestones_vector
+}
+
 #' @export
-generate_qc_report <- function(milestone_names,
+ghqc_report <- function(milestone_names = NULL,
                                owner = get_organization(),
                                repo = get_current_repo(),
                                pdf_name = NULL,
                                just_tables = FALSE) {
+
+  # get user input if milestone_names not inputted
+  if (is.null(milestone_names)) {
+    milestone_names <- get_inputted_milestone_names(repo)
+  }
+
+  # check that each milestone exists and is non-empty
+  lapply(milestone_names, function(milestone_name) {
+    exists <- milestone_exists(milestone_name, owner, repo)
+    if (!exists) {
+      (glue::glue("\"{milestone_name}\" is not a milestone in {repo}"))
+    }
+
+    milestone <- get_milestone_from_name(owner, repo, milestone_name)
+    non_empty <- check_that_milestone_is_non_empty(milestone)
+    if (!non_empty) {
+      stop(glue::glue("\"{milestone_name}\" in {repo} is an empty milestone (no issues)"))
+    }
+  })
+
   # intro
   header_path <- create_header()
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
-
-  # check that each milestone exists
-  lapply(milestone_names, function(milestone_name) {
-    exists <- milestone_exists(milestone_name, owner, repo)
-    if (!exists) {
-      stop(glue::glue("\"{milestone_name}\" is not a milestone in {repo}"))
-    }
-  })
 
   # create milestone sections
   milestone_sections <- lapply(milestone_names, function(milestone_name) {

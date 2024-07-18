@@ -8,6 +8,20 @@ NULL
 ghqc_create_server <- function(id) {
   error_if_git_not_initialized()
 
+  rproj_root_dir <- rprojroot::find_rstudio_root_file()
+  if (getwd() != rproj_root_dir) {
+    setwd(rproj_root_dir)
+    message("Directory changed to project root:", rproj_root_dir, "\n")
+  }
+
+  selected_paths <- treeNavigatorServer(
+    "explorer",
+    rootFolder = rproj_root_dir,
+    search = FALSE,
+    pattern = exclude_patterns(),
+    all.files = FALSE
+  )
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     qc_trigger <- reactiveVal(FALSE)
@@ -70,7 +84,7 @@ ghqc_create_server <- function(id) {
             closeAfterSelect = TRUE
           )
         ),
-        uiOutput(ns("tree_list_ui")),
+        treeNavigatorUI("explorer")
       )
     })
 
@@ -129,11 +143,16 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
 
-    selected_items <- reactive({
-      validate(need(input$tree_list, "No files selected"))
-      session$sendCustomMessage("process_tree_list", message = list(ns = id)) # pass in ns id for new input
+    # selected_items <- reactive({
+    #   validate(need(input$tree_list, "No files selected"))
+    #   session$sendCustomMessage("process_tree_list", message = list(ns = id)) # pass in ns id for new input
+    #
+    #   input$paths # input needs to be set through js because treeInput not built to give pathing info
+    # })
 
-      input$paths # input needs to be set through js because treeInput not built to give pathing info
+    selected_items <- reactive({
+      req(selected_paths())
+      selected_paths()
     })
 
     qc_items <- reactive({

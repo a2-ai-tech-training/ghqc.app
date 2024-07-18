@@ -6,7 +6,9 @@ milestone_exists <- function(title, owner, repo) {
   milestones <- get_all_milestone_objects(owner, repo)
 
   # return true if any matches
-  any(sapply(milestones, function(milestone) milestone$title == title))
+  browser()
+  any_matches <- any(sapply(milestones, function(milestone) milestone$title == title))
+  return(any_matches)
 }
 
 # look up number for milestone that exists - return null if it can't be found

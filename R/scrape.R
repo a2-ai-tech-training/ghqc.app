@@ -367,10 +367,6 @@ create_milestone_report_section <- function(owner, repo, milestone_name, env, ju
   } # else
 } # create_milestone_report_section
 
-# generate_summary_tables <- function(milestone_names, owner = get_organization(), repo = get_current_repo(), pdf_name = NULL) {
-#
-# }
-
 #' @export
 generate_qc_report <- function(milestone_names,
                                owner = get_organization(),
@@ -384,7 +380,10 @@ generate_qc_report <- function(milestone_names,
 
   # check that each milestone exists
   lapply(milestone_names, function(milestone_name) {
-    milestone_exists(milestone_name, owner, repo)
+    exists <- milestone_exists(milestone_name, owner, repo)
+    if (!exists) {
+      stop(glue::glue("\"{milestone_name}\" is not a milestone in {repo}"))
+    }
   })
 
   # create milestone sections

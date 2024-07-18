@@ -367,18 +367,61 @@ create_milestone_report_section <- function(owner, repo, milestone_name, env, ju
   } # else
 } # create_milestone_report_section
 
-get_inputted_milestone_names <- function(repo) {
-  print(glue::glue("Non-empty milestones in {repo}:\n\n"))
-  milestones <- list_milestones()
-  print(milestones)
-  # read in milestones
-  milestones_in <- readline(prompt = glue::glue("\nInput milestone names separated by commas; e.g. milestone1, milestone2, milestone3"))
+clean_input <- function(milestones_in) {
   # remove all quotes if any
   milestones_in_clean <- gsub('"', '', milestones_in)
   # make comma-separated str into vector
   milestones_list <- strsplit(milestones_in_clean, ",\\s*")
-  milestones_vector <- unlist(milestones_list)
-  milestone_names <- milestones_vector
+  unlist(milestones_list)
+}
+
+get_inputted_milestone_names <- function(repo) {
+  # gate with interactive() to avoid hanging
+  if (interactive()) {
+    print(glue::glue("Non-empty milestones in {repo}:\n"))
+    milestones <- list_milestones()
+    print(milestones)
+    valid_input <- FALSE
+    while (!valid_input) {
+      # read in milestones
+      user_input <- milestones_in <- readline(prompt = glue::glue("\nInput milestones: e.g. milestone1, milestone2: "))
+      clean_input <- clean_input(user_input)
+
+      # check they exist and are non-empty
+      result <- tryCatch({
+       check_milestones(clean_input)
+      }, warning = function(w) {
+        NA
+      }, error = function(e) {
+        NA
+      })
+
+      # Check if the conversion was successful
+      if (!is.na(result)) {
+        cat("You entered a valid number:", result, "\n")
+        valid_input <- TRUE
+      } else {
+        cat("Invalid input. Please try again.\n")
+      }
+    }
+
+  }
+} # get_inputted_milestone_names
+
+check_milestones <- function(milestone_names) {
+  # check that each milestone exists and is non-empty
+  lapply(milestone_names, function(milestone_name) {
+    exists <- milestone_exists(milestone_name, owner, repo)
+    if (!exists) {
+      stop(glue::glue("\"{milestone_name}\" is not a milestone in {repo}"))
+    }
+
+    milestone <- get_milestone_from_name(owner, repo, milestone_name)
+    non_empty <- check_that_milestone_is_non_empty(milestone)
+    if (!non_empty) {
+      stop(glue::glue("\"{milestone_name}\" in {repo} is an empty milestone (no issues)"))
+    }
+  })
 }
 
 #' @export
@@ -393,19 +436,8 @@ ghqc_report <- function(milestone_names = NULL,
     milestone_names <- get_inputted_milestone_names(repo)
   }
 
-  # check that each milestone exists and is non-empty
-  lapply(milestone_names, function(milestone_name) {
-    exists <- milestone_exists(milestone_name, owner, repo)
-    if (!exists) {
-      (glue::glue("\"{milestone_name}\" is not a milestone in {repo}"))
-    }
-
-    milestone <- get_milestone_from_name(owner, repo, milestone_name)
-    non_empty <- check_that_milestone_is_non_empty(milestone)
-    if (!non_empty) {
-      stop(glue::glue("\"{milestone_name}\" in {repo} is an empty milestone (no issues)"))
-    }
-  })
+  # check that milestones exist and are non-empty
+  check_milestones(milestone_names)
 
   # intro
   header_path <- create_header()

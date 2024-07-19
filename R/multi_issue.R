@@ -21,6 +21,7 @@ create_issue <- function(file, issue_params) {
   list(number = issue$number, assignees = issue_params$assignees)
 } # create_issue
 
+#' @import log4r
 #' @export
 create_issues <- function(data) {
   # create list of issue_params to input to api call -
@@ -48,28 +49,33 @@ create_issues <- function(data) {
     issue_params$milestone <- get_milestone_number(milestone_params)
   }
 
+  file_names <- glue::glue_collapse(purrr::map(data$files, "name"), sep = ", ")
+  debug(.le$logger, glue::glue("Creating checklists for files: {file_names}"))
   # create an issue for each file
   lapply(data$files, function(file) {
     issue <- create_issue(file, issue_params)
-    cat("Created issue for file:", file$name, "\n")
+    debug(.le$logger, glue::glue("Created checklist for file: {file$name}"))
     if (!is.null(data$milestone)) {
-      cat("Milestone:", data$milestone, "\n")
+      debug(.le$logger, glue::glue("Milestone: {data$milestone}"))
     }
     if (!is.null(issue$assignees)) {
-      cat("Assignee:", paste(issue$assignees, collapse = ", "), "\n")
+      debug(.le$logger, cat("Assignee:", paste(issue$assignees, collapse = ", ")))
+      # cat("Assignee:", paste(issue$assignees, collapse = ", "), "\n")
     }
-    cat("Issue number:", issue$number, "\n")
+    debug(.le$logger, cat("Issue number:", issue$number))
     return(issue)
-
   })
+  info(.le$logger, glue::glue("Created checklists for files: {file_names}"))
 } # create_issues
 
 
 # test with "test_yamls/checklist.yaml"
+#' @import log4r
 #' @export
 create_checklists <- function(yaml_path) {
   data <- read_and_validate_yaml(yaml_path)
   create_issues(data)
+  debug(.le$logger, glue::glue("Created checklists for files: ", glue::glue_collapse(data$files$name, sep = ", ")))
 }
 
 

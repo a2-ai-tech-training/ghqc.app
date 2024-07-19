@@ -118,10 +118,28 @@ get_organization_name_from_url <- function(remote_url) {
 } # get_organization_name_from_url
 
 get_organization <- function() {
+  # repo
+  debug(.le$logger, glue::glue("Retriving repo path..."))
   repo_path <- gert::git_find()
+  debug(.le$logger, glue::glue("Retrived repo path: {repo_path}"))
+
+  # remotes
+  debug(.le$logger, glue::glue("Retriving list of remotes..."))
   remotes <- gert::git_remote_list(repo = repo_path)
-  remote_url <- remotes$url
-  get_organization_name_from_url(remote_url)
+  remotes_string <- glue::glue_collapse(apply(remotes, 1, function(row) {
+    glue::glue("name: {row['name']}, url: {row['url']}")
+  }), sep = "\n")
+  debug(.le$logger, glue::glue("Retrived list of remotes: {remotes_string}"))
+
+  # url
+  debug(.le$logger, glue::glue("Retriving first url in list of remotes..."))
+  remote_url <- remotes$url[1]
+  debug(.le$logger, glue::glue("Retrived remote url: {remote_url}"))
+
+  debug(.le$logger, glue::glue("Retriving organization name from remote url..."))
+  org_name <- get_organization_name_from_url(remote_url)
+  debug(.le$logger, glue::glue("Retrived organization name {org_name}"))
+  org_name
 }
 
 get_issue <- function(owner, repo, issue_number) {

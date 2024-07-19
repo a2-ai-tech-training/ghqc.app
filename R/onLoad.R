@@ -1,3 +1,5 @@
+
+
 #' Initialize the ghqc package
 #'
 #' This function sets up necessary configurations for the ghqc package,
@@ -8,5 +10,5 @@
 #' @noRd
 .onLoad <- function(...) {
   shiny::addResourcePath("ghqc", system.file(".", package = "ghqc"))
-  assign("logger", init_logger(), envir = .GlobalEnv)
+  logger <- init_logger()
 }

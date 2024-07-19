@@ -35,9 +35,16 @@ get_milestone_from_name <- function(owner, repo, name_in) {
 
 # look up number for milestone that exists - return null if it can't be found
 look_up_existing_milestone_number <- function(params) {
+  debug(.le$logger, glue::glue("Retrieving milestone: {params$title}"))
   milestone <- get_milestone_from_name(params$owner, params$repo, params$title)
-  if (!is.null(milestone)) milestone$number
-  else NULL
+  if (!is.null(milestone)) {
+    info(.le$logger, glue::glue("Retrieved milestone: {params$title}, #{milestone$number}"))
+    milestone$number
+  }
+  else {
+    debug(.le$logger, glue::glue("Milestone: {params$title} does not currently exist"))
+    NULL
+    }
 }
 
 create_milestone <- function(params) {
@@ -45,20 +52,17 @@ create_milestone <- function(params) {
 } # create_milestone
 
 get_milestone_number <- function(params) {
-  milestone_number <- {
-    searched_number <- look_up_existing_milestone_number(params)
-    if (!is.null(searched_number)) {
-      #print("milestone already exists")
-      searched_number
-    }
-    else {
-      #print("milestone created")
-      milestone <- create_milestone(params)
-      milestone$number
-    }
-  } # milestone_number
+  searched_number <- look_up_existing_milestone_number(params)
+  if (!is.null(searched_number)) {
+    searched_number
+  }
+  else {
+    debug(.le$logger, glue::glue("Creating milestone: {params$title}"))
+    milestone <- create_milestone(params)
+    info(.le$logger, glue::glue("Created milestone: {params$title}"))
+    milestone$number
+  }
 
-  milestone_number
 } # get_milestone_number
 
 get_milestone_description <- function(title, milestones) {

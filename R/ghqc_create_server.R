@@ -1,4 +1,5 @@
 #' @import shiny
+#' @import log4r
 #' @importFrom shinyjs enable disable addClass removeClass delay
 #' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
@@ -91,11 +92,27 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
+      debug(.le$logger, paste("Connecting to organization..."))
       w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org()))
       w_gh$show()
       on.exit(w_gh$hide())
-      log_message(paste("Connecting to organization:", org()))
-      log_message(paste("Retrieving assignees:", members()))
+
+      # Organization logging
+      info(.le$logger, paste("Connected to organization:", org()))
+
+      # Assignees logging
+      debug(.le$logger, paste("Retrieving assignees..."))
+      info(.le$logger, glue::glue("Retrieved {nrow(members())} assignees from {org()}"))
+
+      members_string <- glue::glue_collapse(apply(members(), 1, function(row) {
+        glue::glue("username: {row['username']}, name: {row['name']}")
+      }), sep = "\n")
+
+      debug(.le$logger, paste("Retrived assignees:\n", members_string))
+      if (nrow(members()) == 0) {
+        warn(.le$logger, glue::glue("No assignees retrived from {org()}"))
+      }
+
       updateSelectizeInput(
         session,
         "assignees",
@@ -117,7 +134,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         )
       )
-      log_message(paste(
+      debug(.le$logger, paste(
         "Connected to organization and retrieved",
         nrow(members()),
         "assignees from:",

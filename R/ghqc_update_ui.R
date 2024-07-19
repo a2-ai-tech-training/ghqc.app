@@ -1,7 +1,7 @@
 #' @import shiny
 #' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel miniButtonBlock
 #' @importFrom shinyjs useShinyjs
-#' @importFrom waiter use_waiter waiter_show_on_load spin_1
+#' @importFrom waiter use_waiter waiter_preloader
 NULL
 
 ghqc_update_ui <- function(id) {
@@ -12,7 +12,7 @@ ghqc_update_ui <- function(id) {
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/styles.css"),
     ),
-    waiter_show_on_load(
+    waiter_preloader(
       html = tagList(
         spin_1(),
         h4("Loading in ...", style = "color: white;")

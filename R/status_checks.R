@@ -2,15 +2,6 @@ generate_html_list <- function(files) {
   paste("<li>", files, "</li>", collapse = "")
 }
 
-generate_binary_file_message <- function(binary_files) {
-  error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
-  messages <- c()
-  if (length(binary_files) > 0) {
-    messages <- sprintf("%s The selected directory contains only the following binary files which are not selectable QC items:<ul>%s</ul><br>",
-                        error_icon_html, paste0("<li>", basename(binary_files), "</li>", collapse = ""))
-  }
-  return(messages)
-}
 
 generate_sync_message <- function(git_sync_status, error_icon_html) {
   messages <- c()

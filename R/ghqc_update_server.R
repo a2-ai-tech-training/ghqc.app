@@ -42,7 +42,7 @@ ghqc_update_server <- function(id) {
       updateSelectInput(
         session,
         "select_milestone",
-        choices = c("All QC Items", milestone_list),
+        choices = c("All QC Items", milestone_list)
       )
       log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
     })
@@ -73,7 +73,7 @@ ghqc_update_server <- function(id) {
       updateSelectInput(
         session,
         "select_issue",
-        choices = issues_choices,
+        choices = issues_choices
       )
     })
 

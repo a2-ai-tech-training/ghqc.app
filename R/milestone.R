@@ -6,38 +6,33 @@ milestone_exists <- function(title, owner, repo) {
   milestones <- get_all_milestone_objects(owner, repo)
 
   # return true if any matches
-  any_matches <- any(sapply(milestones, function(milestone) milestone$title == title))
-  return(any_matches)
+  any(sapply(milestones, function(milestone) milestone$title == title))
 }
 
-get_milestone_from_name <- function(owner, repo, name_in) {
+# look up number for milestone that exists - return null if it can't be found
+look_up_existing_milestone_number <- function(params) {
   # list milestones
-  milestones <- get_all_milestone_objects(owner = owner, repo = repo)
+  milestones <- get_all_milestone_objects(owner = params$owner, repo = params$repo)
+
   # try to get milestone number
   milestone <- sapply(milestones, function(milestone) {
-    if (milestone$title == name_in) {
-      milestone
+    if (milestone$title == params$title) {
+      milestone$number
     }
     else {
       NULL
     }
   })
-  # filter null values - return first match
-  milestone <- Filter(Negate(is.null), milestone)
 
-  if (length(milestone) > 0) {
-    milestone[[1]]
+  # filter null values - return first match
+  milestone_number <- Filter(Negate(is.null), milestone)
+
+  if (length(milestone_number) > 0) {
+    milestone_number[[1]]
   }
   else {
     NULL
   }
-}
-
-# look up number for milestone that exists - return null if it can't be found
-look_up_existing_milestone_number <- function(params) {
-  milestone <- get_milestone_from_name(params$owner, params$repo, params$title)
-  if (!is.null(milestone)) milestone$number
-  else NULL
 }
 
 create_milestone <- function(params) {

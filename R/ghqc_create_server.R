@@ -1,7 +1,7 @@
 #' @import shiny
 #' @importFrom shinyjs enable disable addClass removeClass delay
 #' @importFrom shinyWidgets treeInput create_tree
-#' @importFrom waiter Waiter spin_1 spin_2
+#' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
 #' @importFrom gert git_ahead_behind git_status
 NULL
 
@@ -26,18 +26,7 @@ ghqc_create_server <- function(id) {
     ns <- session$ns
     qc_trigger <- reactiveVal(FALSE)
 
-    create_waiter <- function(ns, message) {
-      Waiter$new(
-        id = ns("main_container"),
-        html = tagList(
-          spin_1(),
-          h4(sprintf("%s", message), style = "color: white;")
-        ),
-        color = "darkgrey"
-      )
-    }
-
-    waiter::waiter_hide()
+    waiter_hide()
 
     org <- reactive({
       get_organization()

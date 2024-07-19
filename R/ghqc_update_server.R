@@ -12,6 +12,9 @@ ghqc_update_server <- function(id) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)
     post_trigger <- reactiveVal(FALSE)
+
+    waiter_hide()
+
     start_time <- Sys.time()
 
     log_message <- function(message) {
@@ -27,6 +30,8 @@ ghqc_update_server <- function(id) {
     })
 
     observe({
+      w_gh <- create_waiter(ns, sprintf("Fetching organization and milestone data for %s ...", org()))
+
       log_message(paste("Connecting to organization:", org()))
       log_message(paste("Retrieving open milestones from repo:", repo()))
 
@@ -39,9 +44,13 @@ ghqc_update_server <- function(id) {
         choices = c("All QC Items", milestone_list),
       )
       log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
-    })
+    }, priority = -1)
 
     observe({
+      w_gh <- create_waiter(ns, sprintf("Fetching issue data for %s ...", input$select_milestone))
+      w_gh$show()
+      on.exit(w_gh$hide())
+
       req(input$select_milestone)
 
       if (input$select_milestone == "All QC Items") {
@@ -95,7 +104,7 @@ ghqc_update_server <- function(id) {
         "select_issue",
         choices = issues_choices,
       )
-    })
+    }, priority = -1)
 
     ref_commits <- reactive({
       req(issue_parts()$issue_number)

@@ -1,9 +1,11 @@
 #' @import shiny
 #' @importFrom jsTreeR renderJstree jstree jstreeOutput
 #' @importFrom pkglite ext_binary
+#' @importFrom fs dir_ls dir_exists is_file is_dir
 NULL
 
-# repurposed some functions from https://github.com/stla/jsTreeR
+# repurposed some functions and js from https://github.com/stla/jsTreeR
+# changes: allows more filtering of lists, prevents binary file selections, renames rootFolder to basename
 
 exclude_patterns <- function(){
   # excludes binaries as won't be qc items
@@ -15,11 +17,13 @@ exclude_patterns <- function(){
 }
 
 list.files_and_dirs <- function(path, pattern, all.files){
-  lfs <- dir_ls(path = path, all = all.files, regexp = pattern, recurse = F, ignore.case = TRUE, invert = TRUE)
+  lfs <- fs::dir_ls(path = path, all = all.files, regexp = pattern, recurse = F, ignore.case = TRUE, invert = TRUE)
 
   # returns a null if lfs is empty so observeEvent can send message to revert state
-  if (length(lfs) == 0){
-    return(NULL)
+  # grabs the filtered files to expose to user
+  if (length(lfs) == 0) {
+    list_all <- fs::dir_ls(path = path, all = all.files, regexp = FALSE, recurse = FALSE, ignore.case = TRUE, invert = TRUE)
+    return(list(files = list_all, empty = TRUE))
   }
 
   non_empty_dirs <- sapply(lfs, function(x) {
@@ -37,6 +41,7 @@ list.files_and_dirs <- function(path, pattern, all.files){
   dirs <- sort(lfs[fs::is_dir(lfs)])
 
   files_and_dirs <- c(dirs, files)
+  return(list(files = files_and_dirs, empty = FALSE))
 }
 
 
@@ -100,15 +105,24 @@ treeNavigatorServer <- function(
 
       lf <- list.files_and_dirs(full_path, pattern = pattern, all.files = all.files)
 
-      # if no viable children found, send msg to revert state and pop modal
-      if (is.null(lf)){
-        session$sendCustomMessage("noChildrenFound", lf)
-        return(showModal(modalDialog("stop. no selectable files")))
+      # if no viable children found, send msg to revert state and open modal
+      # otherwise tree state will have miscalculated state and think node exists when it does not
+      if (lf$empty) {
+        message_content <- generate_binary_file_message(lf$files)
+        session$sendCustomMessage("noChildrenFound", NULL)
+        return(showModal(modalDialog(
+          title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+          footer = NULL,
+          easyClose = TRUE,
+          HTML(message_content)
+          )
+          )
+        )
       }
 
-      fi <- file.info(lf, extra_cols = FALSE)
+      fi <- file.info(lf$files, extra_cols = FALSE)
       x <- list(
-        "elem"   = as.list(basename(lf)),
+        "elem"   = as.list(basename(lf$files)),
         "folder" = as.list(fi[["isdir"]])
       )
 

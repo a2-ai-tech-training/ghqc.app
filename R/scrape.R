@@ -375,7 +375,7 @@ clean_input <- function(milestones_in) {
   unlist(milestones_list)
 }
 
-get_inputted_milestone_names <- function(repo) {
+get_inputted_milestone_names <- function(owner, repo) {
   # gate with interactive() to avoid hanging
   if (interactive()) {
     print(glue::glue("Non-empty milestones in {repo}:\n"))
@@ -389,26 +389,32 @@ get_inputted_milestone_names <- function(repo) {
 
       # check they exist and are non-empty
       result <- tryCatch({
-       check_milestones(clean_input)
-      }, warning = function(w) {
-        NA
-      }, error = function(e) {
-        NA
+        check_milestones(clean_input, owner, repo)
+        TRUE
+      },
+      warning = function(w) {
+        warning(w$message)
+        FALSE
+      },
+      error = function(e) {
+        cat("Error:", e$message, "\n")
+        FALSE
       })
 
       # Check if the conversion was successful
-      if (!is.na(result)) {
-        cat("You entered a valid number:", result, "\n")
+      if (result) {
+        cat("You entered valid milestones:", glue::glue_collapse(clean_input, sep = ", "), "\n")
         valid_input <- TRUE
-      } else {
+      }
+      else {
         cat("Invalid input. Please try again.\n")
       }
     }
-
+    return(clean_input)
   }
 } # get_inputted_milestone_names
 
-check_milestones <- function(milestone_names) {
+check_milestones <- function(milestone_names, owner, repo) {
   # check that each milestone exists and is non-empty
   lapply(milestone_names, function(milestone_name) {
     exists <- milestone_exists(milestone_name, owner, repo)
@@ -431,13 +437,14 @@ ghqc_report <- function(milestone_names = NULL,
                                pdf_name = NULL,
                                just_tables = FALSE) {
 
-  # get user input if milestone_names not inputted
+  # get user input if milestone_names not inputted (check existence here)
   if (is.null(milestone_names)) {
-    milestone_names <- get_inputted_milestone_names(repo)
+    milestone_names <- get_inputted_milestone_names(owner, repo)
   }
-
-  # check that milestones exist and are non-empty
-  check_milestones(milestone_names)
+  else {
+    # check that milestones exist and are non-empty
+    check_milestones(milestone_names)
+  }
 
   # intro
   header_path <- create_header()

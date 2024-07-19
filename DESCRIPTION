@@ -39,7 +39,8 @@ Imports:
     digest (>= 0.6.34),
     readr (>= 2.1.4),
     jsTreeR (>= 2.6.0),
-    pkglite (>= 0.2.2)
+    pkglite (>= 0.2.1),
+    log4r (>= 0.4.3)
 Suggests: 
     testthat (>= 3.0.0),
     httptest,

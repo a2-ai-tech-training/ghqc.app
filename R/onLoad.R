@@ -8,4 +8,5 @@
 #' @noRd
 .onLoad <- function(...) {
   shiny::addResourcePath("ghqc", system.file(".", package = "ghqc"))
+  assign("logger", init_logger(), envir = .GlobalEnv)
 }

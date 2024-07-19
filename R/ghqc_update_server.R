@@ -12,6 +12,9 @@ ghqc_update_server <- function(id) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)
     post_trigger <- reactiveVal(FALSE)
+
+    waiter_hide()
+
     start_time <- Sys.time()
 
     log_message <- function(message) {
@@ -27,6 +30,9 @@ ghqc_update_server <- function(id) {
     })
 
     observe({
+      w_gh <- create_waiter(ns, sprintf("Fetching organization and milestone data for %s ...", org()))
+      w_gh$show()
+
       log_message(paste("Connecting to organization:", org()))
       log_message(paste("Retrieving open milestones from repo:", repo()))
 
@@ -36,64 +42,38 @@ ghqc_update_server <- function(id) {
       updateSelectInput(
         session,
         "select_milestone",
-        choices = c("All QC Items", milestone_list),
+        choices = c("All QC Items", milestone_list)
       )
       log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
     })
 
     observe({
+      w_gh <- create_waiter(ns, sprintf("Fetching issue data for %s ...", input$select_milestone))
+      w_gh$show()
+      on.exit(w_gh$hide())
+
       req(input$select_milestone)
 
       if (input$select_milestone == "All QC Items") {
         log_message(paste("Retrieving all issues from repo:", repo()))
 
         all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
-        issues_df <- map_df(all_issues, ~ {
-          tibble(
-            number = .x$number,
-            title = .x$title,
-            state = .x$state
-          )
-        })
-        issues_choices <- issues_df %>%
-          mutate(state = case_when(
-            state == "open" ~ "Open Items",
-            state == "closed" ~ "Closed Items"
-          )) %>%
-          split(.$state) %>%
-          rev() %>%
-          lapply(function(x) {
-            setNames(nm = paste0("Item ", x$number, ": ", x$title))
-          })
+        issues_choices <- convert_issue_df_format(all_issues)
+
         log_message(paste("Retrieved", length(all_issues), "issues from repo:", repo()))
       } else {
         log_message(paste("Retrieving all issues from milestone:", input$select_milestone))
 
         issues_by_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$select_milestone)
-        issues_df <- map_df(issues_by_milestone, ~ {
-          tibble(
-            number = .x$number,
-            title = .x$title,
-            state = .x$state
-          )
-        })
-        issues_choices <- issues_df %>%
-          mutate(state = case_when(
-            state == "open" ~ "Open Items",
-            state == "closed" ~ "Closed Items"
-          )) %>%
-          split(.$state) %>%
-          rev() %>%
-          lapply(function(x) {
-            setNames(nm = paste0("Item ", x$number, ": ", x$title))
-          })
+        issues_choices <- convert_issue_df_format(issues_by_milestone)
+
         log_message(paste("Retrieved", length(issues_by_milestone), "issues from milestone:", input$select_milestone))
       }
 
       updateSelectInput(
         session,
         "select_issue",
-        choices = issues_choices,
+        choices = issues_choices
       )
     })
 

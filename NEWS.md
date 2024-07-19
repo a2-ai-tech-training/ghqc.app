@@ -16,7 +16,17 @@
 
 -   Adds a "preview" button for each selected QC file to allow users to preview the contents of the file in `ghqc_create_app()`.
 
+
+-   Converts previous file tree from `shinyWidgets::treeInput()` to `jsTreeR::treeNavigatorServer()`/`jsTreeR::treeNavigatorUI()`.
+
+    -   Loads only files that are from the opened directories rather than recursively getting the entire directory.
+
+    -   Uses undetermined state on top level directories to prevent deselection unless all children are deselected.
+
+    -   Filters out all binary files and returns a modalDialog that prevents further indexing into a directory if the directory only contains binary files and shows a list of the files. See `exclude_patterns()` and `list.files_and_dirs()` for full accounting of items that are excluded from the file tree.
+
 -   generate_qc_report() can take a vector milestones as its input, as well as an optional just_tables flag that will only output the tables in the report.
+
 
 ## Minor improvements and bug fixes
 

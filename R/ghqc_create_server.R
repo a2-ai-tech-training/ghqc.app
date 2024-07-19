@@ -8,9 +8,36 @@ NULL
 ghqc_create_server <- function(id) {
   error_if_git_not_initialized()
 
+  rproj_root_dir <- rprojroot::find_rstudio_root_file()
+  if (getwd() != rproj_root_dir) {
+    setwd(rproj_root_dir)
+    message("Directory changed to project root:", rproj_root_dir, "\n")
+  }
+
+  selected_paths <- treeNavigatorServer(
+    "explorer",
+    rootFolder = rproj_root_dir,
+    search = FALSE,
+    pattern = exclude_patterns(),
+    all.files = FALSE
+  )
+
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     qc_trigger <- reactiveVal(FALSE)
+
+    create_waiter <- function(ns, message) {
+      Waiter$new(
+        id = ns("main_container"),
+        html = tagList(
+          spin_1(),
+          h4(sprintf("%s", message), style = "color: white;")
+        ),
+        color = "darkgrey"
+      )
+    }
+
+    waiter::waiter_hide()
 
     org <- reactive({
       get_organization()
@@ -23,15 +50,6 @@ ghqc_create_server <- function(id) {
     members <- reactive({
       get_members_df(org())
     })
-
-    w_create_qc_items <- Waiter$new(
-      id = ns("main_container"),
-      html = tagList(
-        spin_1(),
-        h4("Creating QC items ...", style = "color: white;")
-      ),
-      color = "darkgrey"
-    )
 
     w_load_items <- Waiter$new(
       id = ns("content"),
@@ -49,6 +67,10 @@ ghqc_create_server <- function(id) {
 
 
     output$sidebar <- renderUI({
+      w_tree <- create_waiter(ns, sprintf("Creating file tree for %s ...", basename(getwd())))
+      w_tree$show()
+     # Sys.sleep(2)
+      on.exit(w_tree$hide())
       tagList(
         textInput(ns("milestone"),
                   "Name QC Item List (github milestone)",
@@ -70,11 +92,19 @@ ghqc_create_server <- function(id) {
             closeAfterSelect = TRUE
           )
         ),
-        uiOutput(ns("tree_list_ui")),
+        div(
+          style = "display: flex; align-items: center; column-gap: 5px;",
+          h5("Select files for QC"),
+          actionButton(ns("file_info"), "checklist info", class = "preview-button")
+        ),
+        treeNavigatorUI("explorer")
       )
     })
 
     observe({
+      w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org()))
+      w_gh$show()
+      on.exit(w_gh$hide())
       log_message(paste("Connecting to organization:", org()))
       log_message(paste("Retrieving assignees:", members()))
       updateSelectizeInput(
@@ -106,34 +136,9 @@ return "<div><strong>" + escape(item.username) + "</div>"
       ))
     })
 
-
-    output$tree_list_ui <- renderUI({
-      root_dir <- find_root_directory()
-      files_tree_df <- convert_dir_to_df(dir_path = root_dir)
-      log_message(paste("Creating file tree for:", root_dir))
-
-      tree <- treeInput(
-        inputId = ns("tree_list"),
-        label = div(
-          "Select files for QC",
-          actionButton(ns("file_info"), "checklist info", class = "preview-button")
-        ),
-        choices = create_tree(files_tree_df),
-        returnValue = "text", # neither id or all gives pathing
-        closeDepth = 0
-      )
-
-      log_message(paste("Created file tree for", nrow(files_tree_df), "files"))
-
-      return(tree)
-    })
-
-
     selected_items <- reactive({
-      validate(need(input$tree_list, "No files selected"))
-      session$sendCustomMessage("process_tree_list", message = list(ns = id)) # pass in ns id for new input
-
-      input$paths # input needs to be set through js because treeInput not built to give pathing info
+      req(selected_paths())
+      selected_paths()
     })
 
     qc_items <- reactive({
@@ -242,7 +247,9 @@ return "<div><strong>" + escape(item.username) + "</div>"
       req(qc_trigger())
       qc_trigger(FALSE)
 
+      w_create_qc_items <- create_waiter(ns, "Creating QC items ...")
       w_create_qc_items$show()
+
       create_yaml("test",
         repo = repo(),
         milestone = input$milestone,
@@ -255,6 +262,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       milestone_url <- get_milestone_url(org(), repo(), input$milestone)
 
       w_create_qc_items$hide()
+
       showModal(
         modalDialog(
           title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),

@@ -16,7 +16,7 @@ ghqc_create_ui <- function(id) {
       tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js"),
       tags$script(type = "module", src = "ghqc/js/tree_paths.js")
     ),
-    waiter_preloader(
+    waiter::waiter_show_on_load(
       html = tagList(
         spin_1(),
         h4("Loading in ...", style = "color: white;")

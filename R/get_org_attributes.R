@@ -55,8 +55,7 @@ get_repos <- function(org) {
   purrr::map_chr(repos, "name")
 }
 
-get_open_milestone_objects <- function(owner, repo) {
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
+filter_for_non_empty_milestones <- function(milestones) {
   non_empty_milestones <- lapply(milestones, function(milestone) {
     if (check_that_milestone_is_non_empty(milestone)) {
       milestone
@@ -65,6 +64,11 @@ get_open_milestone_objects <- function(owner, repo) {
   })
   # delete NULLs from list
   non_empty_milestones <- Filter(Negate(is.null), non_empty_milestones)
+}
+
+get_open_milestone_objects <- function(owner, repo) {
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, state = "open", .limit = Inf)
+  non_empty_milestones <- filter_for_non_empty_milestones(milestones)
 }
 
 get_all_milestone_objects <- function(owner, repo) {
@@ -77,30 +81,41 @@ get_open_milestone_names <- function(org, repo) {
 }
 
 #' @export
+list_milestones <- function(org = get_organization(), repo = get_current_repo()) {
+  milestones <- get_all_milestone_objects(org, repo)
+  non_empty_milestones <- filter_for_non_empty_milestones(milestones)
+  purrr::map_chr(non_empty_milestones, "title")
+}
+
+#' @export
 get_current_repo <- function() {
   basename(gert::git_find())
 }
 
 get_organization_name_from_url <- function(remote_url) {
-  if (grepl("https://", remote_url)) {
-    # For HTTPS URLs
-    matches <- regmatches(remote_url, regexec("https://[^/]+/([^/]+)/[^/]+", remote_url))
-  } else if (grepl("git@", remote_url)) {
-    # For SSH URLs
-    matches <- regmatches(remote_url, regexec("git@[^:]+:([^/]+)/[^/]+", remote_url))
-  } else {
-    stop("Unknown remote URL format")
-  }
+  # https url
+  matches <- {
+    if (grepl("https://", remote_url)) {
+      regmatches(remote_url, regexec("https://[^/]+/([^/]+)/[^/]+", remote_url))
+    }
+    # ssh url
+    else if (grepl("git@", remote_url)) {
+      regmatches(remote_url, regexec("git@[^:]+:([^/]+)/[^/]+", remote_url))
+    }
+    else {
+      NULL
+      stop("Unknown remote url format")
+    }
+  } # matches
 
+  # if could match org
   if (length(matches[[1]]) < 2) {
-    stop("Unable to parse organization name from URL")
+    stop("Unable to parse organization from url")
   }
-
-  return(matches[[1]][2])
-  # pattern <- "https://[^/]+/([^/]+)/[^/]+\\.git"
-  # org_name <- sub(pattern, "\\1", url)
-  # return(org_name)
-}
+  else {
+    return(matches[[1]][2])
+  }
+} # get_organization_name_from_url
 
 get_organization <- function() {
   repo_path <- gert::git_find()
@@ -276,5 +291,12 @@ get_milestone_url <- function(owner, repo, milestone_name) {
   )
 
   milestone$html_url
+}
+
+get_collaborators <- function(owner, repo) {
+  collaborators <- gh::gh(
+    "GET /repos/{owner}/{repo}/collaborators",
+    owner = get_organization(), repo = get_current_repo()
+  )
 }
 

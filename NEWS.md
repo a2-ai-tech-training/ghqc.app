@@ -22,7 +22,13 @@
 
     -   Uses undetermined state on top level directories to prevent deselection unless all children are deselected.
 
-    -   Filters out all binary files and returns a modalDialog that prevents further indexing into a directory if the directory only contains binary files and shows a list of the files. See `exclude_patterns()` and `list.files_and_dirs()` for full accounting of items that are excluded from the file tree.
+    -   Filters out all binary files and returns a modalDialog that prevents
+        further indexing into a directory if the directory only contains binary
+        files and shows a list of the files. See `exclude_patterns()` and
+        `list.files_and_dirs()` for full accounting of items that are excluded
+        from the file tree.
+    
+-   generate_qc_report() can take a vector milestones as its input, as well as an optional just_tables flag that will only output the tables in the report.
 
 ## Minor improvements and bug fixes
 
@@ -34,13 +40,21 @@
 
 -   Moves all modalDialog (pop-ups) buttons to the top right for ease of closing without scrolling.
 
--   author in metadata is now the git user who published
+-   author in metadata is now the git user who published the most recent version of the script
 
 -   file hashes for reference and comparator added to comment metadata
 
 -   removes empty milestones in `get_open_milestone_objects()` and `get_open_milestone_object_names()`
 
 -   `check_if_updates_since_init()` function
+
+-   generate_qc_report() errors if any inputted milestones don't exist or are empty
+
+-   in issue body metadata and report: author is the most recent modifier of a script on github and collaborators are other editors of the script (only appears if there are any collaborators)
+
+-   in issue body metadata, file history url is now listed
+
+-   in generate_qc_report(), Issue section renamed to QC data - file name removed (because that's the section name, and is thus redundant), milestone description is listed if it exists. 
 
 # ghqc 0.0.0.9003
 

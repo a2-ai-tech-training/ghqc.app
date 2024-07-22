@@ -15,7 +15,9 @@ create_issue <- function(file, issue_params) {
   }
 
   # create the issue
+  debug(.le$logger, glue::glue("Creating issue... {issue_params$title}"))
   issue <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/issues", issue_params))
+  debug(.le$logger, glue::glue("Created issue {issue_params$title}"))
 
   # return the issue number
   list(number = issue$number, assignees = issue_params$assignees)
@@ -59,10 +61,9 @@ create_issues <- function(data) {
       debug(.le$logger, glue::glue("Milestone: {data$milestone}"))
     }
     if (!is.null(issue$assignees)) {
-      debug(.le$logger, cat("Assignee:", paste(issue$assignees, collapse = ", ")))
-      # cat("Assignee:", paste(issue$assignees, collapse = ", "), "\n")
+      debug(.le$logger, glue::glue("Assignee: ", glue::glue_collapse(issue$assignees, sep = ", ")))
     }
-    debug(.le$logger, cat("Issue number:", issue$number))
+    debug(.le$logger, glue::glue("Issue number: {issue$number}"))
     return(issue)
   })
   info(.le$logger, glue::glue("Created checklists for files: {file_names}"))
@@ -75,7 +76,6 @@ create_issues <- function(data) {
 create_checklists <- function(yaml_path) {
   data <- read_and_validate_yaml(yaml_path)
   create_issues(data)
-  debug(.le$logger, glue::glue("Created checklists for files: ", glue::glue_collapse(data$files$name, sep = ", ")))
 }
 
 

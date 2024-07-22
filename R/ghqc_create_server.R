@@ -51,9 +51,9 @@ ghqc_create_server <- function(id) {
 
     start_time <- Sys.time()
 
-    log_message <- function(message) {
-      cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
-    }
+    # log_message <- function(message) {
+    #   cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
+    # }
 
 
     output$sidebar <- renderUI({
@@ -92,26 +92,9 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
-      debug(.le$logger, paste("Connecting to organization..."))
       w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org()))
       w_gh$show()
       on.exit(w_gh$hide())
-
-      # Organization logging
-      info(.le$logger, paste("Connected to organization:", org()))
-
-      # Assignees logging
-      debug(.le$logger, paste("Retrieving assignees..."))
-      info(.le$logger, glue::glue("Retrieved {nrow(members())} assignees from {org()}"))
-
-      members_string <- glue::glue_collapse(apply(members(), 1, function(row) {
-        glue::glue("username: {row['username']}, name: {row['name']}")
-      }), sep = "\n")
-
-      debug(.le$logger, paste("Retrived assignees:\n", members_string))
-      if (nrow(members()) == 0) {
-        warn(.le$logger, glue::glue("No assignees retrived from {org()}"))
-      }
 
       updateSelectizeInput(
         session,
@@ -134,12 +117,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         )
       )
-      debug(.le$logger, paste(
-        "Connected to organization and retrieved",
-        nrow(members()),
-        "assignees from:",
-        org()
-      ))
     })
 
     selected_items <- reactive({
@@ -257,6 +234,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items$show()
 
       create_yaml("test",
+        org = org(),
         repo = repo(),
         milestone = input$milestone,
         description = input$milestone_description,

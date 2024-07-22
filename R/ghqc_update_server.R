@@ -56,12 +56,8 @@ ghqc_update_server <- function(id) {
         issues_choices <- convert_issue_df_format(all_issues)
 
       } else {
-        #log_message(paste("Retrieving all issues from milestone:", input$select_milestone))
-
         issues_by_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$select_milestone)
         issues_choices <- convert_issue_df_format(issues_by_milestone)
-
-        #log_message(paste("Retrieved", length(issues_by_milestone), "issues from milestone:", input$select_milestone))
       }
 
       updateSelectInput(

@@ -70,7 +70,7 @@ create_comment_body <- function(owner,
   issue <- get_issue(owner, repo, issue_number)
 
   # log
-  cat(glue::glue("Creating comment body for issue #{issue_number} in {owner}/{repo}"), "\n")
+  debug(.le$logger, glue::glue("Creating comment body for issue #{issue_number} in {owner}/{repo}"))
 
   assignees_list <- create_assignees_list(issue$assignees)
   assignees_body <- create_assignees_body(assignees_list)
@@ -109,14 +109,17 @@ create_comment_body <- function(owner,
   # log
   log_assignees <- if (length(assignees_list) == 0) "None" else paste(assignees_list, collapse = ', ')
 
-  cat(glue::glue("Comment body created for issue #{issue_number}: Assignees: {log_assignees}, Reference commit: {reference_commit}, Comparator commit: {comparator_commit}"), "\n")
+  info(.le$logger, glue::glue("Created comment body for issue #{issue_number} in {owner}/{repo} with
+                              Assignee(s):       {log_assignees}
+                              Reference commit:  {reference_commit}
+                              Comparator commit: {comparator_commit}"))
 
   as.character(comment_body)
 }
 
 #' @export
 post_comment <- function(owner, repo, issue_number, body) {
-  cat(glue::glue("Posting comment to issue #{issue_number} in {owner}/{repo}"), "\n")
+  debug(.le$logger, glue::glue("Posting comment to issue #{issue_number} in {owner}/{repo}..."))
 
   comment <- gh::gh("POST /repos/:owner/:repo/issues/:issue_number/comments",
                     owner = owner,
@@ -124,7 +127,8 @@ post_comment <- function(owner, repo, issue_number, body) {
                     issue_number = issue_number,
                     body = body
   )
-  cat(glue::glue("Comment posted to issue #{issue_number} in {owner}/{repo}"), "\n")
+
+  info(.le$logger, glue::glue("Posted comment to issue #{issue_number} in {owner}/{repo}"))
 }
 
 add_fix_comment <- function(owner,
@@ -134,7 +138,6 @@ add_fix_comment <- function(owner,
                             diff = FALSE,
                             reference_commit = "original",
                             comparator_commit = "current") {
-  cat(glue::glue("Adding update comment to issue #{issue_number} in {owner}/{repo}"), "\n")
 
   body <- create_comment_body(owner,
                               repo,
@@ -145,6 +148,4 @@ add_fix_comment <- function(owner,
                               comparator_commit = comparator_commit)
 
   post_comment(owner, repo, issue_number, body)
-
-  cat(glue::glue("Update comment added to issue #{issue_number} in {owner}/{repo}. Reference commit: {reference_commit}, Comparator commit: {comparator_commit}"), "\n")
 }

@@ -54,7 +54,7 @@ ghqc_update_server <- function(id) {
 
         all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
         issues_choices <- convert_issue_df_format(all_issues)
-
+        
       } else {
         issues_by_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$select_milestone)
         issues_choices <- convert_issue_df_format(issues_by_milestone)
@@ -69,7 +69,10 @@ ghqc_update_server <- function(id) {
 
     ref_commits <- reactive({
       req(issue_parts()$issue_number)
-      ref_commits <- get_reference_df(issue_number = issue_parts()$issue_number)
+      ref_commits <- get_reference_df(
+        owner = org(),
+        repo = repo(),
+        issue_number = issue_parts()$issue_number)
     })
 
     observe({
@@ -107,6 +110,8 @@ ghqc_update_server <- function(id) {
       req(input$ref_commits)
 
       comp_commits <- get_comparator_df(
+        owner = org(),
+        repo = repo(),
         issue_number = issue_parts()$issue_number,
         selected_reference_commit = input$ref_commits
       )

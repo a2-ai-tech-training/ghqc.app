@@ -1,3 +1,4 @@
+
 .le <- new.env() # parent = emptyenv()
 
 #' @import log4r
@@ -9,6 +10,7 @@ init_logger <- function() {
   if (!(verbosity %in% LEVEL_NAMES)){
     cat("Invalid verbosity level. Available options are:", paste(LEVEL_NAMES, collapse = ", "), "\n")
   }
+
   # logger <- logger(verbosity, appenders = console_appender(logfmt_log_layout()))
   logger <- logger(verbosity, appenders = console_appender(my_layout))
   assign("logger", logger, envir = .le)
@@ -29,4 +31,5 @@ set_logger_level <- function(level) {
     assign("logger", logger, envir = .le)
   }
 }
+
 

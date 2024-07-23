@@ -79,7 +79,10 @@ ghqc_update_server <- function(id) {
 
     ref_commits <- reactive({
       req(issue_parts()$issue_number)
-      ref_commits <- get_reference_df(issue_number = issue_parts()$issue_number)
+      ref_commits <- get_reference_df(
+        owner = org(),
+        repo = repo(),
+        issue_number = issue_parts()$issue_number)
     })
 
     observe({
@@ -117,6 +120,8 @@ ghqc_update_server <- function(id) {
       req(input$ref_commits)
 
       comp_commits <- get_comparator_df(
+        owner = org(),
+        repo = repo(),
         issue_number = issue_parts()$issue_number,
         selected_reference_commit = input$ref_commits
       )

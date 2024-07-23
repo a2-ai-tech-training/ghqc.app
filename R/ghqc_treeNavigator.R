@@ -10,6 +10,7 @@ NULL
 exclude_patterns <- function(){
   # excludes binaries as won't be qc items
   exclude_pattern <- paste0("\\.(", paste(ext_binary(flat = TRUE), collapse = "|"), ")$", collapse = "")
+
   # removes renv folder and specifically
   # makes sure to only scope exactly for "renv/" only so renv2/ 2renv/ renv.R gets picked up
   exclude_pattern <- c(exclude_pattern, "\\brenv\\b")
@@ -18,6 +19,7 @@ exclude_patterns <- function(){
 }
 
 list.files_and_dirs <- function(path, pattern, all.files){
+
   lfs <- fs::dir_ls(path = path, all = all.files, regexp = pattern, recurse = FALSE, ignore.case = TRUE, invert = TRUE)
 
   # if lfs returns an empty list because all files were filtered out, dir_ls is rerun
@@ -26,6 +28,8 @@ list.files_and_dirs <- function(path, pattern, all.files){
   # the whole proj dir, which can cause significant slow down if large amt of files
   # TODO: rewrite so it gives back all dir_ls initially and the grepl afterwards
   # lfs <- lfs[!grepl(exclude_patterns(), lfs)]
+
+ 
   if (length(lfs) == 0) {
     list_all <- fs::dir_ls(path = path, all = all.files, regexp = FALSE, recurse = FALSE, ignore.case = TRUE, invert = TRUE)
     return(list(files = list_all, empty = TRUE))
@@ -70,7 +74,8 @@ treeNavigatorServer <- function(
 
     output[["treeNavigator___"]] <- renderJstree({
       req(...)
-      suppressMessages(jstree(
+
+      jstree(
         nodes = list(
           list(
             text = basename(rootFolder),
@@ -96,7 +101,7 @@ treeNavigatorServer <- function(
         wholerow = wholerow,
         contextMenu = contextMenu,
         selectLeavesOnly = TRUE
-      ))
+      )
     })
 
     # changed text of rootFolder to give back basename so need to

@@ -1,3 +1,4 @@
+
 format_issue_body <- function(checklist_type, file_path) {
   checklists <- get_checklists()
   file_items <- checklists[[checklist_type]]
@@ -123,5 +124,3 @@ get_file_history_url <- function(file_path) {
   # get something like https://github.com/A2-ai/project_x/commits/main/scripts/DA.R
   file_history_url <- glue::glue("{https_url}/commits/{branch}/{file_path}")
 }
-
-

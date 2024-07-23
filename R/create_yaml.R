@@ -71,16 +71,17 @@ create_file_data_structure <- function(file_name, assignees = NULL, checklist_ty
 #   - 500 simulations given
 #   - generated figures match
 create_yaml <- function(name,
+                        org,
                         repo,
                         files, # files must be a list of lists not a vector of lists
                         milestone = NULL,
                         description = NULL
                         ) {
   # hard code owner
-  owner <- get_organization() #"a2-ai-tech-training"
+  #owner <- get_organization() #"a2-ai-tech-training"
 
   data <- list(
-    owner = owner,
+    owner = org,
     repo = repo,
     files = files # files must be a list of lists not a vector of lists
   )

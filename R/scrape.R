@@ -97,11 +97,11 @@ issue_to_markdown <- function(owner, repo, issue_number) {
 
   # create sections
   issue_section <- create_qc_data_section(issue_creation_time = issue$created_at,
-                                        issue_creator = issue$user$login,
-                                        issue_title = issue$title,
-                                        issue_number = issue$number,
-                                        milestone_title = issue$milestone$title,
-                                        milestones = milestones)
+                                          issue_creator = issue$user$login,
+                                          issue_title = issue$title,
+                                          issue_number = issue$number,
+                                          milestone_title = issue$milestone$title,
+                                          milestones = milestones)
 
   assignees_section <- create_assignees_section(issue$assignees)
 
@@ -214,7 +214,7 @@ create_big_section <- function(section_title, contents) {
 
 create_medium_section <- function(section_title, contents) {
   glue::glue(
-  "## {section_title}\n\n{contents}\n\n\\newpage\n\n", .trim = FALSE)
+    "## {section_title}\n\n{contents}\n\n\\newpage\n\n", .trim = FALSE)
 } # create_section
 
 insert_breaks <- function(text, width) {
@@ -432,10 +432,10 @@ check_milestones <- function(milestone_names, owner, repo) {
 
 #' @export
 ghqc_report <- function(milestone_names = NULL,
-                               owner = get_organization(),
-                               repo = get_current_repo(),
-                               pdf_name = NULL,
-                               just_tables = FALSE) {
+                        owner = get_organization(),
+                        repo = get_current_repo(),
+                        pdf_name = NULL,
+                        just_tables = FALSE) {
 
   # get user input if milestone_names not inputted (check existence here)
   if (is.null(milestone_names)) {
@@ -455,7 +455,7 @@ ghqc_report <- function(milestone_names = NULL,
   milestone_sections <- lapply(milestone_names, function(milestone_name) {
     milestone_body <- create_milestone_report_section(owner, repo, milestone_name, parent.frame(n = 2), just_tables)
     create_big_section(milestone_name, milestone_body)
-    })
+  })
 
   # appendix
 
@@ -468,5 +468,5 @@ ghqc_report <- function(milestone_names = NULL,
     output <- markdown_to_pdf(rmd, repo, milestone_names, pdf_name, just_tables)
   })
   output
- # })
+  # })
 }

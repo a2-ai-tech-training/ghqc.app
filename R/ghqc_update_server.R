@@ -33,9 +33,6 @@ ghqc_update_server <- function(id) {
       w_gh <- create_waiter(ns, sprintf("Fetching organization and milestone data for %s ...", org()))
       w_gh$show()
 
-      log_message(paste("Connecting to organization:", org()))
-      log_message(paste("Retrieving open milestones from repo:", repo()))
-
       milestone_list <- get_open_milestone_names(org = org(), repo = repo())
       milestone_list <- rev(milestone_list)
 
@@ -44,7 +41,6 @@ ghqc_update_server <- function(id) {
         "select_milestone",
         choices = c("All QC Items", milestone_list)
       )
-      log_message(paste("Connected to organization and retrieved", length(milestone_list), "open milestones from repo:", repo()))
     })
 
     observe({
@@ -55,19 +51,13 @@ ghqc_update_server <- function(id) {
       req(input$select_milestone)
 
       if (input$select_milestone == "All QC Items") {
-        log_message(paste("Retrieving all issues from repo:", repo()))
 
         all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
         issues_choices <- convert_issue_df_format(all_issues)
-
-        log_message(paste("Retrieved", length(all_issues), "issues from repo:", repo()))
+        
       } else {
-        log_message(paste("Retrieving all issues from milestone:", input$select_milestone))
-
         issues_by_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$select_milestone)
         issues_choices <- convert_issue_df_format(issues_by_milestone)
-
-        log_message(paste("Retrieved", length(issues_by_milestone), "issues from milestone:", input$select_milestone))
       }
 
       updateSelectInput(

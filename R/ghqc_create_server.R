@@ -1,4 +1,5 @@
 #' @import shiny
+#' @import log4r
 #' @importFrom shinyjs enable disable addClass removeClass delay
 #' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
@@ -50,9 +51,9 @@ ghqc_create_server <- function(id) {
 
     start_time <- Sys.time()
 
-    log_message <- function(message) {
-      cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
-    }
+    # log_message <- function(message) {
+    #   cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
+    # }
 
 
     output$sidebar <- renderUI({
@@ -94,8 +95,7 @@ ghqc_create_server <- function(id) {
       w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org()))
       w_gh$show()
       on.exit(w_gh$hide())
-      log_message(paste("Connecting to organization:", org()))
-      log_message(paste("Retrieving assignees:", members()))
+
       updateSelectizeInput(
         session,
         "assignees",
@@ -117,12 +117,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
           )
         )
       )
-      log_message(paste(
-        "Connected to organization and retrieved",
-        nrow(members()),
-        "assignees from:",
-        org()
-      ))
     })
 
     selected_items <- reactive({
@@ -240,6 +234,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items$show()
 
       create_yaml("test",
+        org = org(),
         repo = repo(),
         milestone = input$milestone,
         description = input$milestone_description,

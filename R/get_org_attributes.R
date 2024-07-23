@@ -8,7 +8,7 @@ get_names_and_usernames <- function(username) {
 }
 
 #' @import log4r
-get_members_list <- function(org) {
+get_members_list <- function(org, repo) {
   page <- 1
   all_members <- list()
 
@@ -16,6 +16,8 @@ get_members_list <- function(org) {
     debug(.le$logger, glue::glue("Retrieving organization members from page {page}..."))
     members <- tryCatch(
       {
+        #"GET /repos/{owner}/{repo}/collaborators"
+        # "/orgs/{org}/members"
         members_api_call <- gh::gh("/orgs/{org}/members", org = org, .limit = 100, page = page)
         debug(.le$logger, glue::glue("Retrieved organization members from page {page} successfully."))
         members_api_call
@@ -45,6 +47,9 @@ get_members_df <- function(org) {
   debug(.le$logger, glue::glue("Retrieving organization members..."))
   members_list <- get_members_list(org)
   members_df <- purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
+  # collaborators <- get_collaborators()
+  # collaborators_with_names <- purrr::map(collaborators, ~ get_names_and_usernames(.x$login))
+  # members_df <- purrr::map_df(collaborators_with_names, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
 
   # logging
   members_string <- glue::glue_collapse(apply(members_df, 1, function(row) {
@@ -370,9 +375,9 @@ get_milestone_url <- function(owner, repo, milestone_name) {
 }
 
 #' @import log4r
-get_collaborators <- function(owner, repo) {
+get_collaborators <- function(owner = get_organization(), repo = get_current_repo()) {
   collaborators <- gh::gh(
     "GET /repos/{owner}/{repo}/collaborators",
-    owner = get_organization(), repo = get_current_repo()
+    owner = owner, repo = repo
   )
 }

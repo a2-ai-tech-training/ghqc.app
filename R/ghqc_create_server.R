@@ -1,5 +1,4 @@
 #' @import shiny
-#' @import log4r
 #' @importFrom shinyjs enable disable addClass removeClass delay
 #' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
@@ -234,7 +233,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items$show()
 
       create_yaml("test",
-        org = org(),
         repo = repo(),
         milestone = input$milestone,
         description = input$milestone_description,
@@ -265,6 +263,12 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     observeEvent(input$return, {
       removeModal()
+    })
+
+    observeEvent(input$close, {
+      job_id <- Sys.getenv("GHQC_SHINY_JOB_ID")
+    #  rstudioapi::jobRemove(job_id)
+      stopApp()
     })
 
     observeEvent(input$reset, {

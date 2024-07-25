@@ -316,6 +316,10 @@ ghqc_update_server <- function(id) {
       session$reload()
     })
 
+    observeEvent(input$close, {
+      stopApp()
+    })
+
     return(input)
   })
 }

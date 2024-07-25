@@ -443,7 +443,7 @@ ghqc_report <- function(milestone_names = NULL,
   }
   else {
     # check that milestones exist and are non-empty
-    check_milestones(milestone_names)
+    check_milestones(milestone_names, owner, repo)
   }
 
   # intro

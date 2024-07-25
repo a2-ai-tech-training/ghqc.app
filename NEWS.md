@@ -4,6 +4,8 @@
 
 ## New features
 
+-   Installation and usage of the apps in the ghqc package now require the ghqcLauncher package, which allows the applications to be ran as background jobs.
+
 -   Changes the available commits comparison in `ghqc_update_app()` from:
 
     1.  Initial QC commit and most recent QC issue update comment commit
@@ -22,13 +24,9 @@
 
     -   Uses undetermined state on top level directories to prevent deselection unless all children are deselected.
 
-    -   Filters out all binary files and returns a modalDialog that prevents
-        further indexing into a directory if the directory only contains binary
-        files and shows a list of the files. See `exclude_patterns()` and
-        `list.files_and_dirs()` for full accounting of items that are excluded
-        from the file tree.
-    
--   generate_qc_report() can take a vector milestones as its input, as well as an optional just_tables flag that will only output the tables in the report.
+    -   Filters out all binary files and returns a modalDialog that prevents further indexing into a directory if the directory only contains binary files and shows a list of the files. See `exclude_patterns()` and `list.files_and_dirs()` for full accounting of items that are excluded from the file tree.
+
+-   ghqc_report() can take a vector milestones as its input, as well as an optional just_tables flag that will only output the tables in the report.
 
 ## Minor improvements and bug fixes
 
@@ -54,7 +52,7 @@
 
 -   in issue body metadata, file history url is now listed
 
--   in generate_qc_report(), Issue section renamed to QC data - file name removed (because that's the section name, and is thus redundant), milestone description is listed if it exists. 
+-   in generate_qc_report(), Issue section renamed to QC data - file name removed (because that's the section name, and is thus redundant), milestone description is listed if it exists.
 
 # ghqc 0.0.0.9003
 

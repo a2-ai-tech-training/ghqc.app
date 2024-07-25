@@ -102,6 +102,17 @@ determine_modal_message <- function(selected_files,
   messages <- c(messages, generate_existing_issue_message(existing_issues, error_icon_html))
   messages <- c(messages, generate_commit_update_message(commit_update_status, error_icon_html))
 
+  log_string <- glue::glue("Modal Check Inputs:
+    - Selected Files: {glue::glue_collapse(selected_files, sep = ', ')}
+    - Uncommitted Git Files: {glue::glue_collapse(uncommitted_git_files, sep = ', ')}
+    - Untracked Selected Files: {glue::glue_collapse(untracked_selected_files, sep = ', ')}
+    - Git Sync Status: Ahead: {git_sync_status$ahead}, Behind: {git_sync_status$behind}
+    - Commit Update Status: {commit_update_status}
+    - Issues in Milestone: {glue::glue_collapse(issue_titles, sep = ', ')}
+  ")
+
+  debug(.le$logger, log_string)
+
   if (length(messages) == 0) {
     return(list(message = NULL, state = NULL))
   } else {

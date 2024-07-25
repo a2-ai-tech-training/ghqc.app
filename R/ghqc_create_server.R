@@ -1,4 +1,5 @@
 #' @import shiny
+#' @import glue
 #' @importFrom shinyjs enable disable addClass removeClass delay
 #' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
@@ -11,7 +12,7 @@ ghqc_create_server <- function(id) {
   rproj_root_dir <- rprojroot::find_rstudio_root_file()
   if (getwd() != rproj_root_dir) {
     setwd(rproj_root_dir)
-    message("Directory changed to project root:", rproj_root_dir, "\n")
+    info(.le$logger, glue::glue("Directory changed to project root: {rproj_root_dir}"))
   }
 
   selected_paths <- treeNavigatorServer(
@@ -48,17 +49,10 @@ ghqc_create_server <- function(id) {
       color = "white"
     )
 
-    start_time <- Sys.time()
-
-    # log_message <- function(message) {
-    #   cat(round(difftime(Sys.time(), start_time, units = "secs"), 2), "-", message, "\n")
-    # }
-
 
     output$sidebar <- renderUI({
       w_tree <- create_waiter(ns, sprintf("Creating file tree for %s ...", basename(getwd())))
       w_tree$show()
-     # Sys.sleep(2)
       on.exit(w_tree$hide())
       tagList(
         textInput(ns("milestone"),
@@ -131,34 +125,39 @@ return "<div><strong>" + escape(item.username) + "</div>"
     output$main_panel <- renderUI({
       validate(need(length(selected_items()) > 0, "No files selected"))
       w_load_items$show()
+
+      log_string <- glue::glue_collapse(selected_items(), sep = ", ")
+      info(.le$logger, glue::glue("Files selected for QC: {log_string}"))
+
       list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
       isolate_rendered_list(input, session, selected_items())
 
-      session$sendCustomMessage("adjust_grid", list) # finds the width of the files and adjusts grid column spacing based on values
+      session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
       return(list)
     })
 
-    observeEvent(c(selected_items(), input$assignees),
-      {
-        delay(300, {
-          w_load_items$hide()
-        })
-      },
-      ignoreInit = TRUE
-    )
+    observe({
+      req(input$adjust_grid_finished) # retrieve msg through js when adjust grid is done
+      w_load_items$hide()
+    })
 
     # button behavior
     observe({
+      debug(.le$logger, glue::glue("create_qc_items buttons are inactivated."))
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
 
       if (length(selected_items()) > 0 && isTruthy(input$milestone)) {
+        debug(.le$logger, glue::glue("create_qc_items buttons are activated because there are {length(selected_items())} selected items and milestone is named {input$milestone}"))
+
         removeClass("create_qc_items", "disabled-btn")
         addClass("create_qc_items", "enabled-btn")
       }
     })
 
     observeEvent(input$file_info, {
+      debug(.le$logger, glue::glue("file_info button was triggered."))
+
       checklists <- get_checklists()
       showModal(
         modalDialog(
@@ -169,10 +168,17 @@ return "<div><strong>" + escape(item.username) + "</div>"
           "See below for a reference of all types and their items.",
           br(),
           br(),
-          selectInput(ns("checklist_info"), NULL, choices = names(checklists)),
+          selectInput(ns("checklist_info"), NULL, choices = names(checklists), width = "100%"),
           renderUI({
+            debug(.le$logger, glue::glue("Checklist selected for review: {input$checklist_info}"))
+
             info <- checklists[[input$checklist_info]]
+
+            log_string <- glue::glue_collapse(info, sep = "\n")
+            debug(.le$logger, glue::glue("Items found in the checklist: \n{log_string}"))
+
             list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+
             tags$ul(list)
           })
         )
@@ -182,18 +188,23 @@ return "<div><strong>" + escape(item.username) + "</div>"
     observeEvent(selected_items(), {
       items <- selected_items()
       for (name in items) {
+        log_string <- glue::glue_collapse(items, sep = ", ")
+        debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
         create_button_preview_event(input, name = name)
       }
     })
 
     modal_check <- eventReactive(input$create_qc_items, {
       req(qc_items())
-      file_names <- sapply(qc_items(), function(x) x$name)
-      uncommitted_git_files <- git_status()$file
-      git_sync_status <- git_ahead_behind()
-      untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
-
-      issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+      tryCatch({
+        file_names <- sapply(qc_items(), function(x) x$name)
+        uncommitted_git_files <- git_status()$file
+        git_sync_status <- git_ahead_behind()
+        untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
+        issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+      }, error = function(e){
+        debug(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
+      })
 
       determine_modal_message(
         selected_files = file_names,
@@ -233,12 +244,14 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items$show()
 
       create_yaml("test",
+        org = org(),
         repo = repo(),
         milestone = input$milestone,
         description = input$milestone_description,
         files = qc_items()
       )
-      create_checklists("test.yaml") # added logging to fxn
+
+      create_checklists("test.yaml")
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
       milestone_url <- get_milestone_url(org(), repo(), input$milestone)
@@ -257,21 +270,23 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     observeEvent(input$proceed, {
+      debug(.le$logger, glue::glue("Create QC items action proceeded and modal removed."))
       removeModal()
       qc_trigger(TRUE)
     })
 
     observeEvent(input$return, {
+      debug(.le$logger, glue::glue("Create QC items action returned and modal removed."))
       removeModal()
     })
 
     observeEvent(input$close, {
-      job_id <- Sys.getenv("GHQC_SHINY_JOB_ID")
-    #  rstudioapi::jobRemove(job_id)
+      debug(.le$logger, glue::glue("App was closed through the close button."))
       stopApp()
     })
 
     observeEvent(input$reset, {
+      debug(.le$logger, glue::glue("App was reset through the reset button."))
       session$reload()
     })
 

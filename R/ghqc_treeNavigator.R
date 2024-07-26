@@ -29,22 +29,22 @@ list.files_and_dirs <- function(path, pattern, all.files){
   # TODO: rewrite so it gives back all dir_ls initially and the grepl afterwards
   # lfs <- lfs[!grepl(exclude_patterns(), lfs)]
 
- 
+
   if (length(lfs) == 0) {
-    list_all <- fs::dir_ls(path = path, all = all.files, regexp = FALSE, recurse = FALSE, ignore.case = TRUE, invert = TRUE)
+    list_all <- fs::dir_ls(path = path, all = TRUE, regexp = FALSE, recurse = FALSE, ignore.case = TRUE, invert = TRUE)
     return(list(files = list_all, empty = TRUE))
   }
 
-  non_empty_dirs <- sapply(lfs, function(x) {
-    if (fs::dir_exists(x)) {
-      length(fs::dir_ls(x)) > 0
-    } else {
-      TRUE
-    }
-  })
-
-  # remove dirs w/o files as otherwise will be unclickable dir
-  lfs <- lfs[non_empty_dirs]
+  # non_empty_dirs <- sapply(lfs, function(x) {
+  #   if (fs::dir_exists(x)) {
+  #     length(fs::dir_ls(x)) > 0
+  #   } else {
+  #     TRUE
+  #   }
+  # })
+  #
+  # # remove dirs w/o files as otherwise will be unclickable dir
+  # lfs <- lfs[non_empty_dirs]
 
   files <- sort(lfs[fs::is_file(lfs)])
   dirs <- sort(lfs[fs::is_dir(lfs)])
@@ -75,7 +75,7 @@ treeNavigatorServer <- function(
     output[["treeNavigator___"]] <- renderJstree({
       req(...)
 
-      jstree(
+      suppressMessages(jstree(
         nodes = list(
           list(
             text = basename(rootFolder),
@@ -101,7 +101,7 @@ treeNavigatorServer <- function(
         wholerow = wholerow,
         contextMenu = contextMenu,
         selectLeavesOnly = TRUE
-      )
+      ))
     })
 
     # changed text of rootFolder to give back basename so need to
@@ -119,7 +119,7 @@ treeNavigatorServer <- function(
       # otherwise tree state will have miscalculated state and think node exists when it does not
       if (lf$empty) {
         message_content <- generate_binary_file_message(lf$files)
-        session$sendCustomMessage("noChildrenFound", NULL)
+        session$sendCustomMessage("noChildrenFound", lf$empty)
         return(showModal(modalDialog(
           title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
           footer = NULL,

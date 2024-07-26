@@ -2,23 +2,17 @@ $(document).ready(function () {
   var Trees = {};
   var Ids = {};
   var Children = null;
-  var lastState = {}; // To store the last state before getChildren
+  var childrenFlag = true;
 
   Shiny.addCustomMessageHandler("getChildren", function (x) {
+    console.log("Received getChildren message:", x);
     Children = x;
+    childrenFlag = true;
   });
 
-  // need to revert to previous state because tree state thinks unselectable node is selected/open
   Shiny.addCustomMessageHandler("noChildrenFound", function (x) {
-    console.log("No selectable files found. Reverting changes.");
-    // Revert to the last stored state
-    for (var id in lastState) {
-      if (lastState.hasOwnProperty(id)) {
-        Trees[id].settings.core.data = lastState[id];
-        Trees[id].refresh();
-      }
-    }
-    lastState = {}; // Clear the last state
+    console.log("childrenFlag set to false.");
+    childrenFlag = false;
   });
 
   var $navigator = $("div[id$='treeNavigator___']");
@@ -54,21 +48,30 @@ $(document).ready(function () {
       alert("That should not happen...");
       return;
     }
+
     var div_id = $li.closest("div").attr("id");
     var tree = Trees[div_id];
     var ns = Ids[div_id];
     var id = $li.attr("id");
     var node = tree.get_node(id);
+    console.log("Leaf node clicked with id:", id, "Node:", node);
+
+
     if (tree.is_leaf(node) && node.original.type === "folder") {
       var path = tree.get_path(node, "/");
-
-      // Store the current state before getChildren
-      lastState[div_id] = tree.settings.core.data;
+      console.log("Fetching children for path:", path);
 
       Shiny.setInputValue(ns + "-path_from_js", path);
-      var interval = setInterval(function () {
-        if (Children !== null) {
-          clearInterval(interval);
+
+      // Introduce a delay to check if the flag changes
+      var checkInterval = setInterval(function () {
+        if (Children !== null || !childrenFlag) {
+          clearInterval(checkInterval);
+          if (!childrenFlag) {
+            console.log("Children flag was set to false, ignoring action");
+            return;
+          }
+
           console.time("Node rendering time");
           console.log("Starting node rendering for:", Children.elem.length, "elements");
           for (var i = 0; i < Children.elem.length; i++) {
@@ -90,7 +93,7 @@ $(document).ready(function () {
             tree.open_node(id);
           }, 10);
         }
-      }, 100);
+      }, 100); // Check every 100 milliseconds
     }
   });
 });

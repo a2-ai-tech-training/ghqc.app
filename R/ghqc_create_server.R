@@ -122,25 +122,24 @@ return "<div><strong>" + escape(item.username) + "</div>"
       extract_file_data(input, selected_items())
     })
 
+
     output$main_panel <- renderUI({
       validate(need(length(selected_items()) > 0, "No files selected"))
       w_load_items$show()
-
       log_string <- glue::glue_collapse(selected_items(), sep = ", ")
       info(.le$logger, glue::glue("Files selected for QC: {log_string}"))
-
       list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
       isolate_rendered_list(input, session, selected_items())
 
-      session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
+      session$sendCustomMessage("adjust_grid", list) # finds the width of the files and adjusts grid column spacing based on values
       return(list)
     })
 
-    observe({
-      req(input$adjust_grid_finished) # retrieve msg through js when adjust grid is done
-      w_load_items$hide()
-    })
-
+    observeEvent(c(selected_items(), input$assignees), {
+      delay(300, {
+        w_load_items$hide()
+      })
+    }, ignoreInit = TRUE)
     # button behavior
     observe({
       debug(.le$logger, glue::glue("create_qc_items buttons are inactivated."))

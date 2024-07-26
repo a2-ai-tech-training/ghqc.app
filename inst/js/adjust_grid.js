@@ -1,4 +1,4 @@
-export function adjust_grid(ns) {
+export function adjust_grid() {
   // Function to get the maximum width of the first column across all grid-items
   function getMaxWidth() {
     const rows = document.querySelectorAll('.grid-items');
@@ -61,11 +61,6 @@ export function adjust_grid(ns) {
   // Get the maximum width and apply it
   const maxWidth = getMaxWidth();
   applyMaxWidth(maxWidth);
-
-  if (typeof Shiny !== 'undefined') {
-    const inputValue = ns + '-adjust_grid_finished';
-    Shiny.setInputValue(inputValue, true);
-  }
 }
 
 // Debounce function to limit the rate at which adjust_grid is called
@@ -78,19 +73,16 @@ function debounce(func, wait) {
   };
 }
 
-const debouncedAdjustGrid = debounce(() => adjust_grid(ns), 200);
+const debouncedAdjustGrid = debounce(adjust_grid, 200);
 
 // Call debouncedAdjustGrid on window resize
 window.addEventListener('resize', debouncedAdjustGrid);
 
 // Expose the function to be called from Shiny
 if (typeof Shiny !== 'undefined') {
-  Shiny.addCustomMessageHandler('adjust_grid', function(ns) {
-    const inputValue = ns + '-adjust_grid_finished';
-    Shiny.setInputValue(inputValue, false);
-
+  Shiny.addCustomMessageHandler('adjust_grid', function(message) {
     $(document).on('shiny:idle', function() {
-      setTimeout(() => adjust_grid(ns), 100);
+      setTimeout(adjust_grid, 100);
     });
   });
 }

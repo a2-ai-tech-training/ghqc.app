@@ -1,7 +1,4 @@
 #' @import shiny
-#' @importFrom jsTreeR renderJstree jstree jstreeOutput
-#' @importFrom pkglite ext_binary
-#' @importFrom fs dir_ls dir_exists is_file is_dir
 NULL
 
 # repurposed some functions and js from https://github.com/stla/jsTreeR
@@ -9,6 +6,37 @@ NULL
 # files give modals w/ excluded file list, renames rootFolder to basename,
 # redid id/naming so ns can be passed in
 
+#' Generate Excluded File Message
+#'
+#' This function generates an HTML formatted message indicating which files are excluded
+#' from selection as QC items in a directory.
+#'
+#' @param excluded_files A character vector of file paths that are excluded from selection.
+#'
+#' @return A character string containing an HTML formatted message listing the excluded files,
+#' or an empty string if no files are excluded.
+#' @examples
+#' excluded_files <- c("path/to/file1.txt", "path/to/file2.pdf")
+#' generate_excluded_file_message(excluded_files)
+#' @noRd
+generate_excluded_file_message <- function(excluded_files) {
+  error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
+  messages <- c()
+  if (length(excluded_files) > 0) {
+    messages <- sprintf("%s The selected directory contains only the following files which are not selectable QC items:<ul>%s</ul><br>",
+                        error_icon_html, paste0("<li>", basename(excluded_files), "</li>", collapse = ""))
+  }
+  return(messages)
+}
+
+#' Generate Exclude Patterns
+#'
+#' This function generates patterns to exclude binary files and specific directories,
+#' such as the `renv` directory, from a file listing.
+#'
+#' @return A character string containing the exclusion patterns.
+#' @importFrom pkglite ext_binary
+#' @noRd
 exclude_patterns <- function(){
   # excludes binaries as won't be qc items
   exclude_pattern <- paste0("\\.(", paste(ext_binary(flat = TRUE), collapse = "|"), ")$", collapse = "")
@@ -20,6 +48,19 @@ exclude_patterns <- function(){
   return(exclude_pattern)
 }
 
+#' List Files and Directories
+#'
+#' This function lists files and directories in a specified path,
+#' filtering out those that match a given pattern. It ensures that
+#' only non-empty directories are included in the list.
+#'
+#' @param path A character string specifying the path to list files and directories from.
+#' @param pattern A character string containing the pattern to filter out files and directories.
+#' @param all.files A logical value indicating whether to list all files, including hidden files.
+#'
+#' @return A list containing two elements:
+#' @importFrom fs dir_ls dir_exists is_file is_dir
+#' @noRd
 list.files_and_dirs <- function(path, pattern, all.files){
   # changed so pattern is only filtered out after retrieving all non filtered out values
   lfs <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
@@ -54,6 +95,7 @@ list.files_and_dirs <- function(path, pattern, all.files){
 }
 
 
+#' @importFrom jsTreeR jstreeOutput
 treeNavigatorUI <- function(id, width = "100%", height = "auto"){
   tree <- jstreeOutput(outputId = id, width = width, height = height)
   tagList(tree,
@@ -61,6 +103,7 @@ treeNavigatorUI <- function(id, width = "100%", height = "auto"){
           tags$script(type = "module", src = "ghqc/js/tree.js"))
 }
 
+#' @importFrom jsTreeR renderJstree jstree
 treeNavigatorServer <- function(
     id, rootFolder, search = TRUE, wholerow = FALSE, contextMenu = FALSE,
     theme = "proton", pattern = NULL, all.files = FALSE, ...
@@ -119,7 +162,7 @@ treeNavigatorServer <- function(
       # if no viable children found, send msg to revert state and open modal
       # otherwise tree state will have miscalculated state and think node exists when it does not
       if (lf$empty) {
-        message_content <- generate_binary_file_message(lf$files)
+        message_content <- generate_excluded_file_message(lf$files)
         session$sendCustomMessage("noChildrenFound", lf$empty)
         return(showModal(modalDialog(
           title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),

@@ -1,6 +1,7 @@
 #' @import shiny
 #' @importFrom shinyjs enable disable addClass removeClass
 #' @import dplyr
+#' @import log4r
 #' @importFrom purrr map_df
 #' @importFrom gert git_status git_ahead_behind
 NULL

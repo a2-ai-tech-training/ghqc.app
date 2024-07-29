@@ -154,7 +154,6 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, input_name, just
   }
 
   # create temporary rmd
-  browser()
   rmd <- tempfile(fileext = ".Rmd")
   fs::file_create(rmd)
   # delete temporary rmd when it's time

@@ -154,10 +154,11 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, input_name, just
   }
 
   # create temporary rmd
+  browser()
   rmd <- tempfile(fileext = ".Rmd")
   fs::file_create(rmd)
   # delete temporary rmd when it's time
-  suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
+  #suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
 
   # create pdf from rmd
@@ -251,6 +252,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   date: {date}
   output:
     pdf_document:
+      pandoc_args: --listings
       toc: true
       toc_depth: 1
       includes:
@@ -278,7 +280,8 @@ create_header <- function() {
     "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
     "}\n",
     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
-    "\\usepackage{lastpage}\n"
+    "\\usepackage{lastpage}\n",
+    "\\lstset{\nbreaklines=true\n}"
   )
   writeLines(header_tex, header_path)
 

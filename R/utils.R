@@ -34,3 +34,23 @@ convert_issue_df_format <- function(issue_df){
     })
   return(issues_choices)
 }
+
+convert_commits_df_format <- function(commit_df){
+  commits <- commit_df %>%
+    split(.$date) %>%
+    rev() %>%
+    lapply(function(x) {
+      setNames(
+        object = x$commit,
+        nm = x$display
+      )
+    })
+}
+
+split_issue_parts <- function(issue){
+  issue_parts <- strsplit(sub("Item ", "", issue), ": ")[[1]]
+  issue_number <- as.numeric(issue_parts[1])
+  issue_title <- as.character(issue_parts[2])
+  list(issue_number = issue_number, issue_title = issue_title)
+}
+

@@ -15,7 +15,7 @@ ghqc_create_server <- function(id) {
     info(.le$logger, glue::glue("Directory changed to project root: {rproj_root_dir}"))
   }
 
-  selected_paths <- treeNavigatorServer(
+  selected_items <- treeNavigatorServer(
     id,
     rootFolder = rproj_root_dir,
     search = FALSE,
@@ -31,15 +31,39 @@ ghqc_create_server <- function(id) {
     waiter_hide()
 
     org <- reactive({
-      get_organization()
+      tryCatch({
+        get_organization()
+      }, error = function(e) {
+        error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
+        showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
+      })
     })
 
     repo <- reactive({
-      get_current_repo()
+      tryCatch({
+        get_current_repo()
+      }, error = function(e) {
+        error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
+        showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
+      })
     })
 
     members <- reactive({
-      get_members_df(org())
+      tryCatch({
+        get_members_df(org())
+      }, error = function(e) {
+        error(.le$logger, glue::glue("There was an error retrieving members: {e$message}"))
+        showModal(modalDialog("Error in getting members: ", e$message, footer = NULL))
+      })
+    })
+
+    checklists <- reactive({
+      tryCatch({
+        get_checklists()
+      }, error = function(e) {
+        error(.le$logger, glue::glue("There was an error retrieving checklists: {e$message}"))
+        showModal(modalDialog("Error in getting checklists: ", e$message)) # let user continue using app even if error occurs here
+      })
     })
 
     w_load_items <- Waiter$new(
@@ -50,9 +74,8 @@ ghqc_create_server <- function(id) {
       color = "white"
     )
 
-
     output$sidebar <- renderUI({
-      w_tree <- create_waiter(ns, sprintf("Creating file tree for %s ...", basename(getwd())))
+      w_tree <- create_waiter(ns, sprintf("Creating file tree for %s ...", basename(rproj_root_dir)))
       w_tree$show()
       on.exit(w_tree$hide())
       tagList(
@@ -113,23 +136,22 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
     })
 
-    selected_items <- reactive({
-      req(selected_paths())
-      selected_paths()
-    })
-
     qc_items <- reactive({
       req(selected_items())
-      extract_file_data(input, selected_items())
+      tryCatch({
+        extract_file_data(input, selected_items())
+      }, error = function(e){
+        error(.le$logger, glue::glue("There was an error extracting file data from {selected_items()}:{e$message}"))
+        rlang::abort(e$message)
+      })
     })
-
 
     output$main_panel <- renderUI({
       validate(need(length(selected_items()) > 0, "No files selected"))
       w_load_items$show()
 
       log_string <- glue::glue_collapse(selected_items(), sep = ", ")
-      info(.le$logger, glue::glue("Files selected for QC: {log_string}"))
+      debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
 
       list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
       isolate_rendered_list(input, session, selected_items())
@@ -143,56 +165,17 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_load_items$hide()
     })
 
-    # button behavior
-    observe({
-      debug(.le$logger, glue::glue("create_qc_items buttons are inactivated."))
-      removeClass("create_qc_items", "enabled-btn")
-      addClass("create_qc_items", "disabled-btn")
-
-      if (length(selected_items()) > 0 && isTruthy(input$milestone)) {
-        debug(.le$logger, glue::glue("create_qc_items buttons are activated because there are {length(selected_items())} selected items and milestone is named {input$milestone}"))
-
-        removeClass("create_qc_items", "disabled-btn")
-        addClass("create_qc_items", "enabled-btn")
-      }
-    })
-
-    observeEvent(input$file_info, {
-      debug(.le$logger, glue::glue("file_info button was triggered."))
-
-      checklists <- get_checklists()
-      showModal(
-        modalDialog(
-          title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
-          footer = NULL,
-          easyClose = TRUE,
-          "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
-          "See below for a reference of all types and their items.",
-          br(),
-          br(),
-          selectInput(ns("checklist_info"), NULL, choices = names(checklists), width = "100%"),
-          renderUI({
-            debug(.le$logger, glue::glue("Checklist selected for review: {input$checklist_info}"))
-
-            info <- checklists[[input$checklist_info]]
-
-            log_string <- glue::glue_collapse(info, sep = "\n")
-            debug(.le$logger, glue::glue("Items found in the checklist: \n{log_string}"))
-
-            list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
-
-            tags$ul(list)
-          })
-        )
-      )
-    })
-
     observeEvent(selected_items(), {
       items <- selected_items()
       for (name in items) {
         log_string <- glue::glue_collapse(items, sep = ", ")
         debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
-        create_button_preview_event(input, name = name)
+        tryCatch({
+          create_button_preview_event(input, name = name)
+        }, error = function(e){
+          error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))
+          rlang::abort(e$message)
+        })
       }
     })
 
@@ -205,7 +188,8 @@ return "<div><strong>" + escape(item.username) + "</div>"
         untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
         issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
       }, error = function(e){
-        debug(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
+        error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
+        rlang::abort(e$message)
       })
 
       determine_modal_message(
@@ -237,7 +221,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
       }
     })
 
-
     observe({
       req(qc_trigger())
       qc_trigger(FALSE)
@@ -245,18 +228,23 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items <- create_waiter(ns, "Creating QC items ...")
       w_create_qc_items$show()
 
-      create_yaml("test",
-        org = org(),
-        repo = repo(),
-        milestone = input$milestone,
-        description = input$milestone_description,
-        files = qc_items()
-      )
+      tryCatch({
+        create_yaml("test",
+          org = org(),
+          repo = repo(),
+          milestone = input$milestone,
+          description = input$milestone_description,
+          files = qc_items()
+        )
 
-      create_checklists("test.yaml")
-      removeClass("create_qc_items", "enabled-btn")
-      addClass("create_qc_items", "disabled-btn")
-      milestone_url <- get_milestone_url(org(), repo(), input$milestone)
+        create_checklists("test.yaml")
+        removeClass("create_qc_items", "enabled-btn")
+        addClass("create_qc_items", "disabled-btn")
+        milestone_url <- get_milestone_url(org(), repo(), input$milestone)
+      }, error = function(e){
+        error(.le$logger, glue::glue("There was an error creating QC items {qc_items()}: {e$message}"))
+        rlang::abort(e$message)
+      })
 
       w_create_qc_items$hide()
 
@@ -269,6 +257,55 @@ return "<div><strong>" + escape(item.username) + "</div>"
           tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
         )
       )
+    })
+
+    #--- checklist info button begin
+    observeEvent(input$file_info, {
+      req(checklists())
+      debug(.le$logger, glue::glue("file_info button was triggered."))
+
+      showModal(
+        modalDialog(
+          title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+          footer = NULL,
+          easyClose = TRUE,
+          "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
+          "See below for a reference of all types and their items.",
+          br(),
+          br(),
+          selectInput(ns("checklist_info"), NULL, choices = names(checklists()), width = "100%"),
+          uiOutput(ns("file_info_panel"))
+        )
+      )
+    })
+
+    output$file_info_panel <- renderUI({
+      req(checklists())
+      req(input$checklist_info)
+      debug(.le$logger, glue::glue("Checklist selected for review: {input$checklist_info}"))
+
+      info <- checklists()[[input$checklist_info]]
+
+      log_string <- glue::glue_collapse(info, sep = "\n")
+      debug(.le$logger, glue::glue("Items found in the checklist: \n{log_string}"))
+
+      list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+
+      tags$ul(list)
+    })
+    #--- checklist info button end
+
+    observe({
+      debug(.le$logger, glue::glue("create_qc_items buttons are inactivated."))
+      removeClass("create_qc_items", "enabled-btn")
+      addClass("create_qc_items", "disabled-btn")
+
+      if (length(selected_items()) > 0 && isTruthy(input$milestone)) {
+        debug(.le$logger, glue::glue("create_qc_items buttons are activated because there are {length(selected_items())} selected items and milestone is named {input$milestone}"))
+
+        removeClass("create_qc_items", "disabled-btn")
+        addClass("create_qc_items", "enabled-btn")
+      }
     })
 
     observeEvent(input$proceed, {

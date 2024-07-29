@@ -16,7 +16,7 @@ ghqc_create_server <- function(id) {
   }
 
   selected_paths <- treeNavigatorServer(
-    "explorer",
+    id,
     rootFolder = rproj_root_dir,
     search = FALSE,
     pattern = exclude_patterns(),
@@ -80,7 +80,7 @@ ghqc_create_server <- function(id) {
           h5("Select files for QC"),
           actionButton(ns("file_info"), "checklist info", class = "preview-button")
         ),
-        treeNavigatorUI("explorer")
+        treeNavigatorUI(ns("treeNavigator"))
       )
     })
 

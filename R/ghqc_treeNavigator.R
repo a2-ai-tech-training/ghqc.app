@@ -5,7 +5,9 @@
 NULL
 
 # repurposed some functions and js from https://github.com/stla/jsTreeR
-# changes: allows more filtering of lists, prevents binary file selections, renames rootFolder to basename
+# changes: allows more filtering of lists, excluded dir selections of only excluded
+# files give modals w/ excluded file list, renames rootFolder to basename,
+# redid id/naming so ns can be passed in
 
 exclude_patterns <- function(){
   # excludes binaries as won't be qc items
@@ -19,35 +21,33 @@ exclude_patterns <- function(){
 }
 
 list.files_and_dirs <- function(path, pattern, all.files){
+  # changed so pattern is only filtered out after retrieving all non filtered out values
+  lfs <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
+  included_files <- lfs[!grepl(pattern, lfs)]
 
-  lfs <- fs::dir_ls(path = path, all = all.files, regexp = pattern, recurse = FALSE, ignore.case = TRUE, invert = TRUE)
+  non_empty_dirs <- sapply(included_files, function(x) {
+    if (fs::dir_exists(x)) {
+      length(fs::dir_ls(x)) > 0
+    } else {
+      TRUE
+    }
+  })
 
-  # if lfs returns an empty list because all files were filtered out, dir_ls is rerun
-  # to expose those files to show user as to why dir is not able to be indexed into
-  # can't recursively look into a dir at top level because that will end up running
-  # the whole proj dir, which can cause significant slow down if large amt of files
-  # TODO: rewrite so it gives back all dir_ls initially and the grepl afterwards
-  # lfs <- lfs[!grepl(exclude_patterns(), lfs)]
+  # remove dirs w/o ANY files as otherwise will be unclickable dir
+  if (any(!non_empty_dirs)) {
+    included_files <- included_files[non_empty_dirs]
+  }
 
-
-  if (length(lfs) == 0) {
-    list_all <- fs::dir_ls(path = path, all = TRUE, regexp = FALSE, recurse = FALSE, ignore.case = TRUE, invert = TRUE)
+  # if included_files returns an empty list because all files were filtered out, dir_ls is rerun
+  # w/ recurse to expose those files to show user as to why dir is not able to be indexed into
+  # didn't reuse lfs because wanted only files rather than both files and dirs + recurse
+  if (length(included_files) == 0) {
+    list_all <- fs::dir_ls(path = path, all = TRUE, regexp = NULL, recurse = T, ignore.case = TRUE, type = "file")
     return(list(files = list_all, empty = TRUE))
   }
 
-  # non_empty_dirs <- sapply(lfs, function(x) {
-  #   if (fs::dir_exists(x)) {
-  #     length(fs::dir_ls(x)) > 0
-  #   } else {
-  #     TRUE
-  #   }
-  # })
-  #
-  # # remove dirs w/o files as otherwise will be unclickable dir
-  # lfs <- lfs[non_empty_dirs]
-
-  files <- sort(lfs[fs::is_file(lfs)])
-  dirs <- sort(lfs[fs::is_dir(lfs)])
+  files <- sort(included_files[fs::is_file(included_files)])
+  dirs <- sort(included_files[fs::is_dir(included_files)])
 
   files_and_dirs <- c(dirs, files)
   return(list(files = files_and_dirs, empty = FALSE))
@@ -55,11 +55,7 @@ list.files_and_dirs <- function(path, pattern, all.files){
 
 
 treeNavigatorUI <- function(id, width = "100%", height = "auto"){
-  if(grepl("-", id)){
-    stop("The `id` must not contain a minus sign.")
-  }
-  outputId <- NS(id, "treeNavigator___")
-  tree <- jstreeOutput(outputId, width = width, height = height)
+  tree <- jstreeOutput(outputId = id, width = width, height = height)
   tagList(tree,
           tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/tree.css"),
           tags$script(type = "module", src = "ghqc/js/tree.js"))
@@ -72,7 +68,7 @@ treeNavigatorServer <- function(
   theme <- match.arg(theme, c("default", "proton"))
   moduleServer(id, function(input, output, session){
 
-    output[["treeNavigator___"]] <- renderJstree({
+    output[["treeNavigator"]] <- renderJstree({
       req(...)
 
       suppressMessages(jstree(
@@ -111,6 +107,11 @@ treeNavigatorServer <- function(
     # example: given input "testTree/inst/www", full_path will be "/path/to/proj/testTree/inst/www"
     observeEvent(input[["path_from_js"]], {
       input <- input[["path_from_js"]]
+
+      # null is sent back to reset the input if user wants to reselect unviable dirs
+      if(is.null(input)){
+        return()
+      }
       full_path <- fs::path(dirname, input)
 
       lf <- list.files_and_dirs(full_path, pattern = pattern, all.files = all.files)
@@ -141,8 +142,8 @@ treeNavigatorServer <- function(
 
     # example: given input "testTree/inst/www", Paths is "inst/www"
     Paths <- reactiveVal()
-    observeEvent(input[["treeNavigator____selected_paths"]], {
-      selected <- input[["treeNavigator____selected_paths"]]
+    observeEvent(input[["treeNavigator_selected_paths"]], {
+      selected <- input[["treeNavigator_selected_paths"]]
       adjusted_paths <- sapply(selected, function(item){
         fs::path_rel(item[["path"]], start = basename(rootFolder))
       })

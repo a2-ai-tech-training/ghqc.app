@@ -3,6 +3,9 @@ $(document).ready(function () {
   var Ids = {};
   var Children = null;
   var childrenFlag = true;
+  var lastNodeState = {};
+  var lastChildrenState = {};
+  var lastNodeIndex = {};
 
   Shiny.addCustomMessageHandler("getChildren", function (x) {
     console.log("Received getChildren message:", x);
@@ -15,8 +18,7 @@ $(document).ready(function () {
     childrenFlag = false;
   });
 
-  var $navigator = $("div[id$='treeNavigator___']");
-
+  var $navigator = $("div[id$='-treeNavigator']");
   console.time("Initial tree rendering time");
 
   $navigator.on("ready.jstree", function (e, data) {
@@ -54,21 +56,38 @@ $(document).ready(function () {
     var ns = Ids[div_id];
     var id = $li.attr("id");
     var node = tree.get_node(id);
-    console.log("Leaf node clicked with id:", id, "Node:", node);
-
+    //console.log("Leaf node clicked with id:", id, "Node:", node);
 
     if (tree.is_leaf(node) && node.original.type === "folder") {
       var path = tree.get_path(node, "/");
+
       console.log("Fetching children for path:", path);
 
       Shiny.setInputValue(ns + "-path_from_js", path);
 
       // Introduce a delay to check if the flag changes
+      // store node state, children state, and node index when clicking a node
+      // if children is invalid (ie it contains only the excluded items), restore a node's
+      // state within the tree and reset flags to "as before" state and stop further
+      // node creation (it will disrupt tree state otherwise; explored reverting to tree state
+      // instead of node states but ran into issues and i couldn't find a way to only reset/redraw
+      // the portion of the tree/parent effected rather than the whole tree) and send a null value
+      // to app to allow for reselection of invalid child because otherwise observeEvent
+      // won't pick up the reselection as it is technically no change from prev selection
+      // used delete/create node because re-enabling node state did not work and trying
+      // to write the node state did not work
       var checkInterval = setInterval(function () {
         if (Children !== null || !childrenFlag) {
+          lastNodeState[div_id] = tree.get_json(node);
+          lastChildrenState[div_id] = Children;
+          lastNodeIndex[div_id] = $("#" + id).index();
           clearInterval(checkInterval);
           if (!childrenFlag) {
-            console.log("Children flag was set to false, ignoring action");
+            tree.delete_node(node);
+            tree.create_node(node.parent, lastNodeState[div_id], lastNodeIndex[div_id]);
+            Children = lastChildrenState[div_id];
+            childrenFlag = true;
+            Shiny.setInputValue(ns + "-path_from_js", null);
             return;
           }
 
@@ -93,7 +112,7 @@ $(document).ready(function () {
             tree.open_node(id);
           }, 10);
         }
-      }, 100); // Check every 100 milliseconds
+      }, 100);
     }
   });
 });

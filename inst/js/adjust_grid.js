@@ -1,4 +1,4 @@
-export function adjust_grid() {
+export function adjust_grid(ns) {
   // Function to get the maximum width of the first column across all grid-items
   function getMaxWidth() {
     const rows = document.querySelectorAll('.grid-items');
@@ -37,12 +37,10 @@ export function adjust_grid() {
     const sidebarCollapsed = document.querySelector("div[id$='-sidebar']").classList.contains('collapsed');
     const maxAllowableWidth = sidebarCollapsed ? containerWidth * 1 / 4 : containerWidth * 1 / 4;
 
-
     if (maxWidth > maxAllowableWidth) {
-      maxWidth = Math.max(maxWidth, 100)
+      maxWidth = Math.max(maxWidth, 100);
     } else {
       maxWidth = maxAllowableWidth;
-
     }
 
     console.log(`Adjusted max width (constrained to '2fr'}): ${maxWidth}px`);
@@ -61,28 +59,18 @@ export function adjust_grid() {
   // Get the maximum width and apply it
   const maxWidth = getMaxWidth();
   applyMaxWidth(maxWidth);
+
+  if (typeof Shiny !== 'undefined') {
+    const inputValue = ns + '-adjust_grid_finished';
+    Shiny.setInputValue(inputValue, true);
+  }
 }
 
-// Debounce function to limit the rate at which adjust_grid is called
-function debounce(func, wait) {
-  let timeout;
-  return function() {
-    const context = this, args = arguments;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), wait);
-  };
-}
-
-const debouncedAdjustGrid = debounce(adjust_grid, 200);
-
-// Call debouncedAdjustGrid on window resize
-window.addEventListener('resize', debouncedAdjustGrid);
-
-// Expose the function to be called from Shiny
-if (typeof Shiny !== 'undefined') {
-  Shiny.addCustomMessageHandler('adjust_grid', function(message) {
-    $(document).on('shiny:idle', function() {
-      setTimeout(adjust_grid, 100);
+    Shiny.addCustomMessageHandler('adjust_grid', function(ns) {
+        const inputValue = ns + '-adjust_grid_finished';
+        Shiny.setInputValue(inputValue, false);
+        $(document).on('shiny:idle', function() {
+          setTimeout(adjust_grid(ns), 100);
+        });
     });
-  });
-}
+

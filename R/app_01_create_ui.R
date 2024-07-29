@@ -14,7 +14,6 @@ ghqc_create_ui <- function(id) {
       tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/styles.css"),
       tags$script(type = "module", src = "ghqc/js/adjust_grid.js"),
       tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js"),
-      tags$script(type = "module", src = "ghqc/js/tree_paths.js")
     ),
     waiter_show_on_load(
       html = tagList(
@@ -27,6 +26,7 @@ ghqc_create_ui <- function(id) {
       id = ns("main_container"),
       gadgetTitleBar(
         title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "Create QC Shiny Tool"),
+        left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),
       div(

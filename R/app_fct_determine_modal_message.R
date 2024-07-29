@@ -2,16 +2,6 @@ generate_html_list <- function(files) {
   paste("<li>", files, "</li>", collapse = "")
 }
 
-generate_binary_file_message <- function(binary_files) {
-  error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
-  messages <- c()
-  if (length(binary_files) > 0) {
-    messages <- sprintf("%s The selected directory contains only the following binary files which are not selectable QC items:<ul>%s</ul><br>",
-                        error_icon_html, paste0("<li>", basename(binary_files), "</li>", collapse = ""))
-  }
-  return(messages)
-}
-
 generate_sync_message <- function(git_sync_status, error_icon_html) {
   messages <- c()
   if (git_sync_status$ahead > 0 || git_sync_status$behind > 0) {
@@ -80,7 +70,6 @@ generate_commit_update_message <- function(commit_update_status, error_icon_html
 #' @return A list containing:
 #' \item{message}{A character string with the generated message, or \code{NULL} if no message is generated.}
 #' \item{state}{A character string indicating the state of the message, either "error" or "warning", or \code{NULL} if no state is determined.}
-#'
 #' @noRd
 determine_modal_message <- function(selected_files,
                                     uncommitted_git_files,
@@ -101,6 +90,17 @@ determine_modal_message <- function(selected_files,
   messages <- c(messages, generate_uncommitted_message(uncommitted_files, error_icon_html, warning_icon_html))
   messages <- c(messages, generate_existing_issue_message(existing_issues, error_icon_html))
   messages <- c(messages, generate_commit_update_message(commit_update_status, error_icon_html))
+
+  log_string <- glue::glue("Modal Check Inputs:
+    - Selected Files: {glue::glue_collapse(selected_files, sep = ', ')}
+    - Uncommitted Git Files: {glue::glue_collapse(uncommitted_git_files, sep = ', ')}
+    - Untracked Selected Files: {glue::glue_collapse(untracked_selected_files, sep = ', ')}
+    - Git Sync Status: Ahead: {git_sync_status$ahead}, Behind: {git_sync_status$behind}
+    - Commit Update Status: {commit_update_status}
+    - Issues in Milestone: {glue::glue_collapse(issue_titles, sep = ', ')}
+  ")
+
+  log4r::debug(.le$logger, log_string)
 
   if (length(messages) == 0) {
     return(list(message = NULL, state = NULL))

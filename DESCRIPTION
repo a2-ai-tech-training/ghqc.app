@@ -1,6 +1,6 @@
 Package: ghqc
 Title: Create QC Checklists in Github Issues
-Version: 0.0.0.9003
+Version: 0.0.0.9005
 Authors@R: c(
     person("Jenna", "Johnson", , "jenna@a2-ai.com", role = c("aut", "cre")),
     person("Anne", "Zheng", , "anne@a2-ai.com", role = "aut"),
@@ -10,7 +10,7 @@ Description: A QC tool with 3 major functions: creation and management of QC log
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
     fs (>= 1.6.3),
     gert (>= 2.0.1),

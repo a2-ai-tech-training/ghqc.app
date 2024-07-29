@@ -277,7 +277,11 @@ get_all_issues_in_repo <- function(owner, repo) {
 get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   debug(.le$logger, glue::glue("Retrieving all issues from milestone: {milestone_name}..."))
   # get milestone number from name
-  milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
+  milestone_number <- look_up_existing_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
+  # if the milestone dne, there are no issues in the milestone, return an empty vector
+  if (is.null(milestone_number)) {
+    return(c())
+  }
 
   open_issues <- list()
   page <- 1

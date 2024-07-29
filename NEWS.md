@@ -1,5 +1,11 @@
 # ghqc (development version)
 
+# ghqc 0.0.0.9005
+
+## Minor improvements and bug fixes
+
+-   Fixes `treeNavigatorServer()` in `ghqc_create_app()` so that selecting directories with no viable children/files twice in a row does not cause file tree state invisible error.
+
 # ghqc 0.0.0.9004
 
 ## New features

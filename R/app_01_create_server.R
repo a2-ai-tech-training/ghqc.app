@@ -136,6 +136,8 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
     })
 
+
+
     qc_items <- reactive({
       req(selected_items())
       tryCatch({
@@ -145,6 +147,8 @@ return "<div><strong>" + escape(item.username) + "</div>"
         rlang::abort(e$message)
       })
     })
+
+    browser()
 
     output$main_panel <- renderUI({
       validate(need(length(selected_items()) > 0, "No files selected"))
@@ -185,6 +189,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         file_names <- sapply(qc_items(), function(x) x$name)
         uncommitted_git_files <- git_status()$file
         git_sync_status <- git_ahead_behind()
+        browser()
         untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
         issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
       }, error = function(e){
@@ -240,13 +245,13 @@ return "<div><strong>" + escape(item.username) + "</div>"
         create_checklists("test.yaml")
         removeClass("create_qc_items", "enabled-btn")
         addClass("create_qc_items", "disabled-btn")
-        milestone_url <- get_milestone_url(org(), repo(), input$milestone)
       }, error = function(e){
         error(.le$logger, glue::glue("There was an error creating QC items {qc_items()}: {e$message}"))
         rlang::abort(e$message)
       })
 
       w_create_qc_items$hide()
+      milestone_url <- get_milestone_url(org(), repo(), input$milestone)
 
       showModal(
         modalDialog(

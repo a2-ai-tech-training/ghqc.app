@@ -6,8 +6,8 @@ generate_sync_message <- function(git_sync_status, error_icon_html) {
   messages <- c()
   if (git_sync_status$ahead > 0 || git_sync_status$behind > 0) {
     sync_messages <- c()
-    if (git_sync_status$ahead > 0) sync_messages <- c(sync_messages, "push changes to the remote repository.")
-    if (git_sync_status$behind > 0) sync_messages <- c(sync_messages, "pull updates from the remote.")
+    if (git_sync_status$ahead > 0) sync_messages <- c(sync_messages, "push changes to the remote repository")
+    if (git_sync_status$behind > 0) sync_messages <- c(sync_messages, "pull updates from the remote repository")
     messages <- paste(error_icon_html, "There are local changes that need to be synchronized. Please", paste(sync_messages, collapse = " and "), "<br>")
   }
   return(messages)

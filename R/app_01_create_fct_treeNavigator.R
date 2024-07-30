@@ -61,7 +61,7 @@ exclude_patterns <- function(){
 #' @return A list containing two elements:
 #' @importFrom fs dir_ls dir_exists is_file is_dir
 #' @noRd
-list.files_and_dirs <- function(path, pattern, all.files){
+list_files_and_dirs <- function(path, pattern, all.files){
   # changed so pattern is only filtered out after retrieving all non filtered out values
   lfs <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
   included_files <- lfs[!grepl(pattern, lfs)]
@@ -157,7 +157,7 @@ treeNavigatorServer <- function(
       }
       full_path <- fs::path(dirname, input)
 
-      lf <- list.files_and_dirs(full_path, pattern = pattern, all.files = all.files)
+      lf <- list_files_and_dirs(full_path, pattern = pattern, all.files = all.files)
 
       # if no viable children found, send msg to revert state and open modal
       # otherwise tree state will have miscalculated state and think node exists when it does not

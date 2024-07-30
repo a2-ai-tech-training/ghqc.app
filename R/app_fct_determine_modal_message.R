@@ -6,8 +6,8 @@ generate_sync_message <- function(git_sync_status, error_icon_html) {
   messages <- c()
   if (git_sync_status$ahead > 0 || git_sync_status$behind > 0) {
     sync_messages <- c()
-    if (git_sync_status$ahead > 0) sync_messages <- c(sync_messages, "push changes to the remote repository.")
-    if (git_sync_status$behind > 0) sync_messages <- c(sync_messages, "pull updates from the remote.")
+    if (git_sync_status$ahead > 0) sync_messages <- c(sync_messages, "push changes to the remote repository")
+    if (git_sync_status$behind > 0) sync_messages <- c(sync_messages, "pull updates from the remote repository")
     messages <- paste(error_icon_html, "There are local changes that need to be synchronized. Please", paste(sync_messages, collapse = " and "), "<br>")
   }
   return(messages)
@@ -49,7 +49,7 @@ generate_commit_update_message <- function(commit_update_status, error_icon_html
   messages <- c()
 
   if (!commit_update_status) {
-    messages <- c(messages, paste(error_icon_html, "There are no update commits on the QC item since QC initialization or reference commit.<br>"))
+    messages <- c(messages, paste(error_icon_html, "There are no update commits on the QC item since QC initialization.<br>"))
   }
 
   return(messages)

@@ -35,6 +35,7 @@ generate_input_id <- function(prefix = NULL, name) {
 #' @noRd
 render_selected_list <- function(input, ns, items = NULL, checklist_choices = NULL, depth = 0) {
   tryCatch({
+    debug(.le$logger, glue::glue("Rendering selected list with items: {paste(items, collapse = ', ')}"))
     checklist_choices <- setNames(names(checklist_choices), names(checklist_choices))
     ul <- div(class = paste("grid-container", "depth", depth, sep = "-")) # if i remove depth, it won't take styles anymore
 
@@ -73,7 +74,7 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         div(class = "item-c", assignee_input)
       ))
     }
-
+    debug(.le$logger, "Rendered selected list successfully")
     ul
   }, error = function(e) {
     log4r::error(glue::glue("Error rendering selected {items}: {e$message}"))
@@ -98,6 +99,8 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
 #' @noRd
 isolate_rendered_list <- function(input, session, items) {
   for (name in items) {
+    debug(.le$logger, glue::glue("Updating selectize inputs for item: {name}"))
+
     checklist_input_id <- generate_input_id("checklist", name)
     assignee_input_id <- generate_input_id("assignee", name)
 
@@ -127,6 +130,8 @@ isolate_rendered_list <- function(input, session, items) {
 #' @noRd
 extract_file_data <- function(input, items) {
   tryCatch({
+    debug(.le$logger, glue::glue("Extracting file data for items: {paste(items, collapse = ', ')}"))
+
     file_data <- list()
     for (name in items) {
       checklist_input_id <- generate_input_id("checklist", name)
@@ -145,7 +150,7 @@ extract_file_data <- function(input, items) {
 
       file_data <- append(file_data, list(create_file_data_structure(file_name = generate_input_id(name = name), assignees = assignee_input_value, checklist_type = checklist_input_value)))
     }
-
+    debug(.le$logger, "Extracted file data successfully")
     return(file_data)
   }, error = function(e) {
     log4r::error(glue::glue("Error extracting data from selected {items}: {e$message}"))
@@ -171,6 +176,7 @@ extract_file_data <- function(input, items) {
 #' @noRd
 convert_list_to_ui <- function(checklists, parent_name = NULL, is_first = TRUE) {
   ui_elements <- list()
+  debug(.le$logger, glue::glue("Converting list to UI with parent name: {parent_name}, is first: {is_first}"))
 
   if (!is.null(parent_name)) {
     if (!is_first) {
@@ -191,7 +197,7 @@ convert_list_to_ui <- function(checklists, parent_name = NULL, is_first = TRUE) 
   } else {
     rlang::abort("Unsupported type")
   }
-
+  debug(.le$logger, "Converted list to UI successfully")
   return(ui_elements)
 }
 
@@ -222,6 +228,7 @@ create_button_preview_event <- function(input, name) {
         )
       )
     }, ignoreInit = TRUE)
+    debug(.le$logger, glue::glue("Created button preview event for item: {name} successfully"))
   }, error = function(e) {
     log4r::error(glue::glue("Error creating observe event for item {name}: {e$message}"))
     rlang::abort(e$message)

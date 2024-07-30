@@ -28,8 +28,7 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
   commit_log
 }
 
-get_reference_df <- function(issue_number, owner = get_organization(), repo = get_current_repo()) {
-  commits_df <- get_commits_df(issue_number, owner, repo)
+get_reference_df <- function(commits_df) {
   # remove first row, the most recent commit (because there's nothing older to compare it to)
   ref_df <- commits_df[-1, ]
   # label new first row as recond most recent commit
@@ -38,16 +37,12 @@ get_reference_df <- function(issue_number, owner = get_organization(), repo = ge
   ref_df
 }
 
-get_comparator_df <- function(issue_number, owner = get_organization(), repo = get_current_repo(), selected_reference_commit) {
-  commits_df <- get_commits_df(issue_number, owner, repo)
+get_comparator_df <- function(commits_df, selected_reference_commit) {
   # selected_reference_display <- stringr::str_remove(selected_reference_display, "\\\n\\(second most recent commit\\)")
   # commits_df$display[1] <- glue::glue("{commits_df$display[1]}") # \n(most recent commit)
   # next need to cut off at selected reference commits
   cutoff_position <- which(commits_df$commit == selected_reference_commit)
 
-  if(length(cutoff_position) == 0){
-    return(NULL)
-  }
   # - 1 to not include the selected commit
   comp_df <- commits_df[1:cutoff_position - 1, ]
 

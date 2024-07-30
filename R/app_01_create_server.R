@@ -148,8 +148,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
       })
     })
 
-    browser()
-
     output$main_panel <- renderUI({
       validate(need(length(selected_items()) > 0, "No files selected"))
       w_load_items$show()
@@ -189,8 +187,9 @@ return "<div><strong>" + escape(item.username) + "</div>"
         file_names <- sapply(qc_items(), function(x) x$name)
         uncommitted_git_files <- git_status()$file
         git_sync_status <- git_ahead_behind()
-        browser()
         untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
+        browser() # browser to check milestone creation issue
+
         issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
       }, error = function(e){
         error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))

@@ -49,7 +49,7 @@ generate_commit_update_message <- function(commit_update_status, error_icon_html
   messages <- c()
 
   if (!commit_update_status) {
-    messages <- c(messages, paste(error_icon_html, "There are no update commits on the QC item since QC initialization or reference commit.<br>"))
+    messages <- c(messages, paste(error_icon_html, "There are no update commits on the QC item since QC initialization.<br>"))
   }
 
   return(messages)

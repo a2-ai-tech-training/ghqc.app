@@ -112,7 +112,7 @@ ghqc_update_server <- function(id) {
         ref_commits <- convert_commits_df_format(ref_commits)
 
       }, error = function(e){
-        error(.le$logger, glue::glue("There was 0 reference commits for issue {issue_parts()$issue_number}: {e$message}"))
+        debug(.le$logger, glue::glue("There was 0 reference commits for issue {issue_parts()$issue_number}: {e$message}"))
         NULL
       })
     })
@@ -141,7 +141,7 @@ ghqc_update_server <- function(id) {
 
       comp_commits <- convert_commits_df_format(comp_commits)
       }, error = function(e){
-        error(.le$logger, glue::glue("There was 0 comparator commits for issue {issue_parts()$issue_number}: {e$message}"))
+        debug(.le$logger, glue::glue("There was 0 comparator commits for issue {issue_parts()$issue_number}: {e$message}"))
         NULL
       })
     })

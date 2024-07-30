@@ -18,6 +18,8 @@
 #' convert_issue_df_format(issues)
 #' @noRd
 convert_issue_df_format <- function(issue_df){
+  debug(.le$logger, "Converting issue data frame format")
+
   issues_df <- map_df(issue_df, ~ {
     tibble(
       number = .x$number,
@@ -25,6 +27,9 @@ convert_issue_df_format <- function(issue_df){
       state = .x$state
     )
   })
+
+  debug(.le$logger, glue::glue("Issues data frame created: {nrow(issues_df)} rows"))
+
   issues_choices <- issues_df %>%
     mutate(state = case_when(
       state == "open" ~ "Open Items",
@@ -35,6 +40,9 @@ convert_issue_df_format <- function(issue_df){
     lapply(function(x) {
       setNames(nm = paste0("Item ", x$number, ": ", x$title))
     })
+
+  debug(.le$logger, "Issues choices list created")
+
   return(issues_choices)
 }
 
@@ -56,6 +64,8 @@ convert_issue_df_format <- function(issue_df){
 #' convert_commits_df_format(commits)
 #' @noRd
 convert_commits_df_format <- function(commit_df){
+  debug(.le$logger, "Converting commits data frame format")
+
   commits <- commit_df %>%
     split(.$date) %>%
     rev() %>%
@@ -65,6 +75,10 @@ convert_commits_df_format <- function(commit_df){
         nm = x$display
       )
     })
+
+  debug(.le$logger, "Commits list created")
+
+  return(commits)
 }
 
 #' Split Issue Parts
@@ -78,8 +92,13 @@ convert_commits_df_format <- function(commit_df){
 #' split_issue_parts("Item 1: Issue Title")
 #' @noRd
 split_issue_parts <- function(issue){
+  debug(.le$logger, glue::glue("Splitting issue parts for: {issue}"))
+
   issue_parts <- strsplit(sub("Item ", "", issue), ": ")[[1]]
   issue_number <- as.numeric(issue_parts[1])
   issue_title <- as.character(issue_parts[2])
+
+  debug(.le$logger, glue::glue("Issue parts split: number = {issue_number}, title = {issue_title}"))
+
   list(issue_number = issue_number, issue_title = issue_title)
 }

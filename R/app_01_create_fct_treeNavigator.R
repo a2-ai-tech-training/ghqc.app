@@ -62,9 +62,15 @@ exclude_patterns <- function(){
 #' @importFrom fs dir_ls dir_exists is_file is_dir
 #' @noRd
 list_files_and_dirs <- function(path, pattern, all.files){
+  debug(.le$logger,
+        glue::glue("Listing files and directories for path: {path}"))
+
   # changed so pattern is only filtered out after retrieving all non filtered out values
   lfs <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
   included_files <- lfs[!grepl(pattern, lfs)]
+
+  debug(.le$logger,
+        glue::glue("Included files: {paste(included_files, collapse = ', ')}"))
 
   non_empty_dirs <- sapply(included_files, function(x) {
     if (fs::dir_exists(x)) {
@@ -74,16 +80,21 @@ list_files_and_dirs <- function(path, pattern, all.files){
     }
   })
 
+  debug(.le$logger, glue::glue("Non-empty directories: {paste(non_empty_dirs, collapse = ', ')}"))
+
   # remove dirs w/o ANY files as otherwise will be unclickable dir
   if (any(!non_empty_dirs)) {
     included_files <- included_files[non_empty_dirs]
   }
+
+  debug(.le$logger, glue::glue("Filtered included files: {paste(included_files, collapse = ', ')}"))
 
   # if included_files returns an empty list because all files were filtered out, dir_ls is rerun
   # w/ recurse to expose those files to show user as to why dir is not able to be indexed into
   # didn't reuse lfs because wanted only files rather than both files and dirs + recurse
   if (length(included_files) == 0) {
     list_all <- fs::dir_ls(path = path, all = TRUE, regexp = NULL, recurse = T, ignore.case = TRUE, type = "file")
+    debug(.le$logger, glue::glue("All files (when included_files is empty): {paste(list_all, collapse = ', ')}"))
     return(list(files = list_all, empty = TRUE))
   }
 
@@ -91,6 +102,7 @@ list_files_and_dirs <- function(path, pattern, all.files){
   dirs <- sort(included_files[fs::is_dir(included_files)])
 
   files_and_dirs <- c(dirs, files)
+
   return(list(files = files_and_dirs, empty = FALSE))
 }
 
@@ -110,9 +122,11 @@ treeNavigatorServer <- function(
 ){
   theme <- match.arg(theme, c("default", "proton"))
   moduleServer(id, function(input, output, session){
+    debug(.le$logger, glue::glue("Initializing treeNavigatorServer module with id: {id}"))
 
     output[["treeNavigator"]] <- renderJstree({
       req(...)
+      debug(.le$logger, glue::glue("Rendering jstree for rootFolder: {rootFolder}"))
 
       suppressMessages(jstree(
         nodes = list(
@@ -150,28 +164,32 @@ treeNavigatorServer <- function(
     # example: given input "testTree/inst/www", full_path will be "/path/to/proj/testTree/inst/www"
     observeEvent(input[["path_from_js"]], {
       input <- input[["path_from_js"]]
+      debug(.le$logger, glue::glue("Received path_from_js input: {paste(input, collapse = ', ')}"))
 
       # null is sent back to reset the input if user wants to reselect unviable dirs
       if(is.null(input)){
+        debug(.le$logger, "Input is NULL, resetting selection")
         return()
       }
       full_path <- fs::path(dirname, input)
+      debug(.le$logger, glue::glue("Full path constructed: {full_path}"))
 
       lf <- list_files_and_dirs(full_path, pattern = pattern, all.files = all.files)
+      debug(.le$logger, glue::glue("List files and dirs result: {paste(lf$files, collapse = ', ')}"))
 
       # if no viable children found, send msg to revert state and open modal
       # otherwise tree state will have miscalculated state and think node exists when it does not
       if (lf$empty) {
         message_content <- generate_excluded_file_message(lf$files)
         session$sendCustomMessage("noChildrenFound", lf$empty)
-        return(showModal(modalDialog(
+        showModal(modalDialog(
           title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
           footer = NULL,
           easyClose = TRUE,
           HTML(message_content)
-          )
-          )
-        )
+        ))
+        debug(.le$logger, "Modal shown due to no viable children found")
+        return()
       }
 
       fi <- file.info(lf$files, extra_cols = FALSE)
@@ -187,6 +205,8 @@ treeNavigatorServer <- function(
     Paths <- reactiveVal()
     observeEvent(input[["treeNavigator_selected_paths"]], {
       selected <- input[["treeNavigator_selected_paths"]]
+      debug(.le$logger, glue::glue("Selected paths: {paste(selected, collapse = ', ')}"))
+
       adjusted_paths <- sapply(selected, function(item){
         fs::path_rel(item[["path"]], start = basename(rootFolder))
       })

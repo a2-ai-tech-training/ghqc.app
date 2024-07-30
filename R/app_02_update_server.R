@@ -89,18 +89,30 @@ ghqc_update_server <- function(id) {
       )
     })
 
+    issue_parts <- reactive({
+      req(input$select_issue)
+      split_issue_parts(input$select_issue)
+    })
+
+    all_commits <- reactive({
+      req(org(), repo(), issue_parts()$issue_number)
+      get_commits_df(
+        issue_number = issue_parts()$issue_number,
+        owner = org(),
+        repo = repo()
+      )
+    })
+
     ref_commits <- reactive({
-      req(issue_parts()$issue_number)
+      req(all_commits())
       tryCatch({
         ref_commits <- get_reference_df(
-          issue_number = issue_parts()$issue_number,
-          owner = org(),
-          repo = repo()
+          commits_df = all_commits()
           )
         ref_commits <- convert_commits_df_format(ref_commits)
 
       }, error = function(e){
-        debug(.le$logger, glue::glue("There was 0 reference commits for issue {issue_parts()$issue_number}: {e$message}"))
+        error(.le$logger, glue::glue("There was 0 reference commits for issue {issue_parts()$issue_number}: {e$message}"))
         NULL
       })
     })
@@ -118,19 +130,18 @@ ghqc_update_server <- function(id) {
     })
 
     comp_commits <- reactive({
-      req(issue_parts()$issue_number)
+      req(all_commits())
       req(input$ref_commits)
 
       tryCatch({
       comp_commits <- get_comparator_df(
-        issue_number = issue_parts()$issue_number,
-        owner = org(),
-        repo = repo(),
+        commits_df = all_commits(),
         selected_reference_commit = input$ref_commits
       )
+
       comp_commits <- convert_commits_df_format(comp_commits)
       }, error = function(e){
-        debug(.le$logger, glue::glue("There was 0 comparator commits for issue {issue_parts()$issue_number}: {e$message}"))
+        error(.le$logger, glue::glue("There was 0 comparator commits for issue {issue_parts()$issue_number}: {e$message}"))
         NULL
       })
     })
@@ -145,11 +156,6 @@ ghqc_update_server <- function(id) {
       updateSelectizeInput(session, "comp_commits", choices = comp_commits())
     })
 
-    issue_parts <- reactive({
-      req(input$select_issue)
-      split_issue_parts(input$select_issue)
-    })
-
     # https://stackoverflow.com/questions/34731975/how-to-listen-for-more-than-one-event-expression-within-a-shiny-eventreactive-ha
     modal_check <- eventReactive(c(input$preview, input$post), {
       tryCatch({
@@ -157,7 +163,7 @@ ghqc_update_server <- function(id) {
         uncommitted_git_files <- git_status()$file
         git_sync_status <- git_ahead_behind()
         untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), issue_parts()$issue_title)
-        commit_update_status <- check_if_updates_since_init(ref_commits())
+        commit_update_status <- check_if_updates_since_init(all_commits())
       }, error = function(e){
         error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
       })

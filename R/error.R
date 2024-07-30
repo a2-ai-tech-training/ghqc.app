@@ -56,11 +56,11 @@ check_that_milestone_is_non_empty <- function(milestone) {
   else TRUE
 }
 
-check_if_updates_since_init <- function(ref_df) {
+check_if_updates_since_init <- function(commits_df) {
   tryCatch({
-    if (length(ref_df) == 0) FALSE else TRUE
+    if (nrow(commits_df) < 2) FALSE else TRUE
   }, error=function(e){
-    error(.le$logger, glue::glue("There was an error checking commits for {ref_df}"))
+    error(.le$logger, glue::glue("There was an error checking commits for {commits_df}"))
     rlang::abort(e$message)
   })
 }

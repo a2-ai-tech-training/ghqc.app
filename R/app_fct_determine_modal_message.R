@@ -16,31 +16,27 @@ generate_sync_message <- function(git_sync_status, error_icon_html) {
 generate_uncommitted_message <- function(uncommitted_files, error_icon_html, warning_icon_html) {
   messages <- c()
   if (length(uncommitted_files$selected) > 0) {
-    messages <- c(messages, sprintf("%s All files to be QC'd must have any local changes committed before proceeding. The following selected local files have uncommitted changes:<ul>%s</ul><br>",
-                                    error_icon_html, generate_html_list(uncommitted_files$selected)))
+    messages <- c(messages, sprintf(
+      "%s All files to be QC'd must have any local changes committed before proceeding. The following selected local files have uncommitted changes:<ul>%s</ul><br>",
+      error_icon_html, generate_html_list(uncommitted_files$selected)
+    ))
   }
   if (length(uncommitted_files$general) > 0 && length(uncommitted_files$selected) == 0) {
-    messages <- c(messages, sprintf("%s There are local files, which are not in the selected QC items, that have uncommitted changes:<ul>%s</ul><br>",
-                                    warning_icon_html, generate_html_list(uncommitted_files$general)))
+    messages <- c(messages, sprintf(
+      "%s There are local files, which are not in the selected QC items, that have uncommitted changes:<ul>%s</ul><br>",
+      warning_icon_html, generate_html_list(uncommitted_files$general)
+    ))
   }
-  return(messages)
-}
-
-generate_gh_issue_message <- function(gh_issue_status, error_icon_html) {
-  messages <- c()
-
-  if (!gh_issue_status) {
-    messages <- c(messages, paste(error_icon_html, "There are no update comments on the issue.<br>"))
-  }
-
   return(messages)
 }
 
 generate_existing_issue_message <- function(existing_issues, error_icon_html) {
   messages <- c()
   if (length(existing_issues) > 0) {
-    messages <- c(messages, sprintf("%s The following selected files are already associated with issues in the milestone:<ul>%s</ul><br>",
-                                    error_icon_html, generate_html_list(existing_issues)))
+    messages <- c(messages, sprintf(
+      "%s The following selected files are already associated with issues in the milestone:<ul>%s</ul><br>",
+      error_icon_html, generate_html_list(existing_issues)
+    ))
   }
   return(messages)
 }

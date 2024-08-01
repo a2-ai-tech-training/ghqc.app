@@ -44,3 +44,20 @@ test_that("determine_modal_message works correctly if there are no messages", {
   expect_null(result$state)
 })
 
+test_that("generate_uncommitted_message works correctly for uncommitted general files only", {
+  uncommitted_files <- list(
+    selected = character(0),
+    general = c("file4.txt", "file5.txt")
+  )
+  error_icon_html <- "<error>"
+  warning_icon_html <- "<warning>"
+
+  result <- generate_uncommitted_message(uncommitted_files, error_icon_html, warning_icon_html)
+
+  expect_true(length(result) == 1)
+  expect_true(grepl("There are local files, which are not in the selected QC items, that have uncommitted changes", result))
+  expect_true(grepl("file4.txt", result))
+  expect_true(grepl("file5.txt", result))
+  expect_true(grepl("<warning>", result))
+})
+

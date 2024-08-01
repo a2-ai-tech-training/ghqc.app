@@ -17,7 +17,7 @@
 #' )
 #' convert_issue_df_format(issues)
 #' @noRd
-convert_issue_df_format <- function(issue_df){
+convert_issue_df_format <- function(issue_df) {
   debug(.le$logger, "Converting issue data frame format")
 
   issues_df <- map_df(issue_df, ~ {
@@ -46,6 +46,7 @@ convert_issue_df_format <- function(issue_df){
   return(issues_choices)
 }
 
+
 #' Convert Commits Data Frame Format
 #'
 #' This function converts a data frame of commits into a named list for further processing.
@@ -57,13 +58,13 @@ convert_issue_df_format <- function(issue_df){
 #' @import dplyr
 #' @examples
 #' commits <- tibble(
-#'   date = as.Date(c('2023-01-01', '2023-01-02')),
-#'   commit = c('abc123', 'def456'),
-#'   display = c('Commit 1', 'Commit 2')
+#'   date = as.Date(c("2023-01-01", "2023-01-02")),
+#'   commit = c("abc123", "def456"),
+#'   display = c("Commit 1", "Commit 2")
 #' )
 #' convert_commits_df_format(commits)
 #' @noRd
-convert_commits_df_format <- function(commit_df){
+convert_commits_df_format <- function(commit_df) {
   debug(.le$logger, "Converting commits data frame format")
 
   commits <- commit_df %>%
@@ -81,6 +82,7 @@ convert_commits_df_format <- function(commit_df){
   return(commits)
 }
 
+
 #' Split Issue Parts
 #'
 #' This function splits an issue string into its components: issue number and issue title for functions that take one or the other.
@@ -91,14 +93,22 @@ convert_commits_df_format <- function(commit_df){
 #' @examples
 #' split_issue_parts("Item 1: Issue Title")
 #' @noRd
-split_issue_parts <- function(issue){
-  debug(.le$logger, glue::glue("Splitting issue parts for: {issue}"))
+split_issue_parts <- function(issue) {
+  tryCatch(
+    {
+      debug(.le$logger, glue::glue("Splitting issue parts for: {issue}"))
 
-  issue_parts <- strsplit(sub("Item ", "", issue), ": ")[[1]]
-  issue_number <- as.numeric(issue_parts[1])
-  issue_title <- as.character(issue_parts[2])
+      issue_parts <- strsplit(sub("Item ", "", issue), ": ")[[1]]
+      issue_number <- as.numeric(issue_parts[1])
+      issue_title <- as.character(issue_parts[2])
 
-  debug(.le$logger, glue::glue("Issue parts split: number = {issue_number}, title = {issue_title}"))
+      debug(.le$logger, glue::glue("Issue parts split: number = {issue_number}, title = {issue_title}"))
 
-  list(issue_number = issue_number, issue_title = issue_title)
+      list(issue_number = issue_number, issue_title = issue_title)
+    },
+    warning = function(w) {
+      debug(.le$logger, glue::glue("Error in split_issue_parts: {e$message}"))
+      rlang::abort(w$message)
+    }
+  )
 }

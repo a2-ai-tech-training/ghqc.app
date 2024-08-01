@@ -5,7 +5,8 @@ NULL
 ghqc_update_app <- function() {
   app <- shinyApp(
     ui = ghqc_update_ui(
-      id = "ghqc_update_app"),
+      id = "ghqc_update_app"
+    ),
     server = function(input, output, session) {
       ghqc_update_server(
         id = "ghqc_update_app"
@@ -15,4 +16,3 @@ ghqc_update_app <- function() {
   port <- as.numeric(Sys.getenv("GHQC_SHINY_PORT", 5454))
   runApp(app, port = port)
 }
-

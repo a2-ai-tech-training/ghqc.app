@@ -23,8 +23,10 @@ generate_excluded_file_message <- function(excluded_files) {
   error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
   messages <- c()
   if (length(excluded_files) > 0) {
-    messages <- sprintf("%s The selected directory contains only the following files which are not selectable QC items:<ul>%s</ul><br>",
-                        error_icon_html, paste0("<li>", basename(excluded_files), "</li>", collapse = ""))
+    messages <- sprintf(
+      "%s The selected directory contains only the following files which are not selectable QC items:<ul>%s</ul><br>",
+      error_icon_html, paste0("<li>", basename(excluded_files), "</li>", collapse = "")
+    )
   }
   return(messages)
 }
@@ -37,7 +39,7 @@ generate_excluded_file_message <- function(excluded_files) {
 #' @return A character string containing the exclusion patterns.
 #' @importFrom pkglite ext_binary
 #' @noRd
-exclude_patterns <- function(){
+exclude_patterns <- function() {
   # excludes binaries as won't be qc items
   exclude_pattern <- paste0("\\.(", paste(ext_binary(flat = TRUE), collapse = "|"), ")$", collapse = "")
 
@@ -61,16 +63,20 @@ exclude_patterns <- function(){
 #' @return A list containing two elements:
 #' @importFrom fs dir_ls dir_exists is_file is_dir
 #' @noRd
-list_files_and_dirs <- function(path, pattern, all.files){
-  debug(.le$logger,
-        glue::glue("Listing files and directories for path: {path}"))
+list_files_and_dirs <- function(path, pattern, all.files) {
+  debug(
+    .le$logger,
+    glue::glue("Listing files and directories for path: {path}")
+  )
 
   # changed so pattern is only filtered out after retrieving all non filtered out values
   lfs <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
   included_files <- lfs[!grepl(pattern, lfs)]
 
-  debug(.le$logger,
-        glue::glue("Included files: {paste(included_files, collapse = ', ')}"))
+  debug(
+    .le$logger,
+    glue::glue("Included files: {paste(included_files, collapse = ', ')}")
+  )
 
   non_empty_dirs <- sapply(included_files, function(x) {
     if (fs::dir_exists(x)) {
@@ -108,20 +114,21 @@ list_files_and_dirs <- function(path, pattern, all.files){
 
 
 #' @importFrom jsTreeR jstreeOutput
-treeNavigatorUI <- function(id, width = "100%", height = "auto"){
+treeNavigatorUI <- function(id, width = "100%", height = "auto") {
   tree <- jstreeOutput(outputId = id, width = width, height = height)
-  tagList(tree,
-          tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/tree.css"),
-          tags$script(type = "module", src = "ghqc/js/tree.js"))
+  tagList(
+    tree,
+    tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/tree.css"),
+    tags$script(type = "module", src = "ghqc/js/tree.js")
+  )
 }
 
 #' @importFrom jsTreeR renderJstree jstree
 treeNavigatorServer <- function(
     id, rootFolder, search = TRUE, wholerow = FALSE, contextMenu = FALSE,
-    theme = "proton", pattern = NULL, all.files = FALSE, ...
-){
+    theme = "proton", pattern = NULL, all.files = FALSE, ...) {
   theme <- match.arg(theme, c("default", "proton"))
-  moduleServer(id, function(input, output, session){
+  moduleServer(id, function(input, output, session) {
     debug(.le$logger, glue::glue("Initializing treeNavigatorServer module with id: {id}"))
 
     output[["treeNavigator"]] <- renderJstree({
@@ -167,7 +174,7 @@ treeNavigatorServer <- function(
       debug(.le$logger, glue::glue("Received path_from_js input: {paste(input, collapse = ', ')}"))
 
       # null is sent back to reset the input if user wants to reselect unviable dirs
-      if(is.null(input)){
+      if (is.null(input)) {
         debug(.le$logger, "Input is NULL, resetting selection")
         return()
       }
@@ -207,7 +214,7 @@ treeNavigatorServer <- function(
       selected <- input[["treeNavigator_selected_paths"]]
       debug(.le$logger, glue::glue("Selected paths: {paste(selected, collapse = ', ')}"))
 
-      adjusted_paths <- sapply(selected, function(item){
+      adjusted_paths <- sapply(selected, function(item) {
         fs::path_rel(item[["path"]], start = basename(rootFolder))
       })
       Paths(adjusted_paths)

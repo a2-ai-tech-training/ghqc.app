@@ -149,6 +149,8 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
     })
 
+
+
     qc_items <- reactive({
       req(selected_items())
       tryCatch(
@@ -214,6 +216,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         }
       )
 
+
       determine_modal_message(
         selected_files = file_names,
         uncommitted_git_files = uncommitted_git_files,
@@ -271,7 +274,9 @@ return "<div><strong>" + escape(item.username) + "</div>"
         }
       )
 
+
       w_create_qc_items$hide()
+      milestone_url <- get_milestone_url(org(), repo(), input$milestone)
 
       showModal(
         modalDialog(

@@ -151,7 +151,13 @@ format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
   current_script <- read_file_at_commit(commit_sha_new, file_path)
 
   # get diff
-  diff_output <- diffobj::diffChr(compared_script, current_script, format = "raw", mode = "unified", pager = "off", disp.width = 200)
+  diff_output <- diffobj::diffChr(compared_script,
+                                  current_script,
+                                  format = "raw",
+                                  mode = "unified",
+                                  pager = "off",
+                                  disp.width = 200) #,unwrap.atomic = FALSE
+
   diff_lines <- as.character(diff_output)
 
 

@@ -34,29 +34,29 @@ ghqc_update_ui <- function(id) {
           textAreaInput(ns("message"), "Message", ""),
           checkboxInput(ns("show_diff"), "Show file difference?", TRUE),
           radioButtons(ns("compare"), "Compare to:",
-                       inline = TRUE,
-                       choices = c(
-                         "Compare original with most recent" = "init",
-                         "Select commit comparators" = "comparators"
-                       )
+            inline = TRUE,
+            choices = c(
+              "Compare original with most recent" = "init",
+              "Select commit comparators" = "comparators"
+            )
           ),
           conditionalPanel(
             condition = "input.compare === 'comparators'", ns = ns,
             div(
               class = "inline-selectize",
               selectizeInput(ns("ref_commits"), "Reference",
-                             choices = "",
-                             multiple = FALSE,
-                             options = list(
-                               placeholder = "No commits since QC initialization."
-                             )
+                choices = "",
+                multiple = FALSE,
+                options = list(
+                  placeholder = "No commits since QC initialization."
+                )
               ),
               selectizeInput(ns("comp_commits"), "Comparator",
-                             choices = "",
-                             multiple = FALSE,
-                             options = list(
-                               placeholder = "No commits since reference commit."
-                             )
+                choices = "",
+                multiple = FALSE,
+                options = list(
+                  placeholder = "No commits since reference commit."
+                )
               )
             )
           )

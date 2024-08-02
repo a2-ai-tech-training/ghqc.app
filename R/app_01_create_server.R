@@ -31,39 +31,51 @@ ghqc_create_server <- function(id) {
     waiter_hide()
 
     org <- reactive({
-      tryCatch({
-        get_organization()
-      }, error = function(e) {
-        error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
-        showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
-      })
+      tryCatch(
+        {
+          get_organization()
+        },
+        error = function(e) {
+          error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
+          showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
+        }
+      )
     })
 
     repo <- reactive({
-      tryCatch({
-        get_current_repo()
-      }, error = function(e) {
-        error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
-        showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
-      })
+      tryCatch(
+        {
+          get_current_repo()
+        },
+        error = function(e) {
+          error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
+          showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
+        }
+      )
     })
 
     members <- reactive({
-      tryCatch({
-        get_members_df(org())
-      }, error = function(e) {
-        error(.le$logger, glue::glue("There was an error retrieving members: {e$message}"))
-        showModal(modalDialog("Error in getting members: ", e$message, footer = NULL))
-      })
+      tryCatch(
+        {
+          get_members_df(org())
+        },
+        error = function(e) {
+          error(.le$logger, glue::glue("There was an error retrieving members: {e$message}"))
+          showModal(modalDialog("Error in getting members: ", e$message, footer = NULL))
+        }
+      )
     })
 
     checklists <- reactive({
-      tryCatch({
-        get_checklists()
-      }, error = function(e) {
-        error(.le$logger, glue::glue("There was an error retrieving checklists: {e$message}"))
-        showModal(modalDialog("Error in getting checklists: ", e$message)) # let user continue using app even if error occurs here
-      })
+      tryCatch(
+        {
+          get_checklists()
+        },
+        error = function(e) {
+          error(.le$logger, glue::glue("There was an error retrieving checklists: {e$message}"))
+          showModal(modalDialog("Error in getting checklists: ", e$message)) # let user continue using app even if error occurs here
+        }
+      )
     })
 
     w_load_items <- Waiter$new(
@@ -80,9 +92,10 @@ ghqc_create_server <- function(id) {
       on.exit(w_tree$hide())
       tagList(
         textInput(ns("milestone"),
-                  "Name QC Item List (github milestone)",
-                  placeholder = "(required)",
-                  width = "100%"),
+          "Name QC Item List (github milestone)",
+          placeholder = "(required)",
+          width = "100%"
+        ),
         textAreaInput(
           ns("milestone_description"),
           "Create a description for the QC Item List",
@@ -140,12 +153,15 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     qc_items <- reactive({
       req(selected_items())
-      tryCatch({
-        extract_file_data(input, selected_items())
-      }, error = function(e){
-        error(.le$logger, glue::glue("There was an error extracting file data from {selected_items()}:{e$message}"))
-        rlang::abort(e$message)
-      })
+      tryCatch(
+        {
+          extract_file_data(input, selected_items())
+        },
+        error = function(e) {
+          error(.le$logger, glue::glue("There was an error extracting file data from {selected_items()}:{e$message}"))
+          rlang::abort(e$message)
+        }
+      )
     })
 
     output$main_panel <- renderUI({
@@ -172,28 +188,34 @@ return "<div><strong>" + escape(item.username) + "</div>"
       for (name in items) {
         log_string <- glue::glue_collapse(items, sep = ", ")
         debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
-        tryCatch({
-          create_button_preview_event(input, name = name)
-        }, error = function(e){
-          error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))
-          rlang::abort(e$message)
-        })
+        tryCatch(
+          {
+            create_button_preview_event(input, name = name)
+          },
+          error = function(e) {
+            error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))
+            rlang::abort(e$message)
+          }
+        )
       }
     })
 
     modal_check <- eventReactive(input$create_qc_items, {
       req(qc_items())
-      tryCatch({
-        file_names <- sapply(qc_items(), function(x) x$name)
-        uncommitted_git_files <- git_status()$file
-        git_sync_status <- git_ahead_behind()
-        untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
+      tryCatch(
+        {
+          file_names <- sapply(qc_items(), function(x) x$name)
+          uncommitted_git_files <- git_status()$file
+          git_sync_status <- git_ahead_behind()
+          untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
+          issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+        },
+        error = function(e) {
+          error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
+          rlang::abort(e$message)
+        }
+      )
 
-        issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
-      }, error = function(e){
-        error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
-        rlang::abort(e$message)
-      })
 
       determine_modal_message(
         selected_files = file_names,
@@ -231,22 +253,27 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items <- create_waiter(ns, "Creating QC items ...")
       w_create_qc_items$show()
 
-      tryCatch({
-        create_yaml("test",
-          org = org(),
-          repo = repo(),
-          milestone = input$milestone,
-          description = input$milestone_description,
-          files = qc_items()
-        )
+      tryCatch(
+        {
+          create_yaml("test",
+            org = org(),
+            repo = repo(),
+            milestone = input$milestone,
+            description = input$milestone_description,
+            files = qc_items()
+          )
 
-        create_checklists("test.yaml")
-        removeClass("create_qc_items", "enabled-btn")
-        addClass("create_qc_items", "disabled-btn")
-      }, error = function(e){
-        error(.le$logger, glue::glue("There was an error creating QC items {qc_items()}: {e$message}"))
-        rlang::abort(e$message)
-      })
+          create_checklists("test.yaml")
+          removeClass("create_qc_items", "enabled-btn")
+          addClass("create_qc_items", "disabled-btn")
+          milestone_url <- get_milestone_url(org(), repo(), input$milestone)
+        },
+        error = function(e) {
+          error(.le$logger, glue::glue("There was an error creating QC items {qc_items()}: {e$message}"))
+          rlang::abort(e$message)
+        }
+      )
+
 
       w_create_qc_items$hide()
       milestone_url <- get_milestone_url(org(), repo(), input$milestone)

@@ -161,7 +161,6 @@ get_organization_name_from_url <- function(remote_url) {
 
 #' @import log4r
 get_organization <- function() {
-  browser()
   debug(.le$logger, glue::glue("Connecting to organization..."))
   # repo
   debug(.le$logger, glue::glue("Retriving repo path..."))
@@ -277,7 +276,6 @@ get_all_issues_in_repo <- function(owner, repo) {
 #' @import log4r
 get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   debug(.le$logger, glue::glue("Retrieving all issues from milestone: {milestone_name}..."))
-  browser()
   # get milestone number from name
   milestone_number <- look_up_existing_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
   # if the milestone dne, there are no issues in the milestone, return an empty vector

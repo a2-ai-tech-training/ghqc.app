@@ -161,6 +161,7 @@ get_organization_name_from_url <- function(remote_url) {
 
 #' @import log4r
 get_organization <- function() {
+  browser()
   debug(.le$logger, glue::glue("Connecting to organization..."))
   # repo
   debug(.le$logger, glue::glue("Retriving repo path..."))

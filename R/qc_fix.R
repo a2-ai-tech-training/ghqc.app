@@ -122,6 +122,7 @@ post_comment <- function(owner, repo, issue_number, body) {
   debug(.le$logger, glue::glue("Posting comment to issue #{issue_number} in {owner}/{repo}..."))
 
   comment <- gh::gh("POST /repos/:owner/:repo/issues/:issue_number/comments",
+                    .api_url = dirname(gert::git_remote_list()$url),
                     owner = owner,
                     repo = repo,
                     issue_number = issue_number,

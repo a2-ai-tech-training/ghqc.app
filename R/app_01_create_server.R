@@ -208,7 +208,13 @@ return "<div><strong>" + escape(item.username) + "</div>"
           uncommitted_git_files <- git_status()$file
           git_sync_status <- git_ahead_behind()
           untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
-          issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+          issues_in_milestone <- list()
+
+          tryCatch({
+            issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+          }, error = function(e){
+            error(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
+          })
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
@@ -252,7 +258,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       w_create_qc_items <- create_waiter(ns, "Creating QC items ...")
       w_create_qc_items$show()
-
       tryCatch(
         {
           create_yaml("test",
@@ -263,17 +268,15 @@ return "<div><strong>" + escape(item.username) + "</div>"
             files = qc_items()
           )
 
-          create_checklists("test.yaml")
+          create_checklists("test.yaml", create = TRUE)
           removeClass("create_qc_items", "enabled-btn")
           addClass("create_qc_items", "disabled-btn")
-          milestone_url <- get_milestone_url(org(), repo(), input$milestone)
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error creating QC items {qc_items()}: {e$message}"))
           rlang::abort(e$message)
         }
       )
-
 
       w_create_qc_items$hide()
       milestone_url <- get_milestone_url(org(), repo(), input$milestone)

@@ -51,6 +51,8 @@ look_up_existing_milestone_number <- function(params) {
 
 #' @import log4r
 create_milestone <- function(params) {
+  params$.api_url <- dirname(gert::git_remote_list()$url)
+
   debug(.le$logger, glue::glue("Creating milestone: {params$title}..."))
   milestone <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/milestones", params))
   info(.le$logger, glue::glue("Created milestone: {params$title}"))
@@ -58,15 +60,20 @@ create_milestone <- function(params) {
 } # create_milestone
 
 #' @import log4r
-get_milestone_number <- function(params) {
+get_milestone_number <- function(params, create = FALSE) {
+  searched_number <- NULL
+  tryCatch({
   searched_number <- look_up_existing_milestone_number(params)
-  if (!is.null(searched_number)) {
-    debug(.le$logger, glue::glue("Retrieved milestone: {params$title}, #{searched_number}"))
-    searched_number
-  }
-  else {
+  }, error= function(e){
+    error(.le$logger, glue::glue("{e$message}"))
+  })
+
+  if (create){
     milestone <- create_milestone(params)
     milestone$number
+  }else{
+    debug(.le$logger, glue::glue("Retrieved milestone: {params$title}, #{searched_number}"))
+    searched_number
   }
 } # get_milestone_number
 

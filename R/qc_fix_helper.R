@@ -195,7 +195,7 @@ format_diff <- function(reference_script, comparator_script) {
 
 get_comments <- function(owner, repo, issue_number) {
   comments <- gh::gh(
-    "GET /repos/:owner/:repo/issues/:issue_number/comments",
+    "GET /repos/:owner/:repo/issues/:issue_number/comments", .api_url = dirname(gert::git_remote_list()$url),
     owner = owner,
     repo = repo,
     issue_number = issue_number

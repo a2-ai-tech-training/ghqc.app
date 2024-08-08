@@ -1,6 +1,6 @@
 #' @export
 list_repos <- function(org) {
-  repos <- gh::gh("GET /orgs/:org/repos", org = org, .limit = Inf)
+  repos <- gh::gh("GET /orgs/:org/repos", .api_url = dirname(gert::git_remote_list()$url), org = org, .limit = Inf)
   return(lapply(repos, function(repo) repo$name))
 }
 

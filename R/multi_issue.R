@@ -14,6 +14,8 @@ create_issue <- function(file, issue_params) {
     issue_params$assignees <- I(file$assignees)
   }
 
+  issue_params$.api_url <-dirname(gert::git_remote_list()$url)
+
   # create the issue
   debug(.le$logger, glue::glue("Creating issue... {issue_params$title}"))
   issue <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/issues", issue_params))
@@ -25,7 +27,7 @@ create_issue <- function(file, issue_params) {
 
 #' @import log4r
 #' @export
-create_issues <- function(data) {
+create_issues <- function(data, create = TRUE) {
   # create list of issue_params to input to api call -
   # will build up in pieces because some are optional
   issue_params <- list(
@@ -48,8 +50,9 @@ create_issues <- function(data) {
     }
 
     # add milestone to the issue_params
-    issue_params$milestone <- get_milestone_number(milestone_params)
+    issue_params$milestone <- get_milestone_number(milestone_params, create = create)
   }
+  Sys.sleep(2) # wait couple seconds for ms to init for issues
 
   file_names <- glue::glue_collapse(purrr::map(data$files, "name"), sep = ", ")
   debug(.le$logger, glue::glue("Creating checklists for files: {file_names}"))
@@ -73,9 +76,9 @@ create_issues <- function(data) {
 # test with "test_yamls/checklist.yaml"
 #' @import log4r
 #' @export
-create_checklists <- function(yaml_path) {
+create_checklists <- function(yaml_path, create = TRUE) {
   data <- read_and_validate_yaml(yaml_path)
-  create_issues(data)
+  create_issues(data, create = create)
 }
 
 

@@ -69,7 +69,7 @@ validate_assignee <- function(assignee, owner, dry = FALSE) {
     # try to find user in organization
     tryCatch({
       response <- gh::gh(
-        "GET /orgs/:org/members/:username",
+        "GET /orgs/:org/members/:username", .api_url = dirname(gert::git_remote_list()$url),
         org = org_name,
         username = username,
         .send_headers = c("Accept" = "application/vnd.github.v3+json")

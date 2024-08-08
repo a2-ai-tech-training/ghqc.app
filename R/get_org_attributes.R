@@ -381,8 +381,8 @@ get_milestone_url <- function(owner, repo, milestone_name) {
 
 #' @import log4r
 get_collaborators <- function(owner = get_organization(), repo = get_current_repo()) {
-  collaborators <- gh::gh(
-    "GET /repos/{owner}/{repo}/collaborators",
-    owner = owner, repo = repo
-  )
+  query <- gh::gh("GET /repos/{owner}/{repo}/collaborators", .api_url = dirname(gert::git_remote_list()$url), .limit = Inf, owner = owner, repo = repo)
+  members_list <- purrr::map(query, ~ get_names_and_usernames(.x$login))
+  members_df <- purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
+  return(members_df)
 }

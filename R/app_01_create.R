@@ -13,6 +13,6 @@ ghqc_create_app <- function() {
       )
     }
   )
-  port <- as.numeric(Sys.getenv("GHQC_SHINY_PORT", 5454))
+  port <- as.numeric(Sys.getenv("GHQC_SHINY_PORT", 5254))
   runApp(app, port = port)
 }

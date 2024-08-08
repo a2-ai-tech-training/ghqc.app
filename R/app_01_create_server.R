@@ -57,7 +57,7 @@ ghqc_create_server <- function(id) {
     members <- reactive({
       tryCatch(
         {
-          get_members_df(org())
+          get_collaborators(owner = org(), repo = repo())
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving members: {e$message}"))

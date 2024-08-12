@@ -1,6 +1,6 @@
 #' @import log4r
 get_names_and_usernames <- function(username) {
-  user <- gh::gh("/users/{username}", username = username)
+  user <- gh::gh("GET /users/{username}", .api_url = dirname(gert::git_remote_list()$url), username = username)
   return(list(
     username = user$login,
     name = user$name

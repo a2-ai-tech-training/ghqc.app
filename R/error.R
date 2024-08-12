@@ -15,15 +15,16 @@ check_if_qc_file_untracked <- function(qc_file_path) {
   return(FALSE)
 }
 
-check_if_issue_name_already_in_milestone <- function(owner, repo, issue_title_in, milestone_name) {
-  # get issues in milestone
-  issues_in_milestone <- get_all_issues_in_milestone(owner, repo, milestone_name)
-  # get issue titles
-  issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
-  # see if issue_title_in is in issue_titles
-  if (issue_title_in %in% issue_titles) TRUE
-  else FALSE
-}
+# anne: only used get_all_issues_in_milestone to get file names to return to user
+# check_if_issue_name_already_in_milestone <- function(owner, repo, issue_title_in, milestone_name) {
+#   # get issues in milestone
+#   issues_in_milestone <- get_all_issues_in_milestone(owner, repo, milestone_name)
+#   # get issue titles
+#   issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
+#   # see if issue_title_in is in issue_titles
+#   if (issue_title_in %in% issue_titles) TRUE
+#   else FALSE
+# }
 
 check_if_git_initialized <- function(path = getwd()) {
   while (TRUE) {

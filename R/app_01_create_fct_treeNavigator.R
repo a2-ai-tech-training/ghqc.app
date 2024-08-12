@@ -70,8 +70,11 @@ list_files_and_dirs <- function(path, pattern, all.files) {
   )
 
   # changed so pattern is only filtered out after retrieving all non filtered out values
-  lfs <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
-  included_files <- lfs[!grepl(pattern, lfs)]
+  included_files <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
+
+  if (!is.null(pattern)){
+    included_files <- included_files[!grepl(pattern, included_files)]
+  }
 
   debug(
     .le$logger,

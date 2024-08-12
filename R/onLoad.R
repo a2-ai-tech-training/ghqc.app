@@ -12,3 +12,7 @@
   shiny::addResourcePath("ghqc", system.file(".", package = "ghqc"))
   logger <- init_logger()
 }
+
+.onUnload <- function(...) {
+  shiny::removeResourcePath("ghqc")
+}

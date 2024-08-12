@@ -93,7 +93,7 @@ determine_modal_message <- function(selected_files,
     - Untracked Selected Files: {glue::glue_collapse(untracked_selected_files, sep = ', ')}
     - Git Sync Status: Ahead: {git_sync_status$ahead}, Behind: {git_sync_status$behind}
     - Commit Update Status: {commit_update_status}
-    - Issues in Milestone: {glue::glue_collapse(issue_titles, sep = ', ')}
+    - Issues in Milestone: {glue::glue_collapse(existing_issues, sep = ', ')}
   ")
 
   log4r::debug(.le$logger, log_string)

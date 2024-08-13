@@ -16,7 +16,7 @@ get_milestone_from_name <- function(owner, repo, name_in) {
   # list milestones
   milestones <- get_all_milestone_objects(owner = owner, repo = repo)
   # try to get milestone number
-  milestone <- sapply(milestones, function(milestone) {
+  milestone <- lapply(milestones, function(milestone) {
     if (milestone$title == name_in) {
       milestone
     }
@@ -30,10 +30,12 @@ get_milestone_from_name <- function(owner, repo, name_in) {
   # milestone is a list if there's more than 1 and a character value otherwise
   # for chr val: milestone[[1]] to give back api url but [[6]] is the ms number
   # for list: milestone[[1]] gives back the first milestone
-  if(is.null(milestone)){
+  if (is.null(milestone)) {
     NULL
-  } else{
-    milestone[[1]]
+  }
+  # else, if not null (milestone was found with that name)
+  else {
+      return(milestone[[1]])
   }
 }
 

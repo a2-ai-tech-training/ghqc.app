@@ -57,7 +57,7 @@ get_open_milestone_names <- function(org, repo) {
 
 #' @import log4r
 #' @export
-list_milestones <- function(org = get_organization(), repo = get_current_repo()) {
+list_milestones <- function(org, repo) {
   milestones <- get_all_milestone_objects(org, repo)
 
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)

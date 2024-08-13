@@ -424,7 +424,6 @@ check_milestones <- function(milestone_names, owner, repo) {
     if (!exists) {
       stop(glue::glue("\"{milestone_name}\" is not a milestone in {repo}"))
     }
-    browser()
     milestone <- get_milestone_from_name(owner, repo, milestone_name)
     non_empty <- check_that_milestone_is_non_empty(milestone)
     if (!non_empty) {

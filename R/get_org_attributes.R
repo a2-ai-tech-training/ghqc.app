@@ -36,9 +36,9 @@ get_members_list <- function(org, repo) {
     page <- page + 1
   }
 
-  debug(.le$logger, glue::glue("Retriving member names from member usernames..."))
+  debug(.le$logger, glue::glue("Retrieving member names from member usernames..."))
   members_list <- purrr::map(all_members, ~ get_names_and_usernames(.x$login))
-  debug(.le$logger, glue::glue("Retrived member names from member usernames..."))
+  debug(.le$logger, glue::glue("Retrieved member names from member usernames..."))
   return(members_list)
 }
 
@@ -56,7 +56,7 @@ get_members_df <- function(org) {
     glue::glue("username: {row['username']}, name: {row['name']}")
   }), sep = "\n")
 
-  debug(.le$logger, glue::glue("Retrived the following organization members:\n", members_string))
+  debug(.le$logger, glue::glue("Retrieved the following organization members:\n", members_string))
   if (nrow(members_df) == 0) {
     warn(.le$logger, glue::glue("No organization members retrived from {org}"))
   }
@@ -163,26 +163,26 @@ get_organization_name_from_url <- function(remote_url) {
 get_organization <- function() {
   debug(.le$logger, glue::glue("Connecting to organization..."))
   # repo
-  debug(.le$logger, glue::glue("Retriving repo path..."))
+  debug(.le$logger, glue::glue("Retrieving repo path..."))
   repo_path <- gert::git_find()
-  debug(.le$logger, glue::glue("Retrived repo path: {repo_path}"))
+  debug(.le$logger, glue::glue("Retrieved repo path: {repo_path}"))
 
   # remotes
-  debug(.le$logger, glue::glue("Retriving list of remotes..."))
+  debug(.le$logger, glue::glue("Retrieving list of remotes..."))
   remotes <- gert::git_remote_list(repo = repo_path)
   remotes_string <- glue::glue_collapse(apply(remotes, 1, function(row) {
     glue::glue("name: {row['name']}, url: {row['url']}")
   }), sep = "\n")
-  debug(.le$logger, glue::glue("Retrived list of remotes: \n{remotes_string}"))
+  debug(.le$logger, glue::glue("Retrieved list of remotes: \n{remotes_string}"))
 
   # url
-  debug(.le$logger, glue::glue("Retriving first url in list of remotes..."))
+  debug(.le$logger, glue::glue("Retrieving first url in list of remotes..."))
   remote_url <- remotes$url[1]
-  debug(.le$logger, glue::glue("Retrived remote url: {remote_url}"))
+  debug(.le$logger, glue::glue("Retrieved remote url: {remote_url}"))
 
-  debug(.le$logger, glue::glue("Retriving organization name from remote url..."))
+  debug(.le$logger, glue::glue("Retrieving organization name from remote url..."))
   org_name <- get_organization_name_from_url(remote_url)
-  debug(.le$logger, glue::glue("Retrived organization name {org_name}"))
+  debug(.le$logger, glue::glue("Retrieved organization name {org_name}"))
 
   info(.le$logger, glue::glue("Connected to organization: {org_name}", ))
   org_name

@@ -42,16 +42,24 @@ ghqc_update_server <- function(id) {
 
     milestone_list <- reactive({
       req(org(), repo())
-      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
-      w_gh$show()
 
       tryCatch(
         {
+          w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
+          w_gh$show()
+
           milestone_list <- get_open_milestone_names(org = org(), repo = repo())
+
+          if(length(milestone_list) == 0){
+            w_gh$hide()
+            showModal(modalDialog(glue::glue("There were no milestones found in {org()}/{repo()}. Please use the Create QC app before using the Update QC app."), footer = NULL))
+            return()
+          }
+
           rev(milestone_list)
         },
         error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving milesstones: {e$message}"))
+          error(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
           showModal(modalDialog("Error in getting milestones: ", e$message, footer = NULL))
         }
       )

@@ -6,11 +6,13 @@
 
 -   Fixes `treeNavigatorServer()` in `ghqc_create_app()` so that selecting directories with no viable children/files twice in a row does not cause file tree state invisible error.
 
-- Retrieves assignees from collaborators/members who have access to repo rather than entire list of members from an organization.
+-   Retrieves assignees from collaborators/members who have access to repo rather than entire list of members from an organization.
 
-- Fixes bug where milestone is still created on GitHub even when process is aborted.
+-   Fixes bug where `ghqc_create_app()` errors when there are no existing milestones.
 
-- Fixes bug where code chunks in `ghqc_report()` overflowed the page if line was too long.
+-   Fixes bug where milestone is still created on GitHub even when process is aborted.
+
+-   Fixes bug where code chunks in `ghqc_report()` overflowed the page if line was too long.
 
 # ghqc 0.0.0.9004
 

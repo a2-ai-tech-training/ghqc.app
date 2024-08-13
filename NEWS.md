@@ -10,9 +10,13 @@
 
 -   Fixes bug where `ghqc_create_app()` errors when there are no existing milestones.
 
+-   Fixes bug where `ghqc_create_app()` errors when only one milestone exists.
+
 -   Fixes bug where milestone is still created on GitHub even when process is aborted.
 
 -   Fixes bug where code chunks in `ghqc_report()` overflowed the page if line was too long.
+
+-   Updates checklists
 
 # ghqc 0.0.0.9004
 

@@ -27,7 +27,7 @@ create_issue <- function(file, issue_params) {
 
 #' @import log4r
 #' @export
-create_issues <- function(data, create = TRUE) {
+create_issues <- function(data) {
   # create list of issue_params to input to api call -
   # will build up in pieces because some are optional
   issue_params <- list(
@@ -48,11 +48,11 @@ create_issues <- function(data, create = TRUE) {
     if (!is.null(data$description)) {
       milestone_params$description <- data$description
     }
+    debug(.le$logger, glue::glue("Adding milestones characteristics: {milestone_params}"))
 
     # add milestone to the issue_params
-    issue_params$milestone <- get_milestone_number(milestone_params, create = create)
+    issue_params$milestone <- get_milestone_number(milestone_params)
   }
-  Sys.sleep(2) # wait couple seconds for ms to init for issues
 
   file_names <- glue::glue_collapse(purrr::map(data$files, "name"), sep = ", ")
   debug(.le$logger, glue::glue("Creating checklists for files: {file_names}"))
@@ -76,9 +76,9 @@ create_issues <- function(data, create = TRUE) {
 # test with "test_yamls/checklist.yaml"
 #' @import log4r
 #' @export
-create_checklists <- function(yaml_path, create = TRUE) {
+create_checklists <- function(yaml_path) {
   data <- read_and_validate_yaml(yaml_path)
-  create_issues(data, create = create)
+  create_issues(data)
 }
 
 

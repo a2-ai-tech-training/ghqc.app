@@ -27,11 +27,13 @@ get_milestone_from_name <- function(owner, repo, name_in) {
   # filter null values - return first match
   milestone <- Filter(Negate(is.null), milestone)
 
-  if (length(milestone) > 0) {
-    milestone[[1]]
-  }
-  else {
+  # milestone is a list if there's more than 1 and a character value otherwise
+  # for chr val: milestone[[1]] to give back api url but [[6]] is the ms number
+  # for list: milestone[[1]] gives back the first milestone
+  if(is.null(milestone)){
     NULL
+  } else{
+    milestone[[1]]
   }
 }
 
@@ -40,13 +42,17 @@ get_milestone_from_name <- function(owner, repo, name_in) {
 look_up_existing_milestone_number <- function(params) {
   debug(.le$logger, glue::glue("Retrieving milestone: {params$title}"))
   milestone <- get_milestone_from_name(params$owner, params$repo, params$title)
+
   if (!is.null(milestone)) {
-    milestone$number
-  }
-  else {
+    if (!is.list(milestone)) {
+      basename(milestone)
+    } else {
+      milestone$number
+    }
+  } else {
     debug(.le$logger, glue::glue("Milestone: {params$title} does not currently exist"))
     NULL
-    }
+  }
 }
 
 #' @import log4r
@@ -60,15 +66,16 @@ create_milestone <- function(params) {
 } # create_milestone
 
 #' @import log4r
-get_milestone_number <- function(params, create = FALSE) {
-  searched_number <- NULL
-  tryCatch({
-  searched_number <- look_up_existing_milestone_number(params)
-  }, error= function(e){
-    error(.le$logger, glue::glue("{e$message}"))
-  })
+get_milestone_number <- function(params) {
 
-  if (create){
+  searched_number <- tryCatch({
+      look_up_existing_milestone_number(params)
+    }, error = function(e){
+      debug(.le$logger, glue::glue("No milestones found: {e$message}"))
+      return(NULL)
+    })
+
+  if (is.null(searched_number)){
     milestone <- create_milestone(params)
     milestone$number
   }else{

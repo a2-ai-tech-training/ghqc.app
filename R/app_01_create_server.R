@@ -208,20 +208,19 @@ return "<div><strong>" + escape(item.username) + "</div>"
           uncommitted_git_files <- git_status()$file
           git_sync_status <- git_ahead_behind()
           untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
-          issues_in_milestone <- list()
 
-          tryCatch({
-            issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
-          }, error = function(e){
-            error(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
-          })
+          issues_in_milestone <- tryCatch({
+              get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+            }, error = function(e){
+              debug(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
+              return(list())
+            })
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))
           rlang::abort(e$message)
         }
       )
-
 
       determine_modal_message(
         selected_files = file_names,
@@ -268,7 +267,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
             files = qc_items()
           )
 
-          create_checklists("test.yaml", create = TRUE)
+          create_checklists("test.yaml")
           removeClass("create_qc_items", "enabled-btn")
           addClass("create_qc_items", "disabled-btn")
         },

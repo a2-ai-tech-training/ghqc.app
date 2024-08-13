@@ -89,8 +89,6 @@ list_files_and_dirs <- function(path, pattern, all.files) {
     }
   })
 
-  debug(.le$logger, glue::glue("Non-empty directories: {paste(non_empty_dirs, collapse = ', ')}"))
-
   # remove dirs w/o ANY files as otherwise will be unclickable dir
   if (any(!non_empty_dirs)) {
     included_files <- included_files[non_empty_dirs]

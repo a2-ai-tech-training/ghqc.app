@@ -127,7 +127,7 @@ get_organization <- function() {
   org_name <- get_organization_name_from_url(remote_url)
   debug(.le$logger, glue::glue("Retrieved organization name {org_name}"))
 
-  info(.le$logger, glue::glue("Connected to organization: {org_name}", ))
+  info(.le$logger, glue::glue("Connected to organization: {org_name}"))
   org_name
 }
 

@@ -1,5 +1,11 @@
 # ghqc (development version)
 
+# ghqc 0.0.0.9006
+
+## Minor improvements and bug fixes
+
+-   Adds new toggle buttons to `ghqc_create_app()` for QC Item List/milestone so that user can either create a name for a new milestone or select a pre-existing milestone to add new QC items. If the new milestone name is a pre-existing one, functionality remains as before where the app adds items to the pre-existing milestone name.
+
 # ghqc 0.0.0.9005
 
 ## Minor improvements and bug fixes

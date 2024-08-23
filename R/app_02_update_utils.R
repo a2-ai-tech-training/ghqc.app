@@ -107,7 +107,7 @@ split_issue_parts <- function(issue) {
       list(issue_number = issue_number, issue_title = issue_title)
     },
     warning = function(w) {
-      debug(.le$logger, glue::glue("Error in split_issue_parts: {e$message}"))
+      debug(.le$logger, glue::glue("Error in split_issue_parts: {w$message}"))
       rlang::abort(w$message)
     }
   )

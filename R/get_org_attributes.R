@@ -56,7 +56,7 @@ get_open_milestone_names <- function(org, repo) {
   purrr::map_chr(milestones, "title")
   }, error = function(e) {
     error(.le$logger, glue::glue("Failed to retrieve open milestone names for organization {org} and {repo}."))
-    rlang::abort(error_msg)
+    rlang::abort(e$message)
   })
 }
 

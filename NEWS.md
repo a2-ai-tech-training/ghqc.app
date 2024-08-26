@@ -6,7 +6,9 @@
 
 -   Adds new toggle buttons to `ghqc_create_app()` for QC Item List/milestone so that user can either create a name for a new milestone or select a pre-existing milestone to add new QC items. If the new milestone name is a pre-existing one, functionality remains as before where the app adds items to the pre-existing milestone name.
 
-- Highlights/grays out existing files/issues in the file tree in `ghqc_create_app()` when selecting an existing milestone. 
+-   Highlights/grays out existing files/issues in the file tree in `ghqc_create_app()` when selecting an existing milestone.
+
+-   Adds more informative logging messages for git credential errors.
 
 # ghqc 0.0.0.9005
 

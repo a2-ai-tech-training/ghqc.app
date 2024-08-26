@@ -73,7 +73,36 @@ ghqc_create_server <- function(id) {
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving checklists: {e$message}"))
-          showModal(modalDialog("Error in getting checklists: ", e$message)) # let user continue using app even if error occurs here
+          showModal(modalDialog("Error in getting checklists: ", e$message, footer = NULL))
+        }
+      )
+    })
+
+    milestone_list <- reactive({
+      req(repo(), org())
+      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
+      w_gh$show()
+      on.exit(w_gh$hide())
+
+      tryCatch(
+        {
+          milestone_list <- get_open_milestone_names(org = org(), repo = repo())
+
+          if(length(milestone_list) == 0){
+            updateSelectizeInput(
+              session,
+              "milestone_existing",
+              options = list(placeholder = "No existing QC Item List")
+            )
+            return()
+          }
+
+          rev(milestone_list)
+        },
+        error = function(e) {
+          # it's fine to swallow error for this because milestones are not needed for creating
+          debug(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
+          return(NULL)
         }
       )
     })
@@ -86,15 +115,52 @@ ghqc_create_server <- function(id) {
       color = "white"
     )
 
+    rv_milestone <- reactiveVal(NULL)
+
+    observe({
+      req(milestone_list())
+
+      updateSelectizeInput(
+        session,
+        "milestone_existing",
+        choices = milestone_list()
+      )
+    })
+
+    observe({
+      req(input$milestone_toggle)
+      milestone_toggle <- input$milestone_toggle
+      if (milestone_toggle == "New") {
+        req(input$milestone)
+        rv_milestone(input$milestone)
+      } else if (milestone_toggle == "Existing") {
+        req(input$milestone_existing)
+        rv_milestone(input$milestone_existing)
+      }
+    })
+
     output$sidebar <- renderUI({
       w_tree <- create_waiter(ns, sprintf("Creating file tree for %s ...", basename(rproj_root_dir)))
       w_tree$show()
-      on.exit(w_tree$hide())
+
       tagList(
-        textInput(ns("milestone"),
-          "Name QC Item List (github milestone)",
-          placeholder = "(required)",
-          width = "100%"
+        radioButtons(ns("milestone_toggle"), "State of QC Item List", choices = c("New", "Existing"), inline = TRUE),
+        conditionalPanel(
+          condition = "input.milestone_toggle == `New`", ns=ns,
+          textInput(ns("milestone"),
+                    "Create a QC Item List (Github milestone)",
+                    placeholder = "Name new QC Item List (required)",
+                    width = "100%"
+          )
+        ),
+        conditionalPanel(
+          condition = "input.milestone_toggle == `Existing`", ns=ns,
+          selectizeInput(ns("milestone_existing"),
+                      "Select a QC Item List (Github milestone)",
+                      choices = "",
+                      multiple = FALSE,
+                      width = "100%",
+                      options = list(placeholder = "Select existing QC Item List (required)")),
         ),
         textAreaInput(
           ns("milestone_description"),
@@ -122,6 +188,7 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
+      req(org(), members())
       w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org()))
       w_gh$show()
       on.exit(w_gh$hide())
@@ -148,8 +215,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
         )
       )
     })
-
-
 
     qc_items <- reactive({
       req(selected_items())
@@ -210,7 +275,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
 
           issues_in_milestone <- tryCatch({
-              get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$milestone)
+              get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
             }, error = function(e){
               debug(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
               return(list())
@@ -262,7 +327,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           create_yaml("test",
             org = org(),
             repo = repo(),
-            milestone = input$milestone,
+            milestone = rv_milestone(),
             description = input$milestone_description,
             files = qc_items()
           )
@@ -278,7 +343,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
 
       w_create_qc_items$hide()
-      milestone_url <- get_milestone_url(org(), repo(), input$milestone)
+      milestone_url <- get_milestone_url(org(), repo(), rv_milestone())
 
       showModal(
         modalDialog(
@@ -332,8 +397,8 @@ return "<div><strong>" + escape(item.username) + "</div>"
       removeClass("create_qc_items", "enabled-btn")
       addClass("create_qc_items", "disabled-btn")
 
-      if (length(selected_items()) > 0 && isTruthy(input$milestone)) {
-        debug(.le$logger, glue::glue("create_qc_items buttons are activated because there are {length(selected_items())} selected items and milestone is named {input$milestone}"))
+      if (length(selected_items()) > 0 && isTruthy(rv_milestone())) {
+        debug(.le$logger, glue::glue("create_qc_items buttons are activated because there are {length(selected_items())} selected items and milestone is named {rv_milestone()}"))
 
         removeClass("create_qc_items", "disabled-btn")
         addClass("create_qc_items", "enabled-btn")

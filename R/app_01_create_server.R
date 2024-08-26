@@ -216,6 +216,22 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
     })
 
+    observe({
+      req(org(), repo(), rv_milestone())
+
+      issue_titles <- tryCatch({
+        issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
+        issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
+        issue_titles_with_root_dir <- paste0(basename(rproj_root_dir), "/", issue_titles)
+        issue_titles_with_root_dir
+      }, error = function(e){
+        debug(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
+        return(list())
+      })
+
+      session$sendCustomMessage("highlightPaths", issue_titles)
+    })
+
     qc_items <- reactive({
       req(selected_items())
       tryCatch(

@@ -40,7 +40,7 @@ get_open_milestone_objects <- function(owner, repo) {
   debug(.le$logger, glue::glue("Retrieving open milestones in organization {owner}, repo {repo}..."))
 
   milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = dirname(gert::git_remote_list()$url), owner = owner, repo = repo, state = "open", .limit = Inf)
-  info(.le$logger, glue::glue("Retrieved {length(milestones)} open milestones in repo {repo}"))
+  info(.le$logger, glue::glue("Retrieved {length(milestones)} open milestone(s) in repo {repo}"))
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)
 }
 
@@ -225,7 +225,7 @@ get_all_issues_in_repo <- function(owner, repo) {
 
   issues <- c(open_issues, closed_issues)
   num_issues <- length(issues)
-  info(.le$logger, glue::glue("Retrieved {num_issues} issues from repo: {repo}"))
+  info(.le$logger, glue::glue("Retrieved {num_issues} issue(s) from repo: {repo}"))
   return(issues)
 
 }
@@ -289,7 +289,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   }
 
   issues <- c(open_issues, closed_issues)
-  info(.le$logger, glue::glue("Retrieved {length(issues)} issues from milestone: {milestone_name}"))
+  info(.le$logger, glue::glue("Retrieved {length(issues)} issue(s) from milestone: {milestone_name}"))
   return(issues)
 }
 

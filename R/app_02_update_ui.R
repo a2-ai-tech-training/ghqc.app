@@ -29,8 +29,8 @@ ghqc_update_ui <- function(id) {
       miniContentPanel(
         div(
           id = ns("center_content"),
-          selectInput(ns("select_milestone"), "Select QC Item List (github milestone)", choices = "", multiple = FALSE),
-          selectInput(ns("select_issue"), "Select QC Item (github issue)", choices = "", multiple = FALSE),
+          selectInput(ns("select_milestone"), "Select QC Item List (Github milestone)", choices = "", multiple = FALSE),
+          selectInput(ns("select_issue"), "Select QC Item (Github issue)", choices = "", multiple = FALSE),
           textAreaInput(ns("message"), "Message", ""),
           checkboxInput(ns("show_diff"), "Show file difference?", TRUE),
           radioButtons(ns("compare"), "Compare to:",

@@ -79,16 +79,21 @@ ghqc_create_server <- function(id) {
     })
 
     milestone_list <- reactive({
-      req(org(), repo())
+      req(repo(), org())
+      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
+      w_gh$show()
+      on.exit(w_gh$hide())
 
       tryCatch(
         {
-          w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
-          w_gh$show()
-
           milestone_list <- get_open_milestone_names(org = org(), repo = repo())
 
           if(length(milestone_list) == 0){
+            updateSelectizeInput(
+              session,
+              "milestone_existing",
+              options = list(placeholder = "No existing QC Item List")
+            )
             return()
           }
 
@@ -97,6 +102,7 @@ ghqc_create_server <- function(id) {
         error = function(e) {
           # it's fine to swallow error for this because milestones are not needed for creating
           debug(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
+          return(NULL)
         }
       )
     })
@@ -136,7 +142,7 @@ ghqc_create_server <- function(id) {
     output$sidebar <- renderUI({
       w_tree <- create_waiter(ns, sprintf("Creating file tree for %s ...", basename(rproj_root_dir)))
       w_tree$show()
-      on.exit(w_tree$hide())
+
       tagList(
         radioButtons(ns("milestone_toggle"), "State of QC Item List", choices = c("New", "Existing"), inline = TRUE),
         conditionalPanel(
@@ -153,6 +159,7 @@ ghqc_create_server <- function(id) {
                       "Select a QC Item List (Github milestone)",
                       choices = "",
                       multiple = FALSE,
+                      width = "100%",
                       options = list(placeholder = "Select existing QC Item List (required)")),
         ),
         textAreaInput(
@@ -181,6 +188,7 @@ ghqc_create_server <- function(id) {
     })
 
     observe({
+      req(org(), members())
       w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org()))
       w_gh$show()
       on.exit(w_gh$hide())
@@ -207,8 +215,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
         )
       )
     })
-
-
 
     qc_items <- reactive({
       req(selected_items())

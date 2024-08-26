@@ -42,12 +42,10 @@ ghqc_update_server <- function(id) {
 
     milestone_list <- reactive({
       req(org(), repo())
-
+      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
+      w_gh$show()
       tryCatch(
         {
-          w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
-          w_gh$show()
-
           milestone_list <- get_open_milestone_names(org = org(), repo = repo())
 
           if(length(milestone_list) == 0){

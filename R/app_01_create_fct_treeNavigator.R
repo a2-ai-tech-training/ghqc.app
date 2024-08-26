@@ -120,6 +120,7 @@ treeNavigatorUI <- function(id, width = "100%", height = "auto") {
   tagList(
     tree,
     tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/tree.css"),
+    tags$script(type = "module", src = "ghqc/js/highlight_files.js"),
     tags$script(type = "module", src = "ghqc/js/tree.js")
   )
 }

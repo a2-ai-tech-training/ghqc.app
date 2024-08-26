@@ -363,7 +363,7 @@ ghqc_update_server <- function(id) {
       addClass("post", "disabled-btn")
 
       if (isTruthy(input$select_issue)) {
-        debug(.le$logger, glue::glue("comment buttons are activated because there is an issue selected: {input$select_issue}}"))
+        debug(.le$logger, glue::glue("comment buttons are activated because there is an issue selected: {input$select_issue}"))
 
         removeClass("preview", "disabled-btn")
         addClass("preview", "enabled-btn")

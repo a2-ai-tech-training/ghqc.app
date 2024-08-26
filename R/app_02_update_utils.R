@@ -18,7 +18,7 @@
 #' convert_issue_df_format(issues)
 #' @noRd
 convert_issue_df_format <- function(issue_df) {
-  debug(.le$logger, "Converting issue data frame format")
+  debug(.le$logger, "Converting issue data frame format to named list")
 
   issues_df <- map_df(issue_df, ~ {
     tibble(
@@ -41,7 +41,7 @@ convert_issue_df_format <- function(issue_df) {
       setNames(nm = paste0("Item ", x$number, ": ", x$title))
     })
 
-  debug(.le$logger, "Issues choices list created")
+  debug(.le$logger, "Successfully creataed issues choices list")
 
   return(issues_choices)
 }
@@ -65,7 +65,7 @@ convert_issue_df_format <- function(issue_df) {
 #' convert_commits_df_format(commits)
 #' @noRd
 convert_commits_df_format <- function(commit_df) {
-  debug(.le$logger, "Converting commits data frame format")
+  debug(.le$logger, "Converting commits data frame format to named list")
 
   commits <- commit_df %>%
     split(.$date) %>%
@@ -77,7 +77,7 @@ convert_commits_df_format <- function(commit_df) {
       )
     })
 
-  debug(.le$logger, "Commits list created")
+  debug(.le$logger, "Successfully created commits list")
 
   return(commits)
 }
@@ -107,7 +107,7 @@ split_issue_parts <- function(issue) {
       list(issue_number = issue_number, issue_title = issue_title)
     },
     warning = function(w) {
-      debug(.le$logger, glue::glue("Error in split_issue_parts: {e$message}"))
+      debug(.le$logger, glue::glue("Error in split_issue_parts: {w$message}"))
       rlang::abort(w$message)
     }
   )

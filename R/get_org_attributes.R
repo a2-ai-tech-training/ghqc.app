@@ -51,8 +51,13 @@ get_all_milestone_objects <- function(owner, repo) {
 
 #' @import log4r
 get_open_milestone_names <- function(org, repo) {
+  tryCatch({
   milestones <- get_open_milestone_objects(org, repo)
   purrr::map_chr(milestones, "title")
+  }, error = function(e) {
+    error(.le$logger, glue::glue("Failed to retrieve open milestone names for organization {org} and {repo}."))
+    rlang::abort(error_msg)
+  })
 }
 
 #' @import log4r
@@ -67,6 +72,7 @@ list_milestones <- function(org, repo) {
 #' @import log4r
 #' @export
 get_current_repo <- function() {
+  tryCatch({
   debug(.le$logger, glue::glue("Connecting to repository..."))
 
   repo <- basename(gert::git_find())
@@ -74,6 +80,10 @@ get_current_repo <- function() {
   info(.le$logger, glue::glue("Connected to repository: {repo}"))
 
   repo
+  }, error = function(e) {
+    error(.le$logger, glue::glue("No local git repository found."))
+    rlang::abort(e$message)
+  })
 }
 
 #' @import log4r
@@ -104,6 +114,7 @@ get_organization_name_from_url <- function(remote_url) {
 
 #' @import log4r
 get_organization <- function() {
+  tryCatch({
   debug(.le$logger, glue::glue("Connecting to organization..."))
   # repo
   debug(.le$logger, glue::glue("Retrieving repo path..."))
@@ -129,6 +140,10 @@ get_organization <- function() {
 
   info(.le$logger, glue::glue("Connected to organization: {org_name}"))
   org_name
+  }, error = function(e) {
+    error(.le$logger, "Failed to connect to organization. Ensure the repository exists and that remotes are correctly configured.")
+    rlang::abort(e$message)
+  })
 }
 
 #' @import log4r
@@ -279,37 +294,6 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
 }
 
 #' @import log4r
-get_issues_info <- function() {
-  issues <- tryCatch({
-    gh::gh("GET /repos/{owner}/{repo}/issues", .api_url = dirname(gert::git_remote_list()$url),
-           owner = get_organization(),
-           repo = get_current_repo(),
-           per_page = 100)
-  }, error = function(e) {
-    stop("Failed to fetch issues.")
-  })
-
-
-  if (is.null(issues) || length(issues) == 0) {
-    stop("No issues found in the repository.")
-  }
-
-  issues_df <- purrr::map_df(issues, ~{
-    tibble::tibble(
-      number = .x$number,
-      title = .x$title,
-      milestone = if (!is.null(.x$milestone)) .x$milestone$title else NA,
-      milestone_created = if (!is.null(.x$milestone) && !is.null(.x$milestone$created_at)) .x$milestone$created_at else NA
-    )
-  })
-
-  # Filter out issues without a milestone
-  issues_df <- issues_df %>% dplyr::filter(!is.na(milestone))
-
-  return(issues_df)
-}
-
-#' @import log4r
 get_milestone_url <- function(owner, repo, milestone_name) {
   milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
   milestone <- gh::gh(
@@ -330,7 +314,7 @@ get_collaborators <- function(owner = get_organization(), repo = get_current_rep
     members_df <- purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
     return(members_df)
   }, error = function(e) {
-    debug(.le$logger, glue::glue("No collaborators found from: {owner} and {repo}"))
-    return(e)
+    error(.le$logger, glue::glue("No collaborators found from: {owner} and {repo}"))
+    rlang::abort(e$message)
   })
 }

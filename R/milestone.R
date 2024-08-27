@@ -59,7 +59,7 @@ look_up_existing_milestone_number <- function(params) {
 
 #' @import log4r
 create_milestone <- function(params) {
-  params$.api_url <- dirname(gert::git_remote_list()$url)
+  params$.api_url <- dirname(gert::git_remote_list()$url[1])
 
   debug(.le$logger, glue::glue("Creating milestone: {params$title}..."))
   milestone <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/milestones", params))

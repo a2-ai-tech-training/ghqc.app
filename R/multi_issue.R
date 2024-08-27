@@ -14,7 +14,7 @@ create_issue <- function(file, issue_params) {
     issue_params$assignees <- I(file$assignees)
   }
 
-  issue_params$.api_url <-dirname(gert::git_remote_list()$url)
+  issue_params$.api_url <-dirname(gert::git_remote_list()$url[1])
 
   # create the issue
   debug(.le$logger, glue::glue("Creating issue... {issue_params$title}"))

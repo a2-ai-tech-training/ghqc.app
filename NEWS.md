@@ -10,6 +10,8 @@
 
 -   Adds more informative logging messages for git credential errors.
 
+-   fixes bug in which the remote repo name was retrieved from the local repo name - as these names were previously always the same, the bug didn't arise until now.
+
 # ghqc 0.0.0.9005
 
 ## Minor improvements and bug fixes

@@ -75,11 +75,17 @@ get_current_repo <- function() {
   tryCatch({
   debug(.le$logger, glue::glue("Connecting to repository..."))
 
-  repo <- basename(gert::git_find())
+  # get local repo
+  local_repo <- gert::git_find()
+  # get remote repo url from local repo
+  remote_repo_url <- gert::git_remote_list(repo = local_repo)$url
+  # extract the remote repo name from the remote repo url
+  remote_repo_name <- stringr::str_extract(remote_repo_url, "(?<=/)[^/]+(?=\\.git$)")
 
-  info(.le$logger, glue::glue("Connected to repository: {repo}"))
 
-  repo
+  info(.le$logger, glue::glue("Connected to repository: {remote_repo_name}"))
+
+  remote_repo_name
   }, error = function(e) {
     error(.le$logger, glue::glue("No local git repository found."))
     rlang::abort(e$message)

@@ -1,6 +1,6 @@
 #' @import log4r
 get_names_and_usernames <- function(username) {
-  user <- gh::gh("GET /users/{username}", .api_url = dirname(gert::git_remote_list()$url), username = username)
+  user <- gh::gh("GET /users/{username}", .api_url = dirname(gert::git_remote_list()$url[1]), username = username)
   return(list(
     username = user$login,
     name = user$name
@@ -12,7 +12,7 @@ get_repos <- function(org) {
   debug(.le$logger, glue::glue("Retrieving repos in org {org}..."))
   repos <- tryCatch(
     {
-      gh::gh("GET /orgs/:org/repos", .api_url = dirname(gert::git_remote_list()$url), org = org, .limit = Inf)
+      gh::gh("GET /orgs/:org/repos", .api_url = dirname(gert::git_remote_list()$url[1]), org = org, .limit = Inf)
     },
     error = function(e) {
       error(.le$logger, glue::glue("Failed to get repos in org {org}. {e$message}"))
@@ -39,14 +39,14 @@ filter_for_non_empty_milestones <- function(milestones) {
 get_open_milestone_objects <- function(owner, repo) {
   debug(.le$logger, glue::glue("Retrieving open milestones in organization {owner}, repo {repo}..."))
 
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = dirname(gert::git_remote_list()$url), owner = owner, repo = repo, state = "open", .limit = Inf)
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = dirname(gert::git_remote_list()$url[1]), owner = owner, repo = repo, state = "open", .limit = Inf)
   info(.le$logger, glue::glue("Retrieved {length(milestones)} open milestone(s) in repo {repo}"))
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)
 }
 
 #' @import log4r
 get_all_milestone_objects <- function(owner, repo) {
-  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .api_url = dirname(gert::git_remote_list()$url), state = "all", .limit = Inf)
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .api_url = dirname(gert::git_remote_list()$url[1]), state = "all", .limit = Inf)
 }
 
 #' @import log4r
@@ -78,6 +78,8 @@ get_current_repo <- function() {
   # get local repo
   local_repo <- gert::git_find()
   # get remote repo url from local repo
+  remote_list <- gert::git_remote_list(repo = local_repo)
+
   remote_repo_url <- gert::git_remote_list(repo = local_repo)$url[1]
   # extract the remote repo name from the remote repo url
   remote_repo_name <- stringr::str_extract(remote_repo_url, "(?<=/)[^/]+(?=\\.git$)")
@@ -154,32 +156,32 @@ get_organization <- function() {
 
 #' @import log4r
 get_issue <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number", .api_url = dirname(gert::git_remote_list()$url),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number", .api_url = dirname(gert::git_remote_list()$url[1]),
          owner = owner, repo = repo, issue_number = issue_number)
 } # get_issue
 
 #' @import log4r
 get_issue_comments <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/comments", .api_url = dirname(gert::git_remote_list()$url),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/comments", .api_url = dirname(gert::git_remote_list()$url[1]),
          owner = owner, repo = repo, issue_number = issue_number)
 } # get_issue_comments
 
 #' @import log4r
 get_issue_events <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/events", .api_url = dirname(gert::git_remote_list()$url),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/events", .api_url = dirname(gert::git_remote_list()$url[1]),
          owner = owner, repo = repo, issue_number = issue_number)
 } # get_issue_events
 
 #' @import log4r
 get_issue_timeline <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/timeline", .api_url = dirname(gert::git_remote_list()$url),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/timeline", .api_url = dirname(gert::git_remote_list()$url[1]),
          owner = owner, repo = repo, issue_number = issue_number)
 }
 
 #' @import log4r
 get_issues <- function(owner, repo, milestone) {
   params <- c(owner, repo)
-  gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url),
+  gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
          owner = owner, repo = repo, milestone = milestone_number, state = "all")
 }
 
@@ -190,7 +192,7 @@ get_all_issues_in_repo <- function(owner, repo) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
                   owner = owner,
                   repo = repo,
                   state = "open",
@@ -212,7 +214,7 @@ get_all_issues_in_repo <- function(owner, repo) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
                   owner = owner,
                   repo = repo,
                   state = "closed",
@@ -253,7 +255,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
                   owner = owner,
                   repo = repo,
                   milestone = milestone_number,
@@ -276,7 +278,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
                   owner = owner,
                   repo = repo,
                   milestone = milestone_number,
@@ -303,7 +305,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
 get_milestone_url <- function(owner, repo, milestone_name) {
   milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
   milestone <- gh::gh(
-    "GET /repos/{owner}/{repo}/milestones/{milestone_number}", .api_url = dirname(gert::git_remote_list()$url),
+    "GET /repos/{owner}/{repo}/milestones/{milestone_number}", .api_url = dirname(gert::git_remote_list()$url[1]),
     owner = owner,
     repo = repo,
     milestone_number = milestone_number
@@ -315,7 +317,7 @@ get_milestone_url <- function(owner, repo, milestone_name) {
 #' @import log4r
 get_collaborators <- function(owner = get_organization(), repo = get_current_repo()) {
   tryCatch({
-    query <- gh::gh("GET /repos/{owner}/{repo}/collaborators", .api_url = dirname(gert::git_remote_list()$url), .limit = Inf, owner = owner, repo = repo)
+    query <- gh::gh("GET /repos/{owner}/{repo}/collaborators", .api_url = dirname(gert::git_remote_list()$url[1]), .limit = Inf, owner = owner, repo = repo)
     members_list <- purrr::map(query, ~ get_names_and_usernames(.x$login))
     members_df <- purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
     return(members_df)

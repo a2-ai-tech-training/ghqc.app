@@ -78,7 +78,7 @@ get_current_repo <- function() {
   # get local repo
   local_repo <- gert::git_find()
   # get remote repo url from local repo
-  remote_repo_url <- gert::git_remote_list(repo = local_repo)$url
+  remote_repo_url <- gert::git_remote_list(repo = local_repo)$url[1]
   # extract the remote repo name from the remote repo url
   remote_repo_name <- stringr::str_extract(remote_repo_url, "(?<=/)[^/]+(?=\\.git$)")
 

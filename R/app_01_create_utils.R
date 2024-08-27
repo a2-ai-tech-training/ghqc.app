@@ -201,7 +201,7 @@ convert_list_to_ui <- function(checklists, parent_name = NULL, is_first = TRUE) 
       first_child <- FALSE
     }
   } else {
-    error(.le$logger, "Checklist not supported: {checklist}")
+    error(.le$logger, glue::glue("Checklist not supported: {checklists}"))
     rlang::abort("Unsupported type of checklist")
   }
   debug(.le$logger, "Converted list to UI successfully")

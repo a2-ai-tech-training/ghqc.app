@@ -4,6 +4,7 @@
 #' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
 #' @importFrom gert git_ahead_behind git_status
+#' @importFrom rprojroot find_rstudio_root_file
 NULL
 
 ghqc_create_server <- function(id) {

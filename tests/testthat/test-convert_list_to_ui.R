@@ -16,7 +16,7 @@ test_that("convert_list_to_ui handles list with named elements correctly", {
 })
 
 test_that("convert_list_to_ui handles a character vector correctly", {
-  index <- which(names(get_checklists()) == "R script - general")
+  index <- which(names(get_checklists()) == "R script")
   chr_vector <- get_checklists()[[index]]
   result <- convert_list_to_ui(chr_vector)
 

@@ -141,9 +141,6 @@ ghqc_create_server <- function(id) {
     })
 
     output$sidebar <- renderUI({
-      w_tree <- create_waiter(ns, sprintf("Creating file tree for %s ...", basename(rproj_root_dir)))
-      w_tree$show()
-
       tagList(
         radioButtons(ns("milestone_toggle"), "State of QC Item List", choices = c("New", "Existing"), inline = TRUE),
         conditionalPanel(

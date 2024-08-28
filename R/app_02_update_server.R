@@ -7,6 +7,9 @@
 NULL
 
 ghqc_update_server <- function(id) {
+  # check gitcreds
+  check_github_credentials()
+
   error_if_git_not_initialized()
 
   moduleServer(id, function(input, output, session) {

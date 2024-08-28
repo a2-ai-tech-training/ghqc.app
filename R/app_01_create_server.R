@@ -1,5 +1,6 @@
 #' @import shiny
 #' @import glue
+#' @import log4r
 #' @importFrom shinyjs enable disable addClass removeClass delay
 #' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
@@ -8,6 +9,9 @@
 NULL
 
 ghqc_create_server <- function(id) {
+  # check gitcreds
+  check_github_credentials()
+
   error_if_git_not_initialized()
 
   rproj_root_dir <- rprojroot::find_rstudio_root_file()

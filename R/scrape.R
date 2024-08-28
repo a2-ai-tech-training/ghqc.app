@@ -438,6 +438,8 @@ ghqc_report <- function(milestone_names = NULL,
                         repo = get_current_repo(),
                         pdf_name = NULL,
                         just_tables = FALSE) {
+  # check gitcreds
+  check_github_credentials()
 
   # get user input if milestone_names not inputted (check existence here)
   if (is.null(milestone_names)) {

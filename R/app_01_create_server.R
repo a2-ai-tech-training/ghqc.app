@@ -83,7 +83,6 @@ ghqc_create_server <- function(id) {
       req(repo(), org())
       w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
       w_gh$show()
-      on.exit(w_gh$hide())
 
       tryCatch(
         {

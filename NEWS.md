@@ -1,5 +1,11 @@
 # ghqc (development version)
 
+# ghqc 0.0.0.9007
+
+## New features
+
+-   Git credentials are set automatically when ghqc functions are run as long as the appropiate environment variables are set.
+
 # ghqc 0.0.0.9006
 
 ## Minor improvements and bug fixes

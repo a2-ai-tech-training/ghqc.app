@@ -42,8 +42,8 @@ Imports:
     pkglite (>= 0.2.1),
     log4r (>= 0.4.3),
     rprojroot (>= 2.0.3),
-    usethis,
-    gitcreds
+    usethis (>= 2.2.2),
+    gitcreds (>= 0.1.2)
 Suggests: 
     testthat (>= 3.0.0),
     httptest,

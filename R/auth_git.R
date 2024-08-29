@@ -1,7 +1,7 @@
 #' @import log4r
 #' @export
 get_ghe_url <- function() {
-  res <- Sys.getenv("CPMS_GHE_URL")
+  res <- Sys.getenv("GHQC_GITHUB_URL", unset = "https://github.com")
   if (!nzchar(res)) {
     error(.le$logger, "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
     rlang::abort(message = "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
@@ -13,7 +13,8 @@ get_ghe_url <- function() {
 #' @import log4r
 #' @export
 get_ghe_api_url <- function() {
-  res <- Sys.getenv("CPMS_API_URL", glue::glue("{get_ghe_url()}/api/v3"))
+  res <- glue::glue("{get_ghe_url()}/api/v3")
+
   if (!nzchar(res)) {
     error(.le$logger, "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
     rlang::abort(message = "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
@@ -25,7 +26,7 @@ get_ghe_api_url <- function() {
 #' @import log4r
 #' @export
 get_ghe_token <- function() {
-  res <- Sys.getenv('GITHUB_PAT_GHE-GSK_METWORX_COM')
+  res <- Sys.getenv('GHQC_GITHUB_PAT')
   if (!nzchar(res)) {
     error(.le$logger, "No GHE token found. Please set GITHUB_PAT_GHE-GSK_METWORX_COM environment variable, likely in your ~/.Renviron file.")
     rlang::abort(message = "No GHE token found. Please set GITHUB_PAT_GHE-GSK_METWORX_COM environment variable, likely in your ~/.Renviron file.")
@@ -65,11 +66,8 @@ check_github_credentials <- function() {
       password = token
     )
 
-    ## using internal function of gitcreds :(
-    ## this is a workaround to the inconsistent gitcreds_set() behaviour
+    gitcreds::gitcreds_approve(creds)
 
-    gitcreds:::gitcreds$gitcreds_run("approve", creds, character(0))
-    #usethis::ui_done("GitHub credentials set")
     info(.le$logger, glue::glue("GitHub credentials set"))
   }
   else {

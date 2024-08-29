@@ -28,7 +28,7 @@ convert_issue_df_format <- function(issue_df) {
     )
   })
 
-  debug(.le$logger, glue::glue("Issues data frame created: {nrow(issues_df)} rows"))
+  debug(.le$logger, glue::glue("Issues data frame created: {nrow(issues_df)} row(s)"))
 
   issues_choices <- issues_df %>%
     mutate(state = case_when(
@@ -41,7 +41,7 @@ convert_issue_df_format <- function(issue_df) {
       setNames(nm = paste0("Item ", x$number, ": ", x$title))
     })
 
-  debug(.le$logger, "Successfully creataed issues choices list")
+  debug(.le$logger, "Successfully created issues choices list")
 
   return(issues_choices)
 }

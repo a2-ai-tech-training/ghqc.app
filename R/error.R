@@ -32,6 +32,7 @@ check_if_git_initialized <- function(path = getwd()) {
 error_if_git_not_initialized <- function(path = getwd()) {
   git_inited <- check_if_git_initialized(path)
   if (!git_inited) {
+    error(.le$logger, "Git not initialized; push repo to Github first.")
     rlang::abort(message = "Git not initialized; push repo to Github first.")
   }
 }

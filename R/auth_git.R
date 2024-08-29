@@ -3,8 +3,8 @@
 get_ghe_url <- function() {
   res <- Sys.getenv("GHQC_GITHUB_URL", unset = "https://github.com")
   if (!nzchar(res)) {
-    error(.le$logger, "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
-    rlang::abort(message = "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
+    error(.le$logger, "No Github URL found. Please set GHQC_GITHUB_URL environment variable, likely in your ~/.Renviron file.")
+    rlang::abort(message = "No Github URL found. Please set GHQC_GITHUB_URL environment variable, likely in your ~/.Renviron file.")
   }
   info(.le$logger, glue::glue("Retrived ghe url environment variable: {res}"))
   gsub("/$", "", res)
@@ -14,11 +14,6 @@ get_ghe_url <- function() {
 #' @export
 get_ghe_api_url <- function() {
   res <- glue::glue("{get_ghe_url()}/api/v3")
-
-  if (!nzchar(res)) {
-    error(.le$logger, "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
-    rlang::abort(message = "No GHE URL found. Please set CPMS_GHE_URL environment variable, likely in your ~/.Renviron file.")
-  }
   info(.le$logger, glue::glue("Configured api url: {res}"))
   res
 }
@@ -28,8 +23,8 @@ get_ghe_api_url <- function() {
 get_ghe_token <- function() {
   res <- Sys.getenv('GHQC_GITHUB_PAT')
   if (!nzchar(res)) {
-    error(.le$logger, "No GHE token found. Please set GITHUB_PAT_GHE-GSK_METWORX_COM environment variable, likely in your ~/.Renviron file.")
-    rlang::abort(message = "No GHE token found. Please set GITHUB_PAT_GHE-GSK_METWORX_COM environment variable, likely in your ~/.Renviron file.")
+    error(.le$logger, "No Github token found. Please set GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
+    rlang::abort(message = "No Github token found. Please set GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
   }
   info(.le$logger, glue::glue("Retrived ghe token environment variable: {substr(res, 1, 4)}************************************"))
   res

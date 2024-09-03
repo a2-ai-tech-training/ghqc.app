@@ -21,6 +21,7 @@ my_layout <- function(level, ...) {
 }
 
 # I don't think we need this as users have to set the log level prior to loading in this pkg
+#' @export
 set_logger_level <- function(level) {
   LEVEL_NAMES <- c("DEBUG", "INFO", "WARN", "ERROR", "FATAL")
   if (!(level %in% LEVEL_NAMES)){

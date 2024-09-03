@@ -71,6 +71,74 @@ list_milestones <- function(org, repo) {
 
 #' @import log4r
 #' @export
+get_remote <- function(remote_list) {
+  debug(.le$logger, glue::glue("Retrieved list of remotes: \n{glue::glue_collapse(apply(remote_list, 1, function(row) {
+    glue::glue(\"name: {row['name']}, url: {row['url']}\")
+  }), sep = \"\n\")}"))
+
+  debug(.le$logger, glue::glue("Retrieving remote..."))
+  remote_repo_url <- {
+    ### FIRST: check if there's a single remote,
+    num_remotes <- nrow(remote_list)
+    if (num_remotes == 1) {
+      remote_list$url[1]
+    } # FIRST
+
+    ### SECOND: check if env var set
+    else if (Sys.getenv("GHQC_REMOTE_NAME") != "") {
+      # else, there are multiple or zero remotes
+      info(.le$logger, "Multiple remote names detected")
+
+      remote_env_var <- Sys.getenv("GHQC_REMOTE_NAME")
+
+      info(.le$logger, glue::glue("Retrieving remote name from GHQC_REMOTE_NAME environment variable: {remote_env_var}"))
+      # if in list of remotes
+      if (remote_env_var %in% remote_list$name) {
+        remote_list[remote_list$name == remote_env_var, ]$url[1]
+      }
+      else {
+        error(.le$logger, glue::glue("{remote_env_var} not in list of remotes"))
+        rlang::abort(glue::glue("{remote_env_var} not in list of remotes"))
+      }
+    } # SECOND
+
+    ### THIRD: check if origin exists in remote list
+    else if ("origin" %in% remote_list$name) {
+      info(.le$logger, "No GHQC_REMOTE_NAME environment variable found. Using \"origin\" from list of remotes.")
+      remote_list[remote_list$name == "origin", ]$url[1]
+    } # THIRD
+
+    ### LAST: try to get first remote
+    else {
+      tryCatch({
+        first_remote_name <- remote_list$name[1]
+        first_remote_url <- remote_list$url[1]
+        info(.le$logger, glue::glue("No GHQC_REMOTE_NAME environment variable found. Using first remote from list of remotes: {first_remote_name}"))
+        first_remote_url
+        # error if no remote urls
+      }, error = function(e) {
+        error(.le$logger, glue::glue("No remote repository found"))
+        rlang::abort(e$message)
+      })
+    } # LAST
+  } # remote
+
+  info(.le$logger, glue::glue("Connected to remote repository url: {remote_repo_url}"))
+
+  api_url <- dirname(remote_repo_url)
+  debug(.le$logger, glue::glue("Setting API_URL environment variable: {api_url}..."))
+  Sys.setenv("API_URL" = api_url)
+  info(.le$logger, glue::glue("Set API_URL environment variable: {Sys.getenv(\"API_URL\")}"))
+
+  # remove .git and extract name
+  remote_repo_name <- stringr::str_extract(remote_repo_url, "(?<=/)[^/]+(?=\\.git$)")
+  info(.le$logger, glue::glue("Retrieved remote repository name: {remote_repo_name}"))
+
+  return(remote_repo_name)
+}
+
+#' @import log4r
+#' @export
 get_current_repo <- function() {
   tryCatch({
   debug(.le$logger, glue::glue("Connecting to repository..."))
@@ -80,14 +148,7 @@ get_current_repo <- function() {
   # get remote repo url from local repo
   remote_list <- gert::git_remote_list(repo = local_repo)
 
-  remote_repo_url <- gert::git_remote_list(repo = local_repo)$url[1]
-  # extract the remote repo name from the remote repo url
-  remote_repo_name <- stringr::str_extract(remote_repo_url, "(?<=/)[^/]+(?=\\.git$)")
-
-
-  info(.le$logger, glue::glue("Connected to repository: {remote_repo_name}"))
-
-  remote_repo_name
+  get_remote(remote_list)
   }, error = function(e) {
     error(.le$logger, glue::glue("No local git repository found."))
     rlang::abort(e$message)

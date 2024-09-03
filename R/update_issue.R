@@ -72,7 +72,7 @@ update_body <- function(body, items_to_check, items_to_uncheck) {
 # "- [ ] does the seed match from when the script was last run? \n- [x] are units in diganostic figures correct? \n- [ ] does the output match what the comments expect? "
 update_issue <- function(owner, repo, issue_number, items_to_check = c(), items_to_uncheck = c()) {
   # get issue
-  issue <- gh::gh("GET /repos/:owner/:repo/issues/:issue_number", .api_url = dirname(gert::git_remote_list()$url[1]),
+  issue <- gh::gh("GET /repos/:owner/:repo/issues/:issue_number", .api_url = Sys.getenv("GHQC_API_URL"),
                   owner = owner,
                   repo = repo,
                   issue_number = issue_number)

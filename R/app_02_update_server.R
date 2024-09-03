@@ -53,7 +53,7 @@ ghqc_update_server <- function(id) {
 
           if(length(milestone_list) == 0){
             w_gh$hide()
-            showModal(modalDialog(glue::glue("There were no milestones found in {org()}/{repo()}. Please use the Create QC app before using the Update QC app."), footer = NULL))
+            showModal(modalDialog(glue::glue("There were no open milestones found in {org()}/{repo()}. Please use the Create QC app before using the Update QC app."), footer = NULL))
             return()
           }
 
@@ -304,6 +304,7 @@ ghqc_update_server <- function(id) {
     })
 
     post_comment <- reactive({
+      browser()
       req(post_trigger())
       post_trigger(FALSE)
 

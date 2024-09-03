@@ -45,6 +45,15 @@ get_open_milestone_objects <- function(owner, repo) {
 }
 
 #' @import log4r
+get_closed_milestone_objects <- function(owner, repo) {
+  debug(.le$logger, glue::glue("Retrieving closed milestones in organization {owner}, repo {repo}..."))
+
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = dirname(gert::git_remote_list()$url[1]), owner = owner, repo = repo, state = "closed", .limit = Inf)
+  info(.le$logger, glue::glue("Retrieved {length(milestones)} closed milestone(s) in repo {repo}"))
+  non_empty_milestones <- filter_for_non_empty_milestones(milestones)
+}
+
+#' @import log4r
 get_all_milestone_objects <- function(owner, repo) {
   gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .api_url = dirname(gert::git_remote_list()$url[1]), state = "all", .limit = Inf)
 }
@@ -61,12 +70,26 @@ get_open_milestone_names <- function(org, repo) {
 }
 
 #' @import log4r
+get_closed_milestone_names <- function(org, repo) {
+  tryCatch({
+    milestones <- get_closed_milestone_objects(org, repo)
+    purrr::map_chr(milestones, "title")
+  }, error = function(e) {
+    error(.le$logger, glue::glue("Failed to retrieve closed milestone names for organization {org} and {repo}."))
+    rlang::abort(e$message)
+  })
+}
+
+#' @import log4r
 #' @export
 list_milestones <- function(org, repo) {
+  debug(.le$logger, glue::glue("Retrieving milestones in organization {owner}, repo {repo}..."))
   milestones <- get_all_milestone_objects(org, repo)
-
+  info(.le$logger, glue::glue("Retrieved {length(milestones)} total milestone(s) in repo {repo}"))
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)
-  purrr::map_chr(non_empty_milestones, "title")
+  info(.le$logger, glue::glue("Retrieved {length(non_empty_milestones)} non-empty milestone(s) in repo {repo}"))
+  res <- purrr::map_chr(non_empty_milestones, "title")
+  return(res)
 }
 
 #' @import log4r

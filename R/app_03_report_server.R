@@ -19,9 +19,7 @@ ghqc_report_server <- function(id) {
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    #preview_trigger <- reactiveVal(FALSE)
     report_trigger <- reactiveVal(FALSE)
-
     waiter_hide()
 
     org <- reactive({
@@ -105,18 +103,66 @@ ghqc_report_server <- function(id) {
       debug(.le$logger, glue::glue("generate_report buttons are inactivated."))
       removeClass("generate_report", "enabled-btn")
       addClass("generate_report", "disabled-btn")
-print(input$select_milestone)
+
       num_milestones_selected <- length(input$select_milestone)
-      print(num_milestones_selected)
+
       if (num_milestones_selected > 0) {
         debug(.le$logger, glue::glue("generate_report buttons are activated because there are {num_milestones_selected} selected QC Item Lists"))
-
         removeClass("generate_report", "disabled-btn")
         addClass("generate_report", "enabled-btn")
       }
-
     })
 
+    observe({
+      req(report_trigger())
+      report_trigger(FALSE)
+
+      milestone_num_str <- {
+        if (length(input$select_milestone) == 1) {
+          "milestone"
+        }
+        else {
+          "milestones"
+        }
+      }
+      milestones <- glue::glue_collapse(input$select_milestone, sep = ", ", last = ", and ")
+      w_generate_report <- create_waiter(ns, glue::glue("Generating report for {milestone_num_str}: {milestones}..."))
+      w_generate_report$show()
+      on.exit(w_generate_report$hide())
+
+      tryCatch({
+        pdf_path <- ghqc_report(
+          milestone_names = input$select_milestone,
+          input_name = input$pdf_name,
+          just_tables = input$just_tables,
+          location = input$pdf_location
+        )
+
+        showModal(
+          modalDialog(
+            title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+            footer = NULL,
+            easyClose = TRUE,
+            tags$p(glue::glue("QC report generated successfully: {pdf_path}"))
+          )
+        ) #showModal
+      },
+      error = function(e) {
+        error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
+        showModal(modalDialog(
+          title = tags$div(
+            tags$span("Error", style = "float: left; font-weight: bold; font-size: 20px;"),
+            modalButton("Dismiss"),
+            style = "overflow: hidden; text-align: right;"
+          ),
+          HTML(error_icon_html, e$message, "<br>"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+        #rlang::abort(e$message)
+      }) # tryCatch
+      report_trigger(FALSE)
+    })
 
     observeEvent(input$closed_only, {
       if (input$closed_only) {
@@ -136,87 +182,9 @@ print(input$select_milestone)
     })
 
     observeEvent(input$generate_report, {
-       report_trigger(TRUE)
+      report_trigger(TRUE)
     })
 
-    observe({
-      req(report_trigger())
-      report_trigger(FALSE)
-
-      w_generate_report <- create_waiter(ns, "Generating report ...")
-      w_generate_report$show()
-      on.exit(w_generate_report$hide())
-
-      tryCatch({
-        pdf_path <- ghqc_report(
-          milestone_names = input$select_milestone,
-          input_name = input$pdf_name,
-          just_tables = input$just_tables,
-          location = input$pdf_location
-        )
-      },
-      error = function(e) {
-        rlang::abort(e$message)
-      }
-      )
-
-      showModal(
-        modalDialog(
-          title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
-          footer = NULL,
-          easyClose = TRUE,
-          tags$p(glue::glue("QC report generated successfully: {pdf_path}")),
-          #tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
-        )
-      )
-
-      report_trigger(FALSE)
-    })
-
-    # observe({
-    #   #once path is received => do something
-    # })
-#     observe({
-#       # req post_comment causes modal not to show
-#       showModal(modalDialog(
-#         title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
-#         footer = NULL,
-#         easyClose = TRUE,
-#         tags$p("Update comment posted successfully."),
-#         tags$a(href = post_comment(), "Click here to visit the QC Checklist on Github", target = "_blank")
-#       ))
-#     })
-#
-#     observe({
-#       debug(.le$logger, glue::glue("comment buttons are inactivated."))
-#       removeClass("preview", "enabled-btn")
-#       addClass("preview", "disabled-btn")
-#
-#       removeClass("post", "enabled-btn")
-#       addClass("post", "disabled-btn")
-#
-#       if (isTruthy(input$select_issue)) {
-#         debug(.le$logger, glue::glue("comment buttons are activated because there is an issue selected: {input$select_issue}"))
-#
-#         removeClass("preview", "disabled-btn")
-#         addClass("preview", "enabled-btn")
-#
-#         removeClass("post", "disabled-btn")
-#         addClass("post", "enabled-btn")
-#       }
-#     })
-
-    # observeEvent(input$proceed_preview, {
-    #   debug(.le$logger, glue::glue("preview comment button proceeded and modal removed."))
-    #   removeModal()
-    #   preview_trigger(TRUE)
-    # })
-
-    # observeEvent(input$proceed_post, {
-    #   debug(.le$logger, glue::glue("post comment button proceeded and modal removed."))
-    #   removeModal()
-    #   report_trigger(TRUE)
-    # })
 
     observeEvent(input$return, {
       debug(.le$logger, glue::glue("Comment button returned and modal removed."))

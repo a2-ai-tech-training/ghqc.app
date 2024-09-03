@@ -22,7 +22,7 @@ ghqc_report_ui <- function(id) {
     div(
       id = ns("main_container"),
       gadgetTitleBar(
-        title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "Update QC Shiny Tool"),
+        title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "QC Report Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),
@@ -34,35 +34,7 @@ ghqc_report_ui <- function(id) {
           #selectInput(ns("select_issue"), "Select QC Item (Github issue)", choices = "", multiple = FALSE),
           textAreaInput(ns("pdf_name"), "PDF name", placeholder = "(Optional)"),
           textAreaInput(ns("pdf_location"), "PDF location", value = get_simple_path()),
-          checkboxInput(ns("just_tables"), "Just tables", FALSE),
-
-          # radioButtons(ns("compare"), "Compare to:",
-          #              inline = TRUE,
-          #              choices = c(
-          #                "Compare original with most recent" = "init",
-          #                "Select commit comparators" = "comparators"
-          #              )
-          # ),
-          # conditionalPanel(
-          #   condition = "input.compare === 'comparators'", ns = ns,
-          #   div(
-          #     class = "inline-selectize",
-          #     selectizeInput(ns("ref_commits"), "Reference",
-          #                    choices = "",
-          #                    multiple = FALSE,
-          #                    options = list(
-          #                      placeholder = "No commits since QC initialization."
-          #                    )
-          #     ),
-          #     selectizeInput(ns("comp_commits"), "Comparator",
-          #                    choices = "",
-          #                    multiple = FALSE,
-          #                    options = list(
-          #                      placeholder = "No commits since reference commit."
-          #                    )
-          #     )
-          #   )
-          # )
+          checkboxInput(ns("just_tables"), "Just tables", FALSE)
         )
       ),
       div(

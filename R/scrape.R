@@ -461,14 +461,14 @@ ghqc_report <- function(milestone_names = NULL,
 
 
   if (fs::is_file(location)) {
-    error(.le$logger, glue::glue("inputted directory {location} is a file path - input a directory instead"))
-    rlang::abort(message = glue::glue("directory {location} is a file path - input a directory instead"))
+    error(.le$logger, glue::glue("Inputted directory {location} is a file path. Input an existing directory."))
+    rlang::abort(message = glue::glue("Inputted directory {location} is a file path.<br>Input an existing directory."))
   }
 
   # check location exists
   if (!fs::dir_exists(location)) {
-    error(.le$logger, glue::glue("inputted directory {location} doesn't exist"))
-    rlang::abort(message = glue::glue("inputted directory {location} doesn't exist"))
+    error(.le$logger, glue::glue("Inputted directory {location} doesn't exist. Input an existing directory."))
+    rlang::abort(message = glue::glue("Inputted directory {location} doesn't exist.<br>Input an existing directory."))
   }
 
   # intro

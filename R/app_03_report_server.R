@@ -12,10 +12,10 @@
 NULL
 
 ghqc_report_server <- function(id) {
+  error_if_git_not_initialized()
+
   # check gitcreds
   check_github_credentials()
-
-  error_if_git_not_initialized()
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -49,18 +49,10 @@ ghqc_report_server <- function(id) {
     closed_milestones <- reactive({
       req(org(), repo())
       w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
-      # w_gh$show()
 
       tryCatch(
         {
           closed_milestones <- get_closed_milestone_names(org = org(), repo = repo())
-
-          if(length(closed_milestones) == 0){
-            w_gh$hide()
-            showModal(modalDialog(glue::glue("There were no closed milestones found in {org()}/{repo()}. Please use the Create QC app before using the Update QC app."), footer = NULL))
-            return()
-          }
-
           rev(closed_milestones)
         },
         error = function(e) {
@@ -76,11 +68,6 @@ ghqc_report_server <- function(id) {
       tryCatch(
         {
           all_milestones <- list_milestones(org = org(), repo = repo())
-
-          if(length(all_milestones) == 0) {
-            return()
-          }
-
           rev(all_milestones)
         },
         error = function(e) {
@@ -90,13 +77,30 @@ ghqc_report_server <- function(id) {
       )
     })
 
-    observe({
-      req(closed_milestones())
-      updateSelectizeInput(
-        session,
-        "select_milestone",
-        choices = c(closed_milestones())
-      )
+    observeEvent(input$closed_only, {
+      # if closed
+      if (input$closed_only) {
+        placeholder <- ifelse(length(closed_milestones()) == 0, "No closed milestones", "Select closed milestones")
+
+        updateSelectizeInput(
+          session,
+          "select_milestone",
+          choices = closed_milestones(),
+          options = list(placeholder = placeholder)
+        )
+      }
+
+      # if not closed
+      else {
+        placeholder <- ifelse(length(all_milestones()) == 0, "No milestones", "Select milestone")
+
+        updateSelectizeInput(
+          session,
+          "select_milestone",
+          choices = c(all_milestones()),
+          options = list(placeholder = placeholder)
+        )
+      }
     })
 
     observe({
@@ -117,14 +121,8 @@ ghqc_report_server <- function(id) {
       req(report_trigger())
       report_trigger(FALSE)
 
-      milestone_num_str <- {
-        if (length(input$select_milestone) == 1) {
-          "milestone"
-        }
-        else {
-          "milestones"
-        }
-      }
+      milestone_num_str <- ifelse(length(input$select_milestone) == 1, "milestone", "milestones")
+
       milestones <- glue::glue_collapse(input$select_milestone, sep = ", ", last = ", and ")
       w_generate_report <- create_waiter(ns, glue::glue("Generating report for {milestone_num_str}: {milestones}..."))
       w_generate_report$show()
@@ -164,22 +162,6 @@ ghqc_report_server <- function(id) {
       report_trigger(FALSE)
     })
 
-    observeEvent(input$closed_only, {
-      if (input$closed_only) {
-        updateSelectizeInput(
-          session,
-          "select_milestone",
-          choices = c(closed_milestones())
-        )
-      }
-      else {
-        updateSelectizeInput(
-          session,
-          "select_milestone",
-          choices = c(all_milestones())
-        )
-      }
-    })
 
     observeEvent(input$generate_report, {
       report_trigger(TRUE)

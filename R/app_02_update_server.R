@@ -304,7 +304,6 @@ ghqc_update_server <- function(id) {
     })
 
     post_comment <- reactive({
-      browser()
       req(post_trigger())
       post_trigger(FALSE)
 

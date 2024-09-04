@@ -171,9 +171,9 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
 
   pdf_path_abs <- get_simple_path(normalizePath(pdf_path))
 
+  info(.le$logger, "Converted rmd to pdf")
   info(.le$logger, glue::glue("Created report pdf: {pdf_path_abs}"))
 
-  print(pdf_path_abs)
   return(pdf_path_abs)
 } # markdown_to_pdf
 
@@ -353,29 +353,30 @@ create_set_of_issue_sections <- function(issues, owner, repo) {
   issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
 }
 
+#' @import log4r
 create_milestone_report_section <- function(owner, repo, milestone_name, env, just_tables = FALSE) {
+  debug(.le$logger, glue::glue("Creating section for milestone: {milestone_name}..."))
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
 
+  debug(.le$logger, glue::glue("Creating summary table for milestone: {milestone_name}..."))
   # summary table
   summary_csv <- create_summary_csv(issues, env)
   summary_table_section <- create_summary_table_section(summary_csv)
-
+  info(.le$logger, glue::glue("Created summary table for milestone: {milestone_name}"))
   # issues
   issue_sections <- create_set_of_issue_sections(issues, owner, repo)
 
-  if (just_tables) {
-    return(summary_table_section)
+  res <- {
+    if (just_tables) {
+      summary_table_section
+    }
+    else { # put it all together
+      paste0(summary_table_section, issue_sections)
+    }
   }
+  info(.le$logger, glue::glue("Created section for milestone: {milestone_name}"))
+  return(res)
 
-  else {
-    return(
-      # put it all together
-      paste0(
-        summary_table_section,
-        issue_sections
-      )
-    )
-  } # else
 } # create_milestone_report_section
 
 clean_input <- function(milestones_in) {
@@ -471,16 +472,20 @@ ghqc_report <- function(milestone_names = NULL,
     rlang::abort(message = glue::glue("Inputted directory {location} doesn't exist.<br>Input an existing directory."))
   }
 
+  debug(.le$logger, "Creating report introduction...")
   # intro
   header_path <- create_header()
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
+  info(.le$logger, "Created report introduction")
 
+  debug(.le$logger, "Creating milestone sections...")
   # create milestone sections
   milestone_sections <- lapply(milestone_names, function(milestone_name) {
     milestone_body <- create_milestone_report_section(owner, repo, milestone_name, parent.frame(n = 2), just_tables)
     create_big_section(milestone_name, milestone_body)
   })
+  info(.le$logger, "Created milestone sections")
 
   # appendix
 
@@ -492,18 +497,18 @@ ghqc_report <- function(milestone_names = NULL,
                            repo = repo)
 
   # create pdf from markdown
-  capture.output({
-    output <- markdown_to_pdf(rmd_content = rmd_content,
-                              repo = repo,
-                              milestone_names = milestone_names,
-                              just_tables = just_tables,
-                              location = location,
-                              pdf_name = pdf_name)
-  })
-  output
+
+  debug(.le$logger, "Converting rmd to pdf...")
+
+  markdown_to_pdf(rmd_content = rmd_content,
+                  repo = repo,
+                  milestone_names = milestone_names,
+                  just_tables = just_tables,
+                  location = location,
+                  pdf_name = pdf_name)
 }
 
-get_simple_path <- function(working_dir = getwd()) {
+get_simple_path <- function(working_dir = gert::git_find()) {
   home_dir <- Sys.getenv("HOME")
   simple_path <- stringr::str_replace(working_dir,
                                       stringr::fixed(home_dir),

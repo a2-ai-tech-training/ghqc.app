@@ -31,7 +31,6 @@ ghqc_report_ui <- function(id) {
           id = ns("center_content"),
           checkboxInput(ns("closed_only"), "Only closed milestones", TRUE),
           selectizeInput(ns("select_milestone"), "Select QC Item List(s)", choices = "", multiple = TRUE),
-          #selectInput(ns("select_issue"), "Select QC Item (Github issue)", choices = "", multiple = FALSE),
           textAreaInput(ns("pdf_name"), "PDF name", placeholder = "(Optional)"),
           textAreaInput(ns("pdf_location"), "PDF location", value = get_simple_path()),
           checkboxInput(ns("just_tables"), "Just tables", FALSE)

@@ -51,6 +51,7 @@ get_all_milestone_objects <- function(owner, repo) {
 
 #' @import log4r
 get_open_milestone_names <- function(org, repo) {
+
   tryCatch({
   milestones <- get_open_milestone_objects(org, repo)
   purrr::map_chr(milestones, "title")
@@ -69,15 +70,16 @@ list_milestones <- function(org, repo) {
   purrr::map_chr(non_empty_milestones, "title")
 }
 
-get_remote_name <- function(remote) {
+get_remote_name <- function(remote_url) {
+
   # remove .git and extract name
-  remote_name <- stringr::str_extract(remote$name, "(?<=/)[^/]+(?=\\.git$)")
+  remote_repo_name <- stringr::str_extract(remote_url, "(?<=/)[^/]+(?=\\.git$)")
   info(.le$logger, glue::glue("Retrieved remote repository name: {remote_repo_name}"))
-  return(remote_name)
+  return(remote_repo_name)
 }
 
 get_remote_url <- function(remote) {
-  browser()
+
   api_url <- dirname(remote$url)
   debug(.le$logger, glue::glue("Setting GHQC_API_URL environment variable: {api_url}..."))
   info(.le$logger, glue::glue("Connected to remote repository url: {api_url}"))
@@ -154,11 +156,12 @@ get_current_repo <- function() {
   # get remote repo url from local repo
   remote_list <- gert::git_remote_list(repo = local_repo)
 
-  get_remote(remote_list)
+  remote <- get_remote(remote_list)
   }, error = function(e) {
     error(.le$logger, glue::glue("No local git repository found."))
     rlang::abort(e$message)
   })
+  remote_repo_name <- get_remote_name(remote$url)
 }
 
 #' @import log4r
@@ -166,7 +169,7 @@ get_organization_name_from_url <- function(remote_url) {
   # https url
   matches <- {
     if (grepl("https://", remote_url)) {
-      regmatches(remote_url, regexec("https://[^/]+/([^/]+)/[^/]+", remote_url))
+      regmatches(remote_url, regexec("https://[^/]+/([^/]+)", remote_url)) #/[^/]+
     }
     # ssh url
     else if (grepl("git@", remote_url)) {
@@ -209,7 +212,7 @@ get_organization <- function() {
 
   # org name
   debug(.le$logger, glue::glue("Retrieving organization name from remote url..."))
-  browser()
+
   org_name <- get_organization_name_from_url(remote_url)
 
   info(.le$logger, glue::glue("Connected to organization: {org_name}"))

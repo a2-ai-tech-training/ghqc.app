@@ -54,7 +54,7 @@ create_issues <- function(data) {
     issue_params$milestone <- get_milestone_number(milestone_params)
   }
 
-  file_names <- glue::glue_collapse(purrr::map(data$files, "name"), sep = ", ")
+  file_names <- glue::glue_collapse(purrr::map(data$files, "name"), sep = ", ", last = " and ")
   debug(.le$logger, glue::glue("Creating checklists for files: {file_names}"))
   # create an issue for each file
   lapply(data$files, function(file) {

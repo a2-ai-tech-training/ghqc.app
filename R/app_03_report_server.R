@@ -19,7 +19,6 @@ ghqc_report_server <- function(id) {
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    report_trigger <- reactiveVal(FALSE)
     waiter_hide()
 
     org <- reactive({
@@ -92,12 +91,12 @@ ghqc_report_server <- function(id) {
 
       # if not closed
       else {
-        placeholder <- ifelse(length(all_milestones()) == 0, "No milestones", "Select milestone")
+        placeholder <- ifelse(length(all_milestones()) == 0, "No milestones", "Select milestones")
 
         updateSelectizeInput(
           session,
           "select_milestone",
-          choices = c(all_milestones()),
+          choices = all_milestones(),
           options = list(placeholder = placeholder)
         )
       }
@@ -117,14 +116,10 @@ ghqc_report_server <- function(id) {
       }
     })
 
-    observe({
-      req(report_trigger())
-      report_trigger(FALSE)
-
+    observeEvent(input$generate_report, {
       milestone_num_str <- ifelse(length(input$select_milestone) == 1, "milestone", "milestones")
 
-      milestones <- glue::glue_collapse(input$select_milestone, sep = ", ", last = ", and ")
-      w_generate_report <- create_waiter(ns, glue::glue("Generating report for {milestone_num_str}: {milestones}..."))
+      milestones <- glue::glue_collapse(input$select_milestone, sep = ", ", last = " and ")
       w_generate_report$show()
       on.exit(w_generate_report$hide())
 
@@ -157,16 +152,8 @@ ghqc_report_server <- function(id) {
           easyClose = TRUE,
           footer = NULL
         ))
-        #rlang::abort(e$message)
       }) # tryCatch
-      report_trigger(FALSE)
     })
-
-
-    observeEvent(input$generate_report, {
-      report_trigger(TRUE)
-    })
-
 
     observeEvent(input$return, {
       debug(.le$logger, glue::glue("Comment button returned and modal removed."))

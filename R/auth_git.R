@@ -23,6 +23,11 @@ get_gh_url <- function() {
   remote <- gert::git_remote_list()$url[1]
   remote_url <- stringr::str_extract(remote, "^https?://[^/]+")
 
+  if(is.na(remote_url)){
+    error(.le$logger, "There is no remote URL set.")
+    rlang::abort("There is no remote URL set.")
+  }
+
   if (remote_url != env_url) {
     error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
     rlang::abort(message = glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
@@ -34,9 +39,14 @@ get_gh_url <- function() {
 #' @import log4r
 #' @export
 get_gh_api_url <- function() {
-  res <- glue::glue("{get_gh_url()}/api/v3")
-  info(.le$logger, glue::glue("Configured api url: {res}"))
-  res
+  tryCatch({
+    res <- glue::glue("{get_gh_url()}/api/v3")
+    info(.le$logger, glue::glue("Configured api url: {res}"))
+    res
+  }, error = function(e){
+    error(.le$logger, glue::glue("There was an error retrieving the api url."))
+    rlang::abort(message = glue::glue("There was an error retrieving the api url."))
+  })
 }
 
 #' @import log4r
@@ -57,8 +67,13 @@ get_gh_token <- function() {
 check_github_credentials <- function() {
   if(file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 
-  api_url <- get_gh_api_url()
-  token <- get_gh_token()
+  tryCatch({
+    api_url <- get_gh_api_url()
+    token <- get_gh_token()
+  }, error = function(e){
+    error(.le$logger, glue::glue("There was an error setting credentials."))
+    rlang::abort(message = glue::glue("There was an error setting credentials."))
+  })
 
   if(token == ""){
     error(.le$logger, glue::glue(

@@ -84,6 +84,10 @@ get_current_repo <- function() {
   # extract the remote repo name from the remote repo url
   remote_repo_name <- stringr::str_extract(remote_repo_url, "(?<=/)[^/]+(?=\\.git$)")
 
+  if(is.na(remote_repo_name)){
+    error(.le$logger, "There is no remote URL set.")
+    rlang::abort("There is no remote URL set.")
+  }
 
   info(.le$logger, glue::glue("Connected to repository: {remote_repo_name}"))
 

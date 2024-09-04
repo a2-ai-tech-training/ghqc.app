@@ -9,9 +9,6 @@
 NULL
 
 ghqc_create_server <- function(id) {
-  # check gitcreds
-  check_github_credentials()
-
   error_if_git_not_initialized()
 
   rproj_root_dir <- rprojroot::find_rstudio_root_file()
@@ -35,7 +32,18 @@ ghqc_create_server <- function(id) {
 
     waiter_hide()
 
+
+    git_creds <- reactive({
+      tryCatch({
+        check_github_credentials()
+      }, error = function(e){
+        error(.le$logger, glue::glue("There was an error retrieving credentials."))
+        showModal(modalDialog("There was an error retrieving credentials.", footer = NULL))
+      })
+    })
+
     org <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_organization()
@@ -48,6 +56,7 @@ ghqc_create_server <- function(id) {
     })
 
     repo <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_current_repo()
@@ -60,6 +69,7 @@ ghqc_create_server <- function(id) {
     })
 
     members <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_collaborators(owner = org(), repo = repo())

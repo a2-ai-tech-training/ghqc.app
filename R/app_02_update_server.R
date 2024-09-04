@@ -7,9 +7,6 @@
 NULL
 
 ghqc_update_server <- function(id) {
-  # check gitcreds
-  check_github_credentials()
-
   error_if_git_not_initialized()
 
   moduleServer(id, function(input, output, session) {
@@ -19,7 +16,17 @@ ghqc_update_server <- function(id) {
 
     waiter_hide()
 
+    git_creds <- reactive({
+      tryCatch({
+        check_github_credentials()
+      }, error = function(e){
+        error(.le$logger, glue::glue("There was an error retrieving credentials."))
+        showModal(modalDialog("There was an error retrieving credentials.", footer = NULL))
+      })
+    })
+
     org <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_organization()
@@ -32,6 +39,7 @@ ghqc_update_server <- function(id) {
     })
 
     repo <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_current_repo()

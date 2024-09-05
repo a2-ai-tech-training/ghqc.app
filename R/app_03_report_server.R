@@ -54,10 +54,27 @@ ghqc_report_server <- function(id) {
       tryCatch(
         {
           closed_milestones <- get_closed_milestone_names(org = org(), repo = repo())
+          if (length(closed_milestones) == 0) {
+            warn_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
+            showModal(
+              modalDialog(
+                title = tags$div(
+                  tags$span("Warning", style = "float: left; font-weight: bold; font-size: 20px;"),
+                  modalButton("Dismiss"),
+                  style = "overflow: hidden; text-align: right;"
+                ),
+                HTML(warn_icon_html, glue::glue("There were no closed milestones found in {org()}/{repo()}.<br>
+                                             Ensure that QC on each relevant milestone is finished and close relevant milestones on Github.<br>")),
+                easyClose = TRUE,
+                footer = NULL
+              )
+            )
+            warn(.le$logger, glue::glue("There were no closed milestones found in {org()}/{repo()}. Ensure that QC on each relevant milestone is finished and close relevant milestones on Github."))
+          } # length(closed_milestones) == 0
           rev(closed_milestones)
         },
         error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
+          error(.le$logger, glue::glue("There was an error retrieving closed milestones: {e$message}"))
           showModal(modalDialog("Error in getting milestones: ", e$message, footer = NULL))
         }
       )
@@ -69,10 +86,28 @@ ghqc_report_server <- function(id) {
       tryCatch(
         {
           all_milestones <- list_milestones(org = org(), repo = repo())
+          if (length(all_milestones) == 0) {
+            error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
+            showModal(
+              modalDialog(
+                title = tags$div(
+                  tags$span("Error", style = "float: left; font-weight: bold; font-size: 20px;"),
+                  modalButton("Dismiss"),
+                  style = "overflow: hidden; text-align: right;"
+                ),
+                HTML(error_icon_html, glue::glue("There were no milestones found in {org()}/{repo()}.<br>
+                                             Initialize QC Checklists by using the ghqc create app.<br>")),
+                easyClose = TRUE,
+                footer = NULL
+              )
+            )
+            error(.le$logger, glue::glue("There were no milestones found in {org()}/{repo()}. Initialize QC Checklists by using the ghqc create app."))
+          } # if (length(all_milestones) == 0)
+
           rev(all_milestones)
         },
         error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
+          error(.le$logger, glue::glue("There was an error retrieving all milestones: {e$message}"))
           showModal(modalDialog("Error in getting milestones: ", e$message, footer = NULL))
         }
       )
@@ -145,8 +180,9 @@ ghqc_report_server <- function(id) {
       },
       error = function(e) {
         error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
-        showModal(modalDialog(
-          title = tags$div(
+        showModal(
+          modalDialog(
+            title = tags$div(
             tags$span("Error", style = "float: left; font-weight: bold; font-size: 20px;"),
             modalButton("Dismiss"),
             style = "overflow: hidden; text-align: right;"

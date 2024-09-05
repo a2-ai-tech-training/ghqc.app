@@ -83,7 +83,7 @@ get_closed_milestone_names <- function(org, repo) {
 #' @import log4r
 #' @export
 list_milestones <- function(org, repo) {
-  debug(.le$logger, glue::glue("Retrieving milestones in organization {owner}, repo {repo}..."))
+  debug(.le$logger, glue::glue("Retrieving milestones in organization {org}, repo {repo}..."))
   milestones <- get_all_milestone_objects(org, repo)
   info(.le$logger, glue::glue("Retrieved {length(milestones)} total milestone(s) in repo {repo}"))
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)

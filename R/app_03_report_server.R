@@ -48,6 +48,8 @@ ghqc_report_server <- function(id) {
     closed_milestones <- reactive({
       req(org(), repo())
       w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
+      w_gh$show()
+      on.exit(w_gh$hide())
 
       tryCatch(
         {
@@ -118,8 +120,9 @@ ghqc_report_server <- function(id) {
 
     observeEvent(input$generate_report, {
       milestone_num_str <- ifelse(length(input$select_milestone) == 1, "milestone", "milestones")
-
       milestones <- glue::glue_collapse(input$select_milestone, sep = ", ", last = " and ")
+
+      w_generate_report <- create_waiter(ns, glue::glue("Generating report for {milestone_num_str}: {milestones}..."))
       w_generate_report$show()
       on.exit(w_generate_report$hide())
 

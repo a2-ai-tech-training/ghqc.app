@@ -118,3 +118,33 @@ check_github_credentials <- function() {
 
   return(creds)
 }
+
+check_remote_upstream <- function() {
+  remotes <- gert::git_remote_list()
+
+  if (nrow(remotes) == 0) {
+    error(.le$logger, "There is no remote URL set.")
+    rlang::abort("There is no remote URL set.")
+  }
+
+  remote_name <- Sys.getenv("GHQC_REMOTE_NAME", "origin") #TODO: will have to adjust to multi-remote pr
+
+  current_branch <- gert::git_branch()
+  tracking_branch <- gert::git_branch_list() %>%
+    dplyr::filter(name == current_branch & upstream != "") %>%
+    dplyr::pull(upstream)
+
+  if (length(tracking_branch) == 0) {
+    error(.le$logger, glue::glue(
+      "The current branch '{current_branch}' has no upstream branch.  \n",
+      "To push the current branch and set the remote as upstream: \n",
+      "  git push --set-upstream {remote_name} {current_branch}"
+    ))
+    rlang::abort(glue::glue(
+      "The current branch '{current_branch}' has no upstream branch.
+      Please set upstream and restart the app."
+    ))
+  }
+
+  return(tracking_branch)
+}

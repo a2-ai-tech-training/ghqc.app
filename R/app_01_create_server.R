@@ -30,6 +30,7 @@ ghqc_create_server <- function(id) {
 
     qc_trigger <- reactiveVal(FALSE)
 
+    # used reactive vs observe here to stop downstream
     git_creds <- reactive({
       tryCatch({
         creds <- check_github_credentials()
@@ -37,13 +38,21 @@ ghqc_create_server <- function(id) {
         return(creds)
       }, error = function(e){
         waiter_hide()
-        error(.le$logger, glue::glue("There was an error retrieving credentials."))
-        showModal(modalDialog("There was an error retrieving credentials.", footer = NULL))
+        showModal(modalDialog("There was an error retrieving credentials. Please check log messages.", footer = NULL))
+      })
+    })
+
+    remote_upstream <- reactive({
+      tryCatch({
+        creds <- check_remote_upstream()
+        return(creds)
+      }, error = function(e){
+        showModal(modalDialog(e$message, footer = NULL))
       })
     })
 
     org <- reactive({
-      req(git_creds())
+      req(git_creds(), remote_upstream())
       tryCatch(
         {
           get_organization()
@@ -56,7 +65,7 @@ ghqc_create_server <- function(id) {
     })
 
     repo <- reactive({
-      req(git_creds())
+      req(git_creds(), remote_upstream())
       tryCatch(
         {
           get_current_repo()
@@ -69,7 +78,7 @@ ghqc_create_server <- function(id) {
     })
 
     members <- reactive({
-      req(git_creds())
+      req(git_creds(), remote_upstream())
       tryCatch(
         {
           get_collaborators(owner = org(), repo = repo())

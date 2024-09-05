@@ -14,6 +14,10 @@ init_logger <- function() {
   # logger <- logger(verbosity, appenders = console_appender(logfmt_log_layout()))
   logger <- logger(verbosity, appenders = console_appender(my_layout))
   assign("logger", logger, envir = .le)
+
+  # log for logger
+  other <- ifelse(verbosity == "INFO", "DEBUG", "INFO")
+  info(.le$logger, glue::glue("logger level set to {verbosity}. Use ghqc_toggle_logger to change to {other}"))
 }
 
 my_layout <- function(level, ...) {
@@ -21,19 +25,7 @@ my_layout <- function(level, ...) {
 }
 
 #' @export
-ghqc_set_logger <- function(level) {
-  LEVEL_NAMES <- c("DEBUG", "INFO", "WARN", "ERROR", "FATAL")
-  if (!(level %in% LEVEL_NAMES)){
-    cat("Invalid verbosity level. Available options are:", paste(LEVEL_NAMES, collapse = ", "), "\n")
-  }
-  else {
-    # update level
-    logger <- logger(level, appenders = console_appender(my_layout))
-    assign("logger", logger, envir = .le)
-  }
-}
-
-toggle_debug_logging <- function() {
+ghqc_toggle_logger <- function() {
   verbosity <- Sys.getenv("GHQC_VERBOSE")
 
   ifelse(verbosity != "DEBUG",

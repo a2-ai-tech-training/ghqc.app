@@ -33,4 +33,15 @@ ghqc_set_logger <- function(level) {
   }
 }
 
+toggle_debug_logging <- function() {
+  verbosity <- Sys.getenv("GHQC_VERBOSE")
+
+  ifelse(verbosity != "DEBUG",
+         Sys.setenv("GHQC_VERBOSE" = "DEBUG"),
+         Sys.setenv("GHQC_VERBOSE" = "INFO"))
+
+  init_logger()
+
+}
+
 

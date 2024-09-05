@@ -116,4 +116,5 @@ check_github_credentials <- function() {
     rlang::abort(message = "Token not equal to 40 characters. Please reset GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
   }
 
+  return(creds)
 }

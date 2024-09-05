@@ -14,12 +14,13 @@ ghqc_update_server <- function(id) {
     preview_trigger <- reactiveVal(FALSE)
     post_trigger <- reactiveVal(FALSE)
 
-    waiter_hide()
-
     git_creds <- reactive({
       tryCatch({
-        check_github_credentials()
+        creds <- check_github_credentials()
+        waiter_hide()
+        return(creds)
       }, error = function(e){
+        waiter_hide()
         error(.le$logger, glue::glue("There was an error retrieving credentials."))
         showModal(modalDialog("There was an error retrieving credentials.", footer = NULL))
       })

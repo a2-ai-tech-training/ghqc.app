@@ -7,19 +7,27 @@
 NULL
 
 ghqc_update_server <- function(id) {
-  # check gitcreds
-  check_github_credentials()
-
-  error_if_git_not_initialized()
-
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)
     post_trigger <- reactiveVal(FALSE)
 
-    waiter_hide()
+    git_creds <- reactive({
+      tryCatch(
+        {
+          creds <- check_github_credentials()
+          waiter_hide()
+          return(creds)
+        },
+        error = function(e) {
+          waiter_hide()
+          showModal(modalDialog("There was an error setting up the app. Please check log messages.", footer = NULL))
+        }
+      )
+    })
 
     org <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_organization()
@@ -32,6 +40,7 @@ ghqc_update_server <- function(id) {
     })
 
     repo <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_current_repo()
@@ -51,7 +60,7 @@ ghqc_update_server <- function(id) {
         {
           milestone_list <- get_open_milestone_names(org = org(), repo = repo())
 
-          if(length(milestone_list) == 0){
+          if (length(milestone_list) == 0) {
             w_gh$hide()
             showModal(modalDialog(glue::glue("There were no open milestones found in {org()}/{repo()}. Please use the Create QC app before using the Update QC app."), footer = NULL))
             return()

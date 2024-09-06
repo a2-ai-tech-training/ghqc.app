@@ -294,7 +294,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           issues_in_milestone <- tryCatch({
               get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
             }, error = function(e){
-              debug(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
+              debug(.le$logger, glue::glue("There were no milestones to query: {e$message}"))
               return(list())
             })
         },

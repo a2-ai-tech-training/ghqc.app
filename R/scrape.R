@@ -127,13 +127,11 @@ issue_to_markdown <- function(owner, repo, issue_number) {
   )
 } # issue_to_markdown
 
-markdown_to_pdf <- function(rmd_content, repo, milestone_names, input_name, just_tables) {
-  wd <- getwd()
-
+get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
   milestone_str <- glue::glue_collapse(milestone_names, "-")
 
   pdf_name <- {
-    if (is.null(input_name)) {
+    if (is.null(input_name) || input_name == "") {
       if (just_tables) {
         glue::glue("tables-{repo}-{milestone_str}.pdf")
       }
@@ -152,6 +150,11 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, input_name, just
       }
     }
   }
+}
+
+#' @import log4r
+markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
+  debug(.le$logger, "Creating report pdf...")
 
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
@@ -161,11 +164,17 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, input_name, just
   writeLines(rmd_content, con = rmd)
 
   # create pdf from rmd
-  pdf_path <- file.path(wd, pdf_name)
+  location <- normalizePath(location)
+  pdf_path <- file.path(location, pdf_name)
   suppressWarnings(rmarkdown::render(rmd, output_file = pdf_path, quiet = TRUE))
   suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
-  pdf_path_abs <- normalizePath(pdf_path)
-  return(glue::glue("Output file: {pdf_path_abs}"))
+
+  pdf_path_abs <- get_simple_path(normalizePath(pdf_path))
+
+  info(.le$logger, "Converted rmd to pdf")
+  info(.le$logger, glue::glue("Created report pdf: {pdf_path_abs}"))
+
+  return(pdf_path_abs)
 } # markdown_to_pdf
 
 scrape_issue <- function(owner, repo, issue_number) {
@@ -344,29 +353,30 @@ create_set_of_issue_sections <- function(issues, owner, repo) {
   issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
 }
 
+#' @import log4r
 create_milestone_report_section <- function(owner, repo, milestone_name, env, just_tables = FALSE) {
+  debug(.le$logger, glue::glue("Creating section for milestone: {milestone_name}..."))
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
 
+  debug(.le$logger, glue::glue("Creating summary table for milestone: {milestone_name}..."))
   # summary table
   summary_csv <- create_summary_csv(issues, env)
   summary_table_section <- create_summary_table_section(summary_csv)
-
+  info(.le$logger, glue::glue("Created summary table for milestone: {milestone_name}"))
   # issues
   issue_sections <- create_set_of_issue_sections(issues, owner, repo)
 
-  if (just_tables) {
-    return(summary_table_section)
+  res <- {
+    if (just_tables) {
+      summary_table_section
+    }
+    else { # put it all together
+      paste0(summary_table_section, issue_sections)
+    }
   }
+  info(.le$logger, glue::glue("Created section for milestone: {milestone_name}"))
+  return(res)
 
-  else {
-    return(
-      # put it all together
-      paste0(
-        summary_table_section,
-        issue_sections
-      )
-    )
-  } # else
 } # create_milestone_report_section
 
 clean_input <- function(milestones_in) {
@@ -433,13 +443,13 @@ check_milestones <- function(milestone_names, owner, repo) {
 }
 
 #' @export
+#' @import log4r
 ghqc_report <- function(milestone_names = NULL,
+                        input_name = NULL,
+                        just_tables = FALSE,
+                        location = ".",
                         owner = get_organization(),
-                        repo = get_current_repo(),
-                        pdf_name = NULL,
-                        just_tables = FALSE) {
-  # check gitcreds
-  check_github_credentials()
+                        repo = get_current_repo()) {
 
   # get user input if milestone_names not inputted (check existence here)
   if (is.null(milestone_names)) {
@@ -450,27 +460,58 @@ ghqc_report <- function(milestone_names = NULL,
     check_milestones(milestone_names, owner, repo)
   }
 
+
+  if (fs::is_file(location)) {
+    error(.le$logger, glue::glue("Inputted directory {location} is a file path. Input an existing directory."))
+    rlang::abort(message = glue::glue("Inputted directory {location} is a file path.<br>Input an existing directory."))
+  }
+
+  # check location exists
+  if (!fs::dir_exists(location)) {
+    error(.le$logger, glue::glue("Inputted directory {location} doesn't exist. Input an existing directory."))
+    rlang::abort(message = glue::glue("Inputted directory {location} doesn't exist.<br>Input an existing directory."))
+  }
+
+  debug(.le$logger, "Creating report introduction...")
   # intro
   header_path <- create_header()
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
+  info(.le$logger, "Created report introduction")
 
+  debug(.le$logger, "Creating milestone sections...")
   # create milestone sections
   milestone_sections <- lapply(milestone_names, function(milestone_name) {
     milestone_body <- create_milestone_report_section(owner, repo, milestone_name, parent.frame(n = 2), just_tables)
     create_big_section(milestone_name, milestone_body)
   })
+  info(.le$logger, "Created milestone sections")
 
   # appendix
 
-  rmd <- glue::glue_collapse(c(intro, set_up_chunk, milestone_sections), sep = "")
+  rmd_content <- glue::glue_collapse(c(intro, set_up_chunk, milestone_sections), sep = "")
 
+  pdf_name <- get_pdf_name(input_name = input_name,
+                           milestone_names = milestone_names,
+                           just_tables = just_tables,
+                           repo = repo)
 
   # create pdf from markdown
-  #result <- suppressWarnings({
-  capture.output({
-    output <- markdown_to_pdf(rmd, repo, milestone_names, pdf_name, just_tables)
-  })
-  output
-  # })
+
+  debug(.le$logger, "Converting rmd to pdf...")
+
+  markdown_to_pdf(rmd_content = rmd_content,
+                  repo = repo,
+                  milestone_names = milestone_names,
+                  just_tables = just_tables,
+                  location = location,
+                  pdf_name = pdf_name)
+}
+
+get_simple_path <- function(working_dir = gert::git_find()) {
+  home_dir <- Sys.getenv("HOME")
+  simple_path <- stringr::str_replace(working_dir,
+                                      stringr::fixed(home_dir),
+                                      "~")
+  return(simple_path)
 }

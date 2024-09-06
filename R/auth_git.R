@@ -34,7 +34,16 @@ get_gh_url <- function() {
 #' @import log4r
 #' @export
 get_gh_api_url <- function() {
-  res <- glue::glue("{get_gh_url()}/api/v3")
+  gh_url <- tryCatch(
+    {
+    get_gh_url()
+    },
+    error = function(e) {
+      rlang::abort(message =  e$message)
+    }
+  )
+
+  res <- glue::glue("{gh_url}/api/v3")
   info(.le$logger, glue::glue("Configured api url: {res}"))
   res
 }

@@ -72,7 +72,7 @@ list_files_and_dirs <- function(path, pattern, all.files) {
   # changed so pattern is only filtered out after retrieving all non filtered out values
   included_files <- fs::dir_ls(path = path, all = all.files, regexp = NULL, recurse = F, ignore.case = TRUE, invert = TRUE)
 
-  if (!is.null(pattern)){
+  if (!is.null(pattern)) {
     included_files <- included_files[!grepl(pattern, included_files)]
   }
 
@@ -135,12 +135,13 @@ treeNavigatorServer <- function(
 
     output[["treeNavigator"]] <- renderJstree({
       req(...)
+      req(rootFolder())
       debug(.le$logger, glue::glue("Rendering jstree for rootFolder: {rootFolder}"))
 
       suppressMessages(jstree(
         nodes = list(
           list(
-            text = basename(rootFolder),
+            text = basename(rootFolder()),
             type = "folder",
             children = FALSE,
             li_attr = list(
@@ -166,10 +167,6 @@ treeNavigatorServer <- function(
       ))
     })
 
-    # changed text of rootFolder to give back basename so need to
-    # reconstruct original/full pathing of files to allow js to incrementally load in files
-    dirname <- dirname(rootFolder)
-
     # example: given input "testTree/inst/www", full_path will be "/path/to/proj/testTree/inst/www"
     observeEvent(input[["path_from_js"]], {
       input <- input[["path_from_js"]]
@@ -180,6 +177,9 @@ treeNavigatorServer <- function(
         debug(.le$logger, "Input is NULL, resetting selection")
         return()
       }
+      # changed text of rootFolder to give back basename so need to
+      # reconstruct original/full pathing of files to allow js to incrementally load in files
+      dirname <- dirname(rootFolder())
       full_path <- fs::path(dirname, input)
       debug(.le$logger, glue::glue("Full path constructed: {full_path}"))
 
@@ -217,7 +217,7 @@ treeNavigatorServer <- function(
       debug(.le$logger, glue::glue("Selected paths: {paste(selected, collapse = ', ')}"))
 
       adjusted_paths <- sapply(selected, function(item) {
-        fs::path_rel(item[["path"]], start = basename(rootFolder))
+        fs::path_rel(item[["path"]], start = basename(rootFolder()))
       })
       Paths(adjusted_paths)
     })

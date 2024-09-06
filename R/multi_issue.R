@@ -14,7 +14,7 @@ create_issue <- function(file, issue_params) {
     issue_params$assignees <- I(file$assignees)
   }
 
-  issue_params$.api_url <-dirname(gert::git_remote_list()$url[1])
+  issue_params$.api_url <- Sys.getenv("GHQC_API_URL")
 
   # create the issue
   debug(.le$logger, glue::glue("Creating issue... {issue_params$title}"))
@@ -48,14 +48,16 @@ create_issues <- function(data) {
     if (!is.null(data$description)) {
       milestone_params$description <- data$description
     }
-    debug(.le$logger, glue::glue("Adding milestones characteristics: {milestone_params}"))
+    debug(.le$logger, glue::glue("Adding milestone characteristics: {milestone_params}"))
 
     # add milestone to the issue_params
     issue_params$milestone <- get_milestone_number(milestone_params)
   }
 
+
   file_names <- glue::glue_collapse(purrr::map(data$files, "name"), sep = ", ", last = " and ")
   debug(.le$logger, glue::glue("Creating checklists for files: {file_names}"))
+
   # create an issue for each file
   lapply(data$files, function(file) {
     issue <- create_issue(file, issue_params)
@@ -69,7 +71,7 @@ create_issues <- function(data) {
     debug(.le$logger, glue::glue("Issue number: {issue$number}"))
     return(issue)
   })
-  info(.le$logger, glue::glue("Created checklists for files: {file_names}"))
+  info(.le$logger, glue::glue("Created checklist(s) for file(s): {file_names}"))
 } # create_issues
 
 

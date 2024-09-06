@@ -70,19 +70,8 @@ get_env_url <- function() {
 
 #' @import log4r
 #' @export
-get_gh_url <- function() {
+get_gh_url <- function(remote_url) {
   env_url <- get_env_url()
-
-  # Check for errors
-  check_git_inited()
-
-  check_remote_set()
-
-  remote <- get_remote()
-  remote_name <- get_remote()$name
-  remote_url <- get_remote_url(remote)
-
-  check_upstream_set(remote_name)
 
   check_remote_matches_env_url(remote_url, env_url)
 
@@ -98,10 +87,10 @@ check_remote_matches_env_url <- function(remote_url, env_url) {
 
 #' @import log4r
 #' @export
-get_gh_api_url <- function() {
+get_gh_api_url <- function(remote_url) {
   gh_url <- tryCatch(
     {
-      get_gh_url()
+      get_gh_url(remote_url)
     },
     error = function(e) {
       rlang::abort(message = e$message)
@@ -131,9 +120,20 @@ get_gh_token <- function() {
 check_github_credentials <- function() {
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 
+  # Check for errors
+  check_git_inited()
+
+  check_remote_set()
+
+  remote <- get_remote()
+  remote_name <- get_remote()$name
+  remote_url <- get_remote_url(remote)
+
+  check_upstream_set(remote_name)
+
   tryCatch(
     {
-      api_url <- get_gh_api_url()
+      api_url <- get_gh_api_url(remote_url)
       token <- get_gh_token()
     },
     error = function(e) {
@@ -189,6 +189,9 @@ check_github_credentials <- function() {
   return(creds)
 
 }
+
+#TODO
+# add the getcreds_get checks and api call logic here
 
 # confirm_creds <- function() {
 #

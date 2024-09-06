@@ -32,8 +32,8 @@ get_gh_url <- function() {
   remotes <- gert::git_remote_list()
 
   if (nrow(remotes) == 0) {
-    error(.le$logger, "There is no remote URL set.")
-    rlang::abort("There is no remote URL set.")
+    error(.le$logger, "There was no remote URL set.")
+    rlang::abort("There was no remote URL set.")
   }
 
   remote_name <- Sys.getenv("GHQC_REMOTE_NAME", "origin") # TODO: will have to adjust to multi-remote pr

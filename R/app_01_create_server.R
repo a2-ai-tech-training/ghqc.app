@@ -9,16 +9,26 @@
 NULL
 
 ghqc_create_server <- function(id) {
-  # check gitcreds
-  check_github_credentials()
+  rproj_root_dir <- reactive({
+    tryCatch(
+      {
+        rprojroot::find_rstudio_root_file()
+      },
+      error = function(e) {
+        waiter_hide()
+        error(.le$logger, glue::glue("There was no Rproj file found within the directory '{getwd()}'."))
+        showModal(modalDialog(glue::glue("There was no Rproj file found within the directory '{getwd()}'."), footer = NULL))
+      }
+    )
+  })
 
-  error_if_git_not_initialized()
-
-  rproj_root_dir <- rprojroot::find_rstudio_root_file()
-  if (getwd() != rproj_root_dir) {
-    setwd(rproj_root_dir)
-    info(.le$logger, glue::glue("Directory changed to project root: {rproj_root_dir}"))
-  }
+  observe({
+    req(rproj_root_dir())
+    if (getwd() != rproj_root_dir()) {
+      setwd(rproj_root_dir())
+      info(.le$logger, glue::glue("Directory changed to project root: {rproj_root_dir()}"))
+    }
+  })
 
   selected_items <- treeNavigatorServer(
     id,
@@ -32,10 +42,24 @@ ghqc_create_server <- function(id) {
     ns <- session$ns
 
     qc_trigger <- reactiveVal(FALSE)
-
-    waiter_hide()
+    # used reactive vs observe here to stop downstream
+    git_creds <- reactive({
+      req(rproj_root_dir())
+      tryCatch(
+        {
+          creds <- check_github_credentials()
+          waiter_hide()
+          return(creds)
+        },
+        error = function(e) {
+          waiter_hide()
+          showModal(modalDialog("There was an error setting up the app. Please check log messages.", footer = NULL))
+        }
+      )
+    })
 
     org <- reactive({
+      req(git_creds(), rproj_root_dir())
       tryCatch(
         {
           get_organization()
@@ -48,6 +72,7 @@ ghqc_create_server <- function(id) {
     })
 
     repo <- reactive({
+      req(git_creds(), rproj_root_dir())
       tryCatch(
         {
           get_current_repo()
@@ -60,6 +85,7 @@ ghqc_create_server <- function(id) {
     })
 
     members <- reactive({
+      req(git_creds(), rproj_root_dir())
       tryCatch(
         {
           get_collaborators(owner = org(), repo = repo())
@@ -92,7 +118,7 @@ ghqc_create_server <- function(id) {
         {
           milestone_list <- get_open_milestone_names(org = org(), repo = repo())
 
-          if(length(milestone_list) == 0){
+          if (length(milestone_list) == 0) {
             updateSelectizeInput(
               session,
               "milestone_existing",
@@ -147,21 +173,22 @@ ghqc_create_server <- function(id) {
       tagList(
         radioButtons(ns("milestone_toggle"), "State of QC Item List", choices = c("New", "Existing"), inline = TRUE),
         conditionalPanel(
-          condition = "input.milestone_toggle == `New`", ns=ns,
+          condition = "input.milestone_toggle == `New`", ns = ns,
           textInput(ns("milestone"),
-                    "Create a QC Item List (Github milestone)",
-                    placeholder = "Name new QC Item List (required)",
-                    width = "100%"
+            "Create a QC Item List (Github milestone)",
+            placeholder = "Name new QC Item List (required)",
+            width = "100%"
           )
         ),
         conditionalPanel(
-          condition = "input.milestone_toggle == `Existing`", ns=ns,
+          condition = "input.milestone_toggle == `Existing`", ns = ns,
           selectizeInput(ns("milestone_existing"),
-                      "Select a QC Item List (Github milestone)",
-                      choices = "",
-                      multiple = FALSE,
-                      width = "100%",
-                      options = list(placeholder = "Select existing QC Item List (required)")),
+            "Select a QC Item List (Github milestone)",
+            choices = "",
+            multiple = FALSE,
+            width = "100%",
+            options = list(placeholder = "Select existing QC Item List (required)")
+          ),
         ),
         textAreaInput(
           ns("milestone_description"),
@@ -220,15 +247,18 @@ return "<div><strong>" + escape(item.username) + "</div>"
     observe({
       req(org(), repo(), rv_milestone())
 
-      issue_titles <- tryCatch({
-        issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
-        issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
-        issue_titles_with_root_dir <- paste0(basename(rproj_root_dir), "/", issue_titles)
-        issue_titles_with_root_dir
-      }, error = function(e){
-        debug(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
-        return(list())
-      })
+      issue_titles <- tryCatch(
+        {
+          issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
+          issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
+          issue_titles_with_root_dir <- paste0(basename(rproj_root_dir), "/", issue_titles)
+          issue_titles_with_root_dir
+        },
+        error = function(e) {
+          debug(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
+          return(list())
+        }
+      )
 
       session$sendCustomMessage("highlightPaths", issue_titles)
     })
@@ -291,12 +321,15 @@ return "<div><strong>" + escape(item.username) + "</div>"
           git_sync_status <- git_ahead_behind()
           untracked_selected_files <- Filter(function(file) check_if_qc_file_untracked(file), file_names)
 
-          issues_in_milestone <- tryCatch({
+          issues_in_milestone <- tryCatch(
+            {
               get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
-            }, error = function(e){
+            },
+            error = function(e) {
               debug(.le$logger, glue::glue("There were no milestones to query: {e$message}"))
               return(list())
-            })
+            }
+          )
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving one of the status_checks items: {e$message}"))

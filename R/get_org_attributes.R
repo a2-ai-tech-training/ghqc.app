@@ -94,7 +94,6 @@ list_milestones <- function(org, repo) {
 }
 
 get_remote_name <- function(remote_url) {
-
   # remove .git and extract name
   remote_repo_name <- stringr::str_extract(remote_url, "(?<=/)[^/]+(?=\\.git$)")
   info(.le$logger, glue::glue("Retrieved remote repository name: {remote_repo_name}"))

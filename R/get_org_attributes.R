@@ -1,6 +1,6 @@
 #' @import log4r
 get_names_and_usernames <- function(username) {
-  user <- gh::gh("GET /users/{username}", .api_url = dirname(gert::git_remote_list()$url[1]), username = username)
+  user <- gh::gh("GET /users/{username}", .api_url = Sys.getenv("GHQC_API_URL"), username = username)
   return(list(
     username = user$login,
     name = user$name
@@ -12,7 +12,7 @@ get_repos <- function(org) {
   debug(.le$logger, glue::glue("Retrieving repos in org {org}..."))
   repos <- tryCatch(
     {
-      gh::gh("GET /orgs/:org/repos", .api_url = dirname(gert::git_remote_list()$url[1]), org = org, .limit = Inf)
+      gh::gh("GET /orgs/:org/repos", .api_url = Sys.getenv("GHQC_API_URL"), org = org, .limit = Inf)
     },
     error = function(e) {
       error(.le$logger, glue::glue("Failed to get repos in org {org}. {e$message}"))
@@ -39,18 +39,28 @@ filter_for_non_empty_milestones <- function(milestones) {
 get_open_milestone_objects <- function(owner, repo) {
   debug(.le$logger, glue::glue("Retrieving open milestones in organization {owner}, repo {repo}..."))
 
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = dirname(gert::git_remote_list()$url[1]), owner = owner, repo = repo, state = "open", .limit = Inf)
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = Sys.getenv("GHQC_API_URL"), owner = owner, repo = repo, state = "open", .limit = Inf)
   info(.le$logger, glue::glue("Retrieved {length(milestones)} open milestone(s) in repo {repo}"))
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)
 }
 
 #' @import log4r
+get_closed_milestone_objects <- function(owner, repo) {
+  debug(.le$logger, glue::glue("Retrieving closed milestones in organization {owner}, repo {repo}..."))
+
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = dirname(gert::git_remote_list()$url[1]), owner = owner, repo = repo, state = "closed", .limit = Inf)
+  info(.le$logger, glue::glue("Retrieved {length(milestones)} closed milestone(s) in repo {repo}"))
+  non_empty_milestones <- filter_for_non_empty_milestones(milestones)
+}
+
+#' @import log4r
 get_all_milestone_objects <- function(owner, repo) {
-  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .api_url = dirname(gert::git_remote_list()$url[1]), state = "all", .limit = Inf)
+  gh::gh("GET /repos/:owner/:repo/milestones", owner = owner, repo = repo, .api_url = Sys.getenv("GHQC_API_URL"), state = "all", .limit = Inf)
 }
 
 #' @import log4r
 get_open_milestone_names <- function(org, repo) {
+
   tryCatch({
   milestones <- get_open_milestone_objects(org, repo)
   purrr::map_chr(milestones, "title")
@@ -61,12 +71,101 @@ get_open_milestone_names <- function(org, repo) {
 }
 
 #' @import log4r
+get_closed_milestone_names <- function(org, repo) {
+  tryCatch({
+    milestones <- get_closed_milestone_objects(org, repo)
+    purrr::map_chr(milestones, "title")
+  }, error = function(e) {
+    error(.le$logger, glue::glue("Failed to retrieve closed milestone names for organization {org} and {repo}."))
+    rlang::abort(e$message)
+  })
+}
+
+#' @import log4r
 #' @export
 list_milestones <- function(org, repo) {
+  debug(.le$logger, glue::glue("Retrieving milestones in organization {org}, repo {repo}..."))
   milestones <- get_all_milestone_objects(org, repo)
-
+  info(.le$logger, glue::glue("Retrieved {length(milestones)} total milestone(s) in repo {repo}"))
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)
-  purrr::map_chr(non_empty_milestones, "title")
+  info(.le$logger, glue::glue("Retrieved {length(non_empty_milestones)} non-empty milestone(s) in repo {repo}"))
+  res <- purrr::map_chr(non_empty_milestones, "title")
+  return(res)
+}
+
+get_remote_name <- function(remote_url) {
+
+  # remove .git and extract name
+  remote_repo_name <- stringr::str_extract(remote_url, "(?<=/)[^/]+(?=\\.git$)")
+  info(.le$logger, glue::glue("Retrieved remote repository name: {remote_repo_name}"))
+  return(remote_repo_name)
+}
+
+get_remote_url <- function(remote) {
+
+  api_url <- dirname(remote$url)
+  debug(.le$logger, glue::glue("Setting GHQC_API_URL environment variable: {api_url}..."))
+  info(.le$logger, glue::glue("Connected to remote repository url: {api_url}"))
+
+  Sys.setenv("GHQC_API_URL" = api_url)
+  info(.le$logger, glue::glue("Set GHQC_API_URL environment variable: {Sys.getenv(\"GHQC_API_URL\")}"))
+
+  return(api_url)
+}
+
+#' @import log4r
+#' @export
+get_remote <- function(remote_list) {
+  debug(.le$logger, glue::glue("Retrieved list of remotes: \n{glue::glue_collapse(apply(remote_list, 1, function(row) {
+    glue::glue(\"name: {row['name']}, url: {row['url']}\")
+  }), sep = \"\n\")}"))
+
+  debug(.le$logger, glue::glue("Retrieving remote..."))
+  remote <- {
+    ### FIRST: check if there's a single remote,
+    num_remotes <- nrow(remote_list)
+    if (num_remotes == 1) {
+      remote_list[1, ]
+    } # FIRST
+
+    ### SECOND: check if env var set
+    else if (Sys.getenv("GHQC_REMOTE_NAME") != "") {
+      # else, there are multiple or zero remotes
+      info(.le$logger, "Multiple remote names detected")
+
+      remote_env_var <- Sys.getenv("GHQC_REMOTE_NAME")
+
+      info(.le$logger, glue::glue("Retrieving remote name from GHQC_REMOTE_NAME environment variable: {remote_env_var}"))
+      # if in list of remotes
+      if (remote_env_var %in% remote_list$name) {
+        remote_list[remote_list$name == remote_env_var, ][1, ]
+      }
+      else {
+        error(.le$logger, glue::glue("{remote_env_var} not in list of remotes"))
+        rlang::abort(glue::glue("{remote_env_var} not in list of remotes"))
+      }
+    } # SECOND
+
+    ### THIRD: check if origin exists in remote list
+    else if ("origin" %in% remote_list$name) {
+      info(.le$logger, "No GHQC_REMOTE_NAME environment variable found. Using \"origin\" from list of remotes.")
+      remote_list[remote_list$name == "origin", ][1, ]
+    } # THIRD
+
+    ### LAST: try to get first remote
+    else {
+      tryCatch({
+        info(.le$logger, glue::glue("No GHQC_REMOTE_NAME environment variable found. Using first remote from list of remotes: {remote_list$name[1]}"))
+        remote_list[1, ]
+        # error if no remote urls
+      }, error = function(e) {
+        error(.le$logger, glue::glue("No remote repository found"))
+        rlang::abort(e$message)
+      })
+    } # LAST
+  } # remote
+
+  return(remote)
 }
 
 #' @import log4r
@@ -80,22 +179,12 @@ get_current_repo <- function() {
   # get remote repo url from local repo
   remote_list <- gert::git_remote_list(repo = local_repo)
 
-  remote_repo_url <- gert::git_remote_list(repo = local_repo)$url[1]
-  # extract the remote repo name from the remote repo url
-  remote_repo_name <- stringr::str_extract(remote_repo_url, "(?<=/)[^/]+(?=\\.git$)")
-
-  if(is.na(remote_repo_name)){
-    error(.le$logger, "There is no remote URL set.")
-    rlang::abort("There is no remote URL set.")
-  }
-
-  info(.le$logger, glue::glue("Connected to repository: {remote_repo_name}"))
-
-  remote_repo_name
+  remote <- get_remote(remote_list)
   }, error = function(e) {
     error(.le$logger, glue::glue("No local git repository found."))
     rlang::abort(e$message)
   })
+  remote_repo_name <- get_remote_name(remote$url)
 }
 
 #' @import log4r
@@ -103,7 +192,7 @@ get_organization_name_from_url <- function(remote_url) {
   # https url
   matches <- {
     if (grepl("https://", remote_url)) {
-      regmatches(remote_url, regexec("https://[^/]+/([^/]+)/[^/]+", remote_url))
+      regmatches(remote_url, regexec("https://[^/]+/([^/]+)", remote_url)) #/[^/]+
     }
     # ssh url
     else if (grepl("git@", remote_url)) {
@@ -128,30 +217,30 @@ get_organization_name_from_url <- function(remote_url) {
 get_organization <- function() {
   tryCatch({
   debug(.le$logger, glue::glue("Connecting to organization..."))
+
   # repo
-  debug(.le$logger, glue::glue("Retrieving repo path..."))
+  debug(.le$logger, glue::glue("Retrieving local repo path..."))
   repo_path <- gert::git_find()
-  debug(.le$logger, glue::glue("Retrieved repo path: {repo_path}"))
+  debug(.le$logger, glue::glue("Retrieved local repo path: {repo_path}"))
 
-  # remotes
+  # remote
   debug(.le$logger, glue::glue("Retrieving list of remotes..."))
-  remotes <- gert::git_remote_list(repo = repo_path)
-  remotes_string <- glue::glue_collapse(apply(remotes, 1, function(row) {
-    glue::glue("name: {row['name']}, url: {row['url']}")
-  }), sep = "\n")
-  debug(.le$logger, glue::glue("Retrieved list of remotes: \n{remotes_string}"))
+  remotes_list <- gert::git_remote_list(repo = repo_path)
+  remote <- get_remote(remotes_list)
 
-  # url
-  debug(.le$logger, glue::glue("Retrieving first url in list of remotes..."))
-  remote_url <- remotes$url[1]
+  # remote url
+  debug(.le$logger, glue::glue("Retrieving remote url..."))
+  remote_url <- get_remote_url(remote)
   debug(.le$logger, glue::glue("Retrieved remote url: {remote_url}"))
 
+  # org name
   debug(.le$logger, glue::glue("Retrieving organization name from remote url..."))
+
   org_name <- get_organization_name_from_url(remote_url)
-  debug(.le$logger, glue::glue("Retrieved organization name {org_name}"))
 
   info(.le$logger, glue::glue("Connected to organization: {org_name}"))
-  org_name
+
+  return(org_name)
   }, error = function(e) {
     error(.le$logger, "Failed to connect to organization. Ensure the repository exists and that remotes are correctly configured.")
     rlang::abort(e$message)
@@ -160,32 +249,32 @@ get_organization <- function() {
 
 #' @import log4r
 get_issue <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number", .api_url = dirname(gert::git_remote_list()$url[1]),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number", .api_url = Sys.getenv("GHQC_API_URL"),
          owner = owner, repo = repo, issue_number = issue_number)
 } # get_issue
 
 #' @import log4r
 get_issue_comments <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/comments", .api_url = dirname(gert::git_remote_list()$url[1]),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/comments", .api_url = Sys.getenv("GHQC_API_URL"),
          owner = owner, repo = repo, issue_number = issue_number)
 } # get_issue_comments
 
 #' @import log4r
 get_issue_events <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/events", .api_url = dirname(gert::git_remote_list()$url[1]),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/events", .api_url = Sys.getenv("GHQC_API_URL"),
          owner = owner, repo = repo, issue_number = issue_number)
 } # get_issue_events
 
 #' @import log4r
 get_issue_timeline <- function(owner, repo, issue_number) {
-  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/timeline", .api_url = dirname(gert::git_remote_list()$url[1]),
+  gh::gh("GET /repos/:owner/:repo/issues/:issue_number/timeline", .api_url = Sys.getenv("GHQC_API_URL"),
          owner = owner, repo = repo, issue_number = issue_number)
 }
 
 #' @import log4r
 get_issues <- function(owner, repo, milestone) {
   params <- c(owner, repo)
-  gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
+  gh::gh("GET /repos/:owner/:repo/issues", .api_url = Sys.getenv("GHQC_API_URL"),
          owner = owner, repo = repo, milestone = milestone_number, state = "all")
 }
 
@@ -196,7 +285,7 @@ get_all_issues_in_repo <- function(owner, repo) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = Sys.getenv("GHQC_API_URL"),
                   owner = owner,
                   repo = repo,
                   state = "open",
@@ -218,7 +307,7 @@ get_all_issues_in_repo <- function(owner, repo) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = Sys.getenv("GHQC_API_URL"),
                   owner = owner,
                   repo = repo,
                   state = "closed",
@@ -259,7 +348,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = Sys.getenv("GHQC_API_URL"),
                   owner = owner,
                   repo = repo,
                   milestone = milestone_number,
@@ -282,7 +371,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   page <- 1
 
   repeat {
-    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = dirname(gert::git_remote_list()$url[1]),
+    res <- gh::gh("GET /repos/:owner/:repo/issues", .api_url = Sys.getenv("GHQC_API_URL"),
                   owner = owner,
                   repo = repo,
                   milestone = milestone_number,
@@ -309,7 +398,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
 get_milestone_url <- function(owner, repo, milestone_name) {
   milestone_number <- get_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
   milestone <- gh::gh(
-    "GET /repos/{owner}/{repo}/milestones/{milestone_number}", .api_url = dirname(gert::git_remote_list()$url[1]),
+    "GET /repos/{owner}/{repo}/milestones/{milestone_number}", .api_url = Sys.getenv("GHQC_API_URL"),
     owner = owner,
     repo = repo,
     milestone_number = milestone_number
@@ -321,7 +410,7 @@ get_milestone_url <- function(owner, repo, milestone_name) {
 #' @import log4r
 get_collaborators <- function(owner = get_organization(), repo = get_current_repo()) {
   tryCatch({
-    query <- gh::gh("GET /repos/{owner}/{repo}/collaborators", .api_url = dirname(gert::git_remote_list()$url[1]), .limit = Inf, owner = owner, repo = repo)
+    query <- gh::gh("GET /repos/{owner}/{repo}/collaborators", .api_url = Sys.getenv("GHQC_API_URL"), .limit = Inf, owner = owner, repo = repo)
     members_list <- purrr::map(query, ~ get_names_and_usernames(.x$login))
     members_df <- purrr::map_df(members_list, ~ as.data.frame(t(.x), stringsAsFactors = FALSE))
     return(members_df)

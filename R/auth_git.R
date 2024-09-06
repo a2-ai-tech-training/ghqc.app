@@ -4,14 +4,10 @@ get_gh_url <- function() {
   env_url <- Sys.getenv("GHQC_GITHUB_URL")
   env_url <- gsub("/$", "", env_url)
 
-  # if GHQC_GITHUB_URL not set
+  # if GHQC_GITHUB_URL not set, use github.com
   if (!nzchar(env_url)) {
-    # set as github as default
-    #Sys.setenv("GHQC_GITHUB_URL" = "https://github.com")
-
-    # warn that default is used
+    # warn that default will be used
     warn(.le$logger, "No GHQC_GITHUB_URL environment variable found. Using Github URL \"https://github.com\". To specify otherwise, set GHQC_GITHUB_URL environment variable, likely in your ~/.Renviron file.")
-
     env_url <- "https://github.com"
   }
   # else if was set
@@ -19,16 +15,30 @@ get_gh_url <- function() {
     info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL environment variable: {env_url}"))
   }
 
-  # get remote url
-  remote <- gert::git_remote_list()$url[1]
-  remote_url <- stringr::str_extract(remote, "^https?://[^/]+")
+  # error if not https
+  url_starts_with_https <- stringr::str_starts(env_url, "https://")
+  if (!url_starts_with_https) {
+    error(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
+    rlang::abort(message = glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
+  }
 
+  # remove /api/v3 if at the end
+  env_url <- stringr::str_remove(env_url, "/api/v3$")
+
+  # get remote url
+  remote <- get_remote()
+  remote_url <- get_remote_url(remote)
+
+  check_remote_matches_env_url(remote_url, env_url)
+
+  return(env_url)
+}
+
+check_remote_matches_env_url <- function(remote_url, env_url) {
   if (remote_url != env_url) {
     error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
     rlang::abort(message = glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
   }
-
-  return(env_url)
 }
 
 #' @import log4r

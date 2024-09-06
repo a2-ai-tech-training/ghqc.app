@@ -16,7 +16,7 @@ get_gh_url <- function() {
   }
   # else if was set
   else {
-    info(.le$logger, glue::glue("Retrived GHQC_GITHUB_URL environment variable: {env_url}"))
+    info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL environment variable: {env_url}"))
   }
 
   # get remote url
@@ -47,8 +47,8 @@ get_gh_token <- function() {
     error(.le$logger, "No Github token found. Please set GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
     rlang::abort(message = "No Github token found. Please set GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
   }
-  info(.le$logger, glue::glue("Retrived GHQC_GITHUB_PAT environment variable: {substr(res, 1, 4)}************************************"))
-  debug(.le$logger, glue::glue("Retrived GHQC_GITHUB_PAT environment variable: {res}"))
+  info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_PAT environment variable: {substr(res, 1, 4)}************************************"))
+  debug(.le$logger, glue::glue("Retrieved GHQC_GITHUB_PAT environment variable: {res}"))
   res
 }
 

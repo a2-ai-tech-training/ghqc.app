@@ -13,6 +13,7 @@ run_gitcreds_get <- function(url, renviron_token) {
   tryCatch({
     retrieved_creds <- gitcreds::gitcreds_get(url, use_cache = FALSE)
     gitcreds_token <- retrieved_creds$password
+    info(.le$logger)
 
     check_stored_token_matches_renviron_token(renviron_token = renviron_token,
                                               gitcreds_token = gitcreds_token)

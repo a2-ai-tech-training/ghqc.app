@@ -21,7 +21,7 @@ get_gh_url <- function() {
 
   tryCatch(
     {
-      gert::git_find()
+      repo <- gert::git_find()
     },
     error = function(e) {
       error(.le$logger, "There was no local Git repository found.")
@@ -39,6 +39,18 @@ get_gh_url <- function() {
   remote_name <- Sys.getenv("GHQC_REMOTE_NAME", "origin") # TODO: will have to adjust to multi-remote pr
 
   current_branch <- gert::git_branch()
+
+  if (is.null(current_branch)){
+    error(.le$logger, glue::glue("There were no branches found for the existing repository: {repo} \n",
+                                 "To create a branch, use one of the below for you default branch name: \n",
+                                 "  git branch -M main \n",
+                                 "  git branch -M master \n",
+                                 "Push the branch to the remote repository using: \n",
+                                 "  git push -u {remote_name} main \n",
+                                 "  git push -u {remote_name} master"))
+    rlang::abort(glue::glue("There were no branches found for the existing repo: {repo}"))
+  }
+
   tracking_branch <- gert::git_branch_list() %>%
     dplyr::filter(name == current_branch & upstream != "") %>%
     dplyr::pull(upstream)

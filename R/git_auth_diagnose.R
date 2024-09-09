@@ -84,7 +84,7 @@ get_url <- function() {
 }
 
 #' @export
-ghqc_diagnose_git_auth <- function(org = get_organization(), repo = get_current_repo()) {
+ghqc_authenticate_git <- function(org = get_organization(), repo = get_current_repo()) {
   url <- get_url()
 
   username <- "PersonalAccessToken"

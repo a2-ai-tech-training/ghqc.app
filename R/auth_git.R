@@ -1,24 +1,4 @@
-#' @import log4r
-#' @export
-get_gh_url <- function() {
-  env_url <- Sys.getenv("GHQC_GITHUB_URL")
-  env_url <- gsub("/$", "", env_url)
-
-  # if GHQC_GITHUB_URL not set
-  if (!nzchar(env_url)) {
-    # set as github as default
-    # Sys.setenv("GHQC_GITHUB_URL" = "https://github.com")
-
-    # warn that default is used
-    warn(.le$logger, "No GHQC_GITHUB_URL environment variable found. Using Github URL \"https://github.com\". To specify otherwise, set GHQC_GITHUB_URL environment variable, likely in your ~/.Renviron file.")
-
-    env_url <- "https://github.com"
-  }
-  # else if was set
-  else {
-    info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL environment variable: {env_url}"))
-  }
-
+check_git_inited <- function() {
   tryCatch(
     {
       repo <- gert::git_find()
@@ -28,16 +8,18 @@ get_gh_url <- function() {
       rlang::abort("There was no local Git repository found.")
     }
   )
+}
 
+check_remote_set <- function() {
   remotes <- gert::git_remote_list()
 
   if (nrow(remotes) == 0) {
     error(.le$logger, "There was no remote URL set.")
     rlang::abort("There was no remote URL set.")
   }
+}
 
-  remote_name <- Sys.getenv("GHQC_REMOTE_NAME", "origin") # TODO: will have to adjust to multi-remote pr
-
+check_upstream_set <- function(remote_name) {
   current_branch <- gert::git_branch()
 
   if (is.null(current_branch)){
@@ -55,6 +37,7 @@ get_gh_url <- function() {
     dplyr::filter(name == current_branch & upstream != "") %>%
     dplyr::pull(upstream)
 
+
   if (length(tracking_branch) == 0) {
     error(.le$logger, glue::glue(
       "The current branch '{current_branch}' has no tracking information.  \n",
@@ -68,24 +51,58 @@ get_gh_url <- function() {
       Please set upstream and restart the app."
     ))
   }
+}
 
-  remote <- gert::git_remote_list()$url[1]
-  remote_url <- stringr::str_extract(remote, "^https?://[^/]+")
+get_env_url <- function() {
+  env_url <- Sys.getenv("GHQC_GITHUB_URL")
+  env_url <- gsub("/$", "", env_url)
 
-  if (remote_url != env_url) {
-    error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
-    rlang::abort(message = glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
+  # if GHQC_GITHUB_URL not set, use github.com
+  if (!nzchar(env_url)) {
+    warn(.le$logger, "No GHQC_GITHUB_URL environment variable found. Using Github URL \"https://github.com\". To specify otherwise, set GHQC_GITHUB_URL environment variable, likely in your ~/.Renviron file.")
+    env_url <- "https://github.com"
   }
+  # else if was set
+  else {
+    info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL environment variable: {env_url}"))
+  }
+
+  # error if not https
+  url_starts_with_https <- stringr::str_starts(env_url, "https://")
+  if (!url_starts_with_https) {
+    error(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
+    rlang::abort(message = glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
+  }
+
+  # remove /api/v3 if at the end
+  env_url <- stringr::str_remove(env_url, "/api/v3$")
+  return(env_url)
+}
+
+
+#' @import log4r
+#' @export
+get_gh_url <- function(remote_url) {
+  env_url <- get_env_url()
+
+  check_remote_matches_env_url(remote_url, env_url)
 
   return(env_url)
 }
 
+check_remote_matches_env_url <- function(remote_url, env_url) {
+  if (remote_url != env_url) {
+    error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
+    rlang::abort(message = glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
+  }
+}
+
 #' @import log4r
 #' @export
-get_gh_api_url <- function() {
+get_gh_api_url <- function(remote_url) {
   gh_url <- tryCatch(
     {
-      get_gh_url()
+      get_gh_url(remote_url)
     },
     error = function(e) {
       rlang::abort(message = e$message)
@@ -115,9 +132,20 @@ get_gh_token <- function() {
 check_github_credentials <- function() {
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 
+  # Check for errors
+  check_git_inited()
+
+  check_remote_set()
+
+  remote <- get_remote()
+  remote_name <- get_remote()$name
+  remote_url <- get_remote_url(remote)
+
+  check_upstream_set(remote_name)
+
   tryCatch(
     {
-      api_url <- get_gh_api_url()
+      api_url <- get_gh_api_url(remote_url)
       token <- get_gh_token()
     },
     error = function(e) {
@@ -166,5 +194,17 @@ check_github_credentials <- function() {
     rlang::abort(message = "Token not equal to 40 characters. Please reset GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
   }
 
+
+  #confirm_creds()
+
+
   return(creds)
+
 }
+
+#TODO
+# add the getcreds_get checks and api call logic here
+
+# confirm_creds <- function() {
+#
+# }

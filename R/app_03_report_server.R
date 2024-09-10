@@ -5,7 +5,6 @@
 #' @importFrom purrr map_df
 #' @importFrom gert git_status git_ahead_behind
 #' @importFrom shinyjs enable disable addClass removeClass delay
-#' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
 #' @importFrom gert git_ahead_behind git_status
 #' @importFrom rprojroot find_rstudio_root_file

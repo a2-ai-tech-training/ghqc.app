@@ -54,6 +54,7 @@ ghqc_report_server <- function(id) {
       tryCatch(
         {
           closed_milestones <- get_closed_milestone_names(org = org(), repo = repo())
+          milestone_list_url <- get_milestone_list_url()
           if (length(closed_milestones) == 0) {
             warn_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
             showModal(

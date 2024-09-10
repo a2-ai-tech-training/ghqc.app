@@ -409,6 +409,15 @@ get_milestone_url <- function(owner, repo, milestone_name) {
 }
 
 #' @import log4r
+get_milestone_list_url <- function() {
+  remote_url <- get_remote()$url
+  remote_repo <- get_current_repo()
+  # will look something like:
+  # https://ghe-experiments.dev.a2-ai.cloud/gsk-cpmsprojects/test_ghqc_9005/milestones
+  milestones_url <- file.path(remote_url, remote_repo, "milestones")
+}
+
+#' @import log4r
 get_collaborators <- function(owner = get_organization(), repo = get_current_repo()) {
   tryCatch({
     query <- gh::gh("GET /repos/{owner}/{repo}/collaborators", .api_url = Sys.getenv("GHQC_API_URL"), .limit = Inf, owner = owner, repo = repo)

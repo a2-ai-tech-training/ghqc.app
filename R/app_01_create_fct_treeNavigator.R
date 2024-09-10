@@ -136,7 +136,7 @@ treeNavigatorServer <- function(
     output[["treeNavigator"]] <- renderJstree({
       req(...)
       req(rootFolder())
-      debug(.le$logger, glue::glue("Rendering jstree for rootFolder: {rootFolder}"))
+      debug(.le$logger, glue::glue("Rendering jstree for rootFolder: {rootFolder()}"))
 
       suppressMessages(jstree(
         nodes = list(

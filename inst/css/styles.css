@@ -13,7 +13,7 @@ h1 {
 }
 
 div[id$="-sidebar"] {
-  width: 25%;
+  width: 35%;
   min-width: 250px;
   float: left;
   transition: width 0.3s;
@@ -26,6 +26,10 @@ div[id$="-sidebar"].collapsed {
   width: 0;
   min-width: 0;
   overflow: hidden;
+}
+
+div[id$="-treeNavigator"] {
+  overflow: inherit;
 }
 
 div[id$="-main_panel"] {

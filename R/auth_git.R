@@ -20,6 +20,8 @@ check_remote_set <- function() {
 }
 
 check_upstream_set <- function(remote_name) {
+  repo <- get_simple_path()
+
   current_branch <- gert::git_branch()
 
   if (is.null(current_branch)){

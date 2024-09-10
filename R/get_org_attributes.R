@@ -410,7 +410,7 @@ get_milestone_url <- function(owner, repo, milestone_name) {
 
 #' @import log4r
 get_milestone_list_url <- function() {
-  remote_url <- get_remote()$url
+  remote_url <- dirname(get_remote()$url)
   remote_repo <- get_current_repo()
   # will look something like:
   # https://ghe-experiments.dev.a2-ai.cloud/gsk-cpmsprojects/test_ghqc_9005/milestones

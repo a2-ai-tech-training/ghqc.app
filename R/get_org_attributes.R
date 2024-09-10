@@ -48,7 +48,7 @@ get_open_milestone_objects <- function(owner, repo) {
 get_closed_milestone_objects <- function(owner, repo) {
   debug(.le$logger, glue::glue("Retrieving closed milestones in organization {owner}, repo {repo}..."))
 
-  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = dirname(gert::git_remote_list()$url[1]), owner = owner, repo = repo, state = "closed", .limit = Inf)
+  milestones <- gh::gh("GET /repos/:owner/:repo/milestones", .api_url = Sys.getenv("GHQC_API_URL"), owner = owner, repo = repo, state = "closed", .limit = Inf)
   info(.le$logger, glue::glue("Retrieved {length(milestones)} closed milestone(s) in repo {repo}"))
   non_empty_milestones <- filter_for_non_empty_milestones(milestones)
 }
@@ -94,16 +94,18 @@ list_milestones <- function(org, repo) {
 }
 
 get_remote_name <- function(remote_url) {
-
   # remove .git and extract name
   remote_repo_name <- stringr::str_extract(remote_url, "(?<=/)[^/]+(?=\\.git$)")
   info(.le$logger, glue::glue("Retrieved remote repository name: {remote_repo_name}"))
   return(remote_repo_name)
 }
 
-get_remote_url <- function(remote) {
 
-  api_url <- dirname(remote$url)
+
+get_remote_url <- function(remote) {
+  org_url <- dirname(remote$url)
+  api_url <- dirname(org_url)
+
   debug(.le$logger, glue::glue("Setting GHQC_API_URL environment variable: {api_url}..."))
   info(.le$logger, glue::glue("Connected to remote repository url: {api_url}"))
 
@@ -116,9 +118,19 @@ get_remote_url <- function(remote) {
 #' @import log4r
 #' @export
 get_remote <- function(remote_list) {
-  debug(.le$logger, glue::glue("Retrieved list of remotes: \n{glue::glue_collapse(apply(remote_list, 1, function(row) {
-    glue::glue(\"name: {row['name']}, url: {row['url']}\")
-  }), sep = \"\n\")}"))
+
+  debug(.le$logger, glue::glue("Retrieving local repo path..."))
+  repo_path <- gert::git_find()
+  debug(.le$logger, glue::glue("Retrieved local repo path: {repo_path}"))
+
+  debug(.le$logger, glue::glue("Retrieving list of remotes..."))
+  remote_list <- gert::git_remote_list(repo = repo_path)
+
+  debug_remote_list <- apply(remote_list, 1, function(row) {
+    glue::glue("name: {row['name']}, url: {row['url']}")
+  })
+  debug_remote_list_str <- glue::glue_collapse(debug_remote_list, sep = "\n")
+  debug(.le$logger, glue::glue("Retrieved list of remotes: \n{debug_remote_list_str}"))
 
   debug(.le$logger, glue::glue("Retrieving remote..."))
   remote <- {
@@ -174,12 +186,9 @@ get_current_repo <- function() {
   tryCatch({
   debug(.le$logger, glue::glue("Connecting to repository..."))
 
-  # get local repo
-  local_repo <- gert::git_find()
   # get remote repo url from local repo
-  remote_list <- gert::git_remote_list(repo = local_repo)
+  remote <- get_remote()
 
-  remote <- get_remote(remote_list)
   }, error = function(e) {
     error(.le$logger, glue::glue("No local git repository found."))
     rlang::abort(e$message)
@@ -218,19 +227,11 @@ get_organization <- function() {
   tryCatch({
   debug(.le$logger, glue::glue("Connecting to organization..."))
 
-  # repo
-  debug(.le$logger, glue::glue("Retrieving local repo path..."))
-  repo_path <- gert::git_find()
-  debug(.le$logger, glue::glue("Retrieved local repo path: {repo_path}"))
-
-  # remote
-  debug(.le$logger, glue::glue("Retrieving list of remotes..."))
-  remotes_list <- gert::git_remote_list(repo = repo_path)
-  remote <- get_remote(remotes_list)
+  remote <- get_remote()
 
   # remote url
   debug(.le$logger, glue::glue("Retrieving remote url..."))
-  remote_url <- get_remote_url(remote)
+  remote_url <- dirname(remote$url)
   debug(.le$logger, glue::glue("Retrieved remote url: {remote_url}"))
 
   # org name

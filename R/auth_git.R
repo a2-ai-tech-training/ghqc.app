@@ -183,24 +183,42 @@ check_github_credentials <- function(remote) {
       password = token
     )
 
-    tryCatch(
-      {
-        debug(.le$logger, glue::glue("Retrieving uncached credentials..."))
-        run_gitcreds_get(url = api_url, renviron_token = token)
+    tryCatch({
+      # Case 1: gitcreds_approve works if git isn't authenticated for the url
+      # OR if it is already authenticated
+      debug(.le$logger, glue::glue("Approving credentials..."))
+      gitcreds::gitcreds_approve(creds)
+      debug(.le$logger, glue::glue("Approved credentials"))
 
-        debug(.le$logger, glue::glue("Approving credentials..."))
-        gitcreds::gitcreds_approve(creds)
-        debug(.le$logger, glue::glue("Approved credentials"))
+      debug(.le$logger, glue::glue("Attempting test api call..."))
+      try_api_call(api_url)
+      info(.le$logger, glue::glue("Successful test api call"))
+    }, error = function(e) {
+      # Case 2: git is incorrectly authenticated for the url
+      tryCatch({
+          # get uncached creds
+          debug(.le$logger, e$message)
+          debug(.le$logger, glue::glue("Retrieving uncached credentials..."))
+          run_gitcreds_get(url = api_url, renviron_token = token)
 
-        debug(.le$logger, glue::glue("Attempting test api call..."))
-        try_api_call(api_url)
-        info(.le$logger, glue::glue("Successful test api call"))
-      },
-      error = function(e) {
-        rlang::abort(message = e$message)
-        error(.le$logger, glue::glue("Could not set github credentials for {api_url}. Double check that the GHQC_GITHUB_PAT and GHQC_GITHUB_URL environment variables are correct, then run ghqc_authenticate() to set Github credentials."))
-      }
-    )
+          # approve again (this has worked every time so far)
+          debug(.le$logger, glue::glue("Approving credentials..."))
+          gitcreds::gitcreds_approve(creds)
+          debug(.le$logger, glue::glue("Approved credentials"))
+
+          # try api call again
+          debug(.le$logger, glue::glue("Attempting test api call..."))
+          try_api_call(api_url)
+          info(.le$logger, glue::glue("Successful test api call"))
+        },
+        # Case 3: if authentication fails, have user run gitcreds manually
+        error = function(e) {
+          error(.le$logger, glue::glue("Could not set github credentials for {api_url}. Double check that the GHQC_GITHUB_PAT and GHQC_GITHUB_URL environment variables are correct, then run gitcreds::gitcreds_set()")) #, then run ghqc_authenticate() to set Github credentials.
+          rlang::abort(message = e$message)
+        } # error
+      ) # tryCatch
+    } # error
+    ) # tryCatch
 
     info(.le$logger, glue::glue("GitHub credentials set"))
   } else {

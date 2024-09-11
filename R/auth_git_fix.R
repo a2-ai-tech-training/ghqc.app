@@ -2,8 +2,8 @@
 check_stored_token_matches_renviron_token <- function(renviron_token, gitcreds_token) {
   if (renviron_token != gitcreds_token) {
     error(.le$logger, glue::glue("gitcreds_get token doesn't match .Renviron token"))
-    error(.le$logger, glue::glue("gitcreds_get token: {gitcreds_token}"))
-    error(.le$logger, glue::glue("Renviron token: {renviron_token}"))
+    # error(.le$logger, glue::glue("gitcreds_get token: {gitcreds_token}"))
+    # error(.le$logger, glue::glue("Renviron token: {renviron_token}"))
   }
   else {
     info(.le$logger, "Renviron token matches gitcreds_get token")

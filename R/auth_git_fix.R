@@ -3,10 +3,10 @@ check_stored_token_matches_renviron_token <- function(renviron_token, gitcreds_t
   if (renviron_token != gitcreds_token) {
     error(.le$logger, glue::glue("gitcreds_get token doesn't match .Renviron token"))
     error(.le$logger, glue::glue("gitcreds_get token: {gitcreds_token}"))
-    error(.le$logger, glue::glue(".Renviron token: {renviron_token}"))
+    error(.le$logger, glue::glue("Renviron token: {renviron_token}"))
   }
   else {
-    info(.le$logger, ".Renviron token matches gitcreds_get token")
+    info(.le$logger, "Renviron token matches gitcreds_get token")
   }
 }
 
@@ -81,18 +81,18 @@ run_giteds_reject_then_approve <- function(desired_creds, renviron_token) {
 
 #' @import log4r
 get_renvion_token <- function() {
-  info(.le$logger, "Retrieving GHQC_GITHUB_PAT environment variable from .Renviron...")
+  info(.le$logger, "Retrieving GHQC_GITHUB_PAT environment variable from Renviron...")
   renviron_token <- Sys.getenv('GHQC_GITHUB_PAT')
-  info(.le$logger, glue::glue("Retrieved .Renviron token: {renviron_token}"))
+  info(.le$logger, glue::glue("Retrieved Renviron token: {renviron_token}"))
 
   token_length <- nchar(renviron_token)
 
   if (token_length != 40) {
-    error(.le$logger, ".Renviron token not 40 characters")
-    error(.le$logger, glue::glue(".Renviron token length: {token_length}"))
+    error(.le$logger, "Renviron token not 40 characters")
+    error(.le$logger, glue::glue("Renviron token length: {token_length}"))
   }
   else {
-    info(.le$logger, ".Renviron token has correct length of 40 characters")
+    info(.le$logger, "Renviron token has correct length of 40 characters")
   }
   return(renviron_token)
 }
@@ -110,7 +110,7 @@ get_url <- function() {
 
 #' @import log4r
 #' @export
-ghqc_authenticate <- function(org = get_organization(), repo = get_current_repo()) {
+ghqc_authenticate <- function() {
   url <- get_url()
 
   username <- "PersonalAccessToken"

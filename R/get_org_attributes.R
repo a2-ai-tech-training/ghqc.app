@@ -132,11 +132,12 @@ get_remote <- function(remote_list) {
   debug_remote_list_str <- glue::glue_collapse(debug_remote_list, sep = "\n")
   debug(.le$logger, glue::glue("Retrieved list of remotes: \n{debug_remote_list_str}"))
 
-  debug(.le$logger, glue::glue("Retrieving remote..."))
+  debug(.le$logger, glue::glue("Selecting remote from list..."))
   remote <- {
     ### FIRST: check if there's a single remote,
     num_remotes <- nrow(remote_list)
     if (num_remotes == 1) {
+      debug(.le$logger, glue::glue("Single remote: Selected only remote in list"))
       remote_list[1, ]
     } # FIRST
 
@@ -160,6 +161,7 @@ get_remote <- function(remote_list) {
 
     ### THIRD: check if origin exists in remote list
     else if ("origin" %in% remote_list$name) {
+      info(.le$logger, "Multiple remote names detected")
       info(.le$logger, "No GHQC_REMOTE_NAME environment variable found. Using \"origin\" from list of remotes.")
       remote_list[remote_list$name == "origin", ][1, ]
     } # THIRD
@@ -167,6 +169,7 @@ get_remote <- function(remote_list) {
     ### LAST: try to get first remote
     else {
       tryCatch({
+        info(.le$logger, "Multiple remote names detected")
         info(.le$logger, glue::glue("No GHQC_REMOTE_NAME environment variable found. Using first remote from list of remotes: {remote_list$name[1]}"))
         remote_list[1, ]
         # error if no remote urls

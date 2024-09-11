@@ -190,6 +190,7 @@ check_github_credentials <- function() {
 
         debug(.le$logger, glue::glue("Approving credentials..."))
         gitcreds::gitcreds_approve(creds)
+        debug(.le$logger, glue::glue("Approved credentials"))
 
         debug(.le$logger, glue::glue("Attempting test api call..."))
         try_api_call(api_url)

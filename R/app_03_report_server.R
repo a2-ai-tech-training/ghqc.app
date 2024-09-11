@@ -12,16 +12,26 @@
 NULL
 
 ghqc_report_server <- function(id) {
-  error_if_git_not_initialized()
-
-  # check gitcreds
-  check_github_credentials()
-
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    waiter_hide()
+    #waiter_hide()
+
+    git_creds <- reactive({
+      tryCatch(
+        {
+          remote <- check_github_credentials()
+          waiter_hide()
+          return(remote)
+        },
+        error = function(e) {
+          waiter_hide()
+          showModal(modalDialog("There was an error setting up the app. Please check log messages.", footer = NULL))
+        }
+      )
+    })
 
     org <- reactive({
+      req(git_creds())
       tryCatch(
         {
           get_organization()
@@ -34,9 +44,10 @@ ghqc_report_server <- function(id) {
     })
 
     repo <- reactive({
+      req(git_creds())
       tryCatch(
         {
-          get_current_repo()
+          get_current_repo(git_creds())
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))

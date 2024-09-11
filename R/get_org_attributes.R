@@ -185,12 +185,9 @@ get_remote <- function(remote_list) {
 
 #' @import log4r
 #' @export
-get_current_repo <- function() {
+get_current_repo <- function(remote = get_remote()) {
   tryCatch({
   debug(.le$logger, glue::glue("Connecting to repository..."))
-
-  # get remote repo url from local repo
-  remote <- get_remote()
 
   }, error = function(e) {
     error(.le$logger, glue::glue("No local git repository found."))

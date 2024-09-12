@@ -33,7 +33,7 @@ create_milestone_section <- function(milestone_title, milestones) { # issue$mile
   if (!is.null(milestone_title)) {
     milestone_body <- {
       description <- get_milestone_description(milestone_title, milestones)
-      if (!is.null(description)) {
+      if (!is.null(description) && description != "") {
         glue::glue("* **Milestone:** {milestone_title}
                    * **Milestone description:** {description}")
       }
@@ -183,12 +183,27 @@ scrape_issue <- function(owner, repo, issue_number) {
 } # scrape
 
 get_summary_table_col_vals <- function(issue) {
-  metadata <- get_metadata(issue$body)
+  metadata <- {
+    tryCatch({
+      get_metadata(issue$body)
+    }, error = function(e) {
+      # rename file path to issue title if not a ghqc issue
+
+      list(
+        `qc type` = "NA"
+      )
+    })
+  }
+
+
   close_data <- get_close_info(issue)
 
+  authors <- get_authors(issue$title)
+  latest_author <- authors$latest
+
   file_path <- issue$title
-  author <- ifelse(!is.null(metadata$author), metadata$author, "NA")
-  qc_type <- ifelse(!is.null(metadata$`qc type`), metadata$`qc type`, "NA")
+  author <- ifelse(!is.null(latest_author), latest_author, "NA")
+  qc_type <- ifelse(!is.null(metadata$`qc type`), metadata$`qc type`, ifelse(!is.null(metadata$`qc_type`), "NA"))
   #file_name <- basename(file_path)
   #git_sha <- ifelse(!is.null(metadata$git_sha), metadata$git_sha, NA)
   qcer <- ifelse(length(issue$assignees) > 0, issue$assignees[[1]], "NA")

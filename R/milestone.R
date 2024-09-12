@@ -80,7 +80,8 @@ get_milestone_number <- function(params) {
   if (is.null(searched_number)){
     milestone <- create_milestone(params)
     milestone$number
-  }else{
+  }
+  else {
     debug(.le$logger, glue::glue("Retrieved milestone: {params$title}, #{searched_number}"))
     searched_number
   }

@@ -5,7 +5,6 @@
 #' @importFrom purrr map_df
 #' @importFrom gert git_status git_ahead_behind
 #' @importFrom shinyjs enable disable addClass removeClass delay
-#' @importFrom shinyWidgets treeInput create_tree
 #' @importFrom waiter Waiter spin_1 spin_2 waiter_hide
 #' @importFrom gert git_ahead_behind git_status
 #' @importFrom rprojroot find_rstudio_root_file
@@ -14,7 +13,6 @@ NULL
 ghqc_report_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    #waiter_hide()
 
     git_creds <- reactive({
       tryCatch(
@@ -22,6 +20,7 @@ ghqc_report_server <- function(id) {
           remote <- check_github_credentials()
           waiter_hide()
           return(remote)
+
         },
         error = function(e) {
           waiter_hide()
@@ -65,6 +64,7 @@ ghqc_report_server <- function(id) {
       tryCatch(
         {
           closed_milestones <- get_closed_milestone_names(org = org(), repo = repo())
+          milestone_list_url <- get_milestone_list_url()
           if (length(closed_milestones) == 0) {
             warn_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
             showModal(
@@ -74,8 +74,11 @@ ghqc_report_server <- function(id) {
                   modalButton("Dismiss"),
                   style = "overflow: hidden; text-align: right;"
                 ),
+                #tags$p("QC items created successfully."),
+
                 HTML(warn_icon_html, glue::glue("There were no closed milestones found in {org()}/{repo()}.<br>
-                                             Ensure that QC on each relevant milestone is finished and close relevant milestones on Github.<br>")),
+                                             Ensure that QC on each relevant milestone is finished, close relevant milestones on Github, then click \"Reset\" in the top right corner.<div style=\"margin-bottom: 9px;\"></div>")),
+                tags$a(href = milestone_list_url, "Click here close milestones on Github", target = "_blank"),
                 easyClose = TRUE,
                 footer = NULL
               )

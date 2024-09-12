@@ -21,6 +21,7 @@ rename_file_copy <- function(file_path) {
   file.rename(file_path, stringr::str_remove(file_path, "_copy_for_ghqc"))
 }
 
+#' @import log4r
 read_file_at_commit <- function(commit_sha, file_path) {
   args <- c("checkout", commit_sha, "--", file_path)
   result <- processx::run("git", args, error_on_status = FALSE)
@@ -29,7 +30,26 @@ read_file_at_commit <- function(commit_sha, file_path) {
     stop(result$stderr)
   }
 
-  file_content <- readLines(file_path)
+  tryCatch({
+    file_content <- suppressWarnings(readLines(file_path))
+  }, error = function(e) {
+    if (stringr::str_detect(e$message, "incomplete final line")) {
+      # add a newline
+      con <- file(file_path, open = "a")
+      writeLines("\n", con)
+      close(con)
+
+      # read file
+      file_content <- suppressWarnings(readLines(file_path))
+
+      # remove newline
+      if (length(lines) > 0 && lines[length(lines)] == "") {
+        lines <- lines[-length(lines)]
+      }
+      writeLines(lines, file_path)
+    } # if incomplete final line
+  })
+
   return(file_content)
 }
 

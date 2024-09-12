@@ -63,6 +63,12 @@ check_client_local <- function(git_url){
   client_repo_path
 }
 
+move_logo <- function(client_repo_path){
+  new_logo_loc <- file.path(.libPaths()[1], "ghqc/assets/a2ai.jpeg")
+  file.copy(file.path(client_repo_path,"a2ai.jpeg"), new_logo_loc)
+  new_logo_loc
+}
+
 #' @import log4r
 #' @export
 load_client_info <- function(){
@@ -74,4 +80,6 @@ load_client_info <- function(){
   # check if client local is cloned and most up to date commit
   client_repo_path <- check_client_local(git_url)
   assign("client_repo_path", client_repo_path, envir = .lci)
+
+  new_logo_loc <- move_logo(client_repo_path)
 }

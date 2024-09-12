@@ -25,7 +25,7 @@ ghqc_create_ui <- function(id) {
     div(
       id = ns("main_container"),
       gadgetTitleBar(
-        title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "Create QC Shiny Tool"),
+        title = span(tags$img(src = "ghqc/assets/a2ai.jpeg", height = 50, class = "logo-img"), "Create QC Shiny Tool"),
         # title = span(tags$img(src = logo_file_path(), height = 50, class = "logo-img"), "Create QC Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")

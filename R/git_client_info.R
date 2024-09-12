@@ -64,7 +64,7 @@ check_client_local <- function(git_url){
 }
 
 move_logo <- function(client_repo_path){
-  new_logo_loc <- file.path(.libPaths()[1], "ghqc/assets/logo.png")
+  new_logo_loc <- file.path(.libPaths()[1], "ghqc/assets/logo.jpeg")
   file.copy(file.path(client_repo_path,"logo.png"), new_logo_loc)
   new_logo_loc
 }

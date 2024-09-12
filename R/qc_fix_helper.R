@@ -30,25 +30,25 @@ read_file_at_commit <- function(commit_sha, file_path) {
     stop(result$stderr)
   }
 
-  tryCatch({
+  #tryCatch({
     file_content <- suppressWarnings(readLines(file_path))
-  }, error = function(e) {
-    if (stringr::str_detect(e$message, "incomplete final line")) {
-      # add a newline
-      con <- file(file_path, open = "a")
-      writeLines("\n", con)
-      close(con)
-
-      # read file
-      file_content <- suppressWarnings(readLines(file_path))
-
-      # remove newline
-      if (length(lines) > 0 && lines[length(lines)] == "") {
-        lines <- lines[-length(lines)]
-      }
-      writeLines(lines, file_path)
-    } # if incomplete final line
-  })
+  # }, error = function(e) {
+  #   if (stringr::str_detect(e$message, "incomplete final line")) {
+  #     # add a newline
+  #     con <- file(file_path, open = "a")
+  #     writeLines("\n", con)
+  #     close(con)
+  #
+  #     # read file
+  #     file_content <- suppressWarnings(readLines(file_path))
+  #
+  #     # remove newline
+  #     if (length(lines) > 0 && lines[length(lines)] == "") {
+  #       lines <- lines[-length(lines)]
+  #     }
+  #     writeLines(lines, file_path)
+  #   } # if incomplete final line
+  # })
 
   return(file_content)
 }

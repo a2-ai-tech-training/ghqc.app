@@ -46,9 +46,9 @@ ghqc_create_server <- function(id) {
       req(rproj_root_dir())
       tryCatch(
         {
-          creds <- check_github_credentials()
+          remote <- check_github_credentials()
           waiter_hide()
-          return(creds)
+          return(remote)
         },
         error = function(e) {
           waiter_hide()
@@ -74,7 +74,7 @@ ghqc_create_server <- function(id) {
       req(git_creds(), rproj_root_dir())
       tryCatch(
         {
-          get_current_repo()
+          get_current_repo(git_creds())
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))

@@ -16,8 +16,15 @@ init_logger <- function() {
   assign("logger", logger, envir = .le)
 
   # log for logger
-  other <- ifelse(verbosity == "INFO", "DEBUG", "INFO")
-  info(.le$logger, glue::glue("logger level set to {verbosity}. Use ghqc_toggle_logger to change to {other}"))
+  #other <- ifelse(verbosity == "INFO", "DEBUG", "INFO")
+  #info(.le$logger, glue::glue("logger level set to {verbosity}. Use ghqc_toggle_logger() to change to {other}"))
+  if (verbosity == "INFO") {
+    info(.le$logger, glue::glue("logger level set to INFO. Use Sys.setenv(\"GHQC_VERBOSE\" = \"DEBUG\") to change to DEBUG mode"))
+  }
+  if (verbosity == "DEBUG") {
+    info(.le$logger, glue::glue("logger level set to DEBUG. Use Sys.setenv(\"GHQC_VERBOSE\" = \"INFO\") to change to INFO mode"))
+  }
+
 }
 
 my_layout <- function(level, ...) {

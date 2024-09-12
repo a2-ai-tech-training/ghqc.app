@@ -1,3 +1,4 @@
+#' @import log4r
 check_git_inited <- function() {
   tryCatch(
     {
@@ -10,6 +11,7 @@ check_git_inited <- function() {
   )
 }
 
+#' @import log4r
 check_remote_set <- function() {
   remotes <- gert::git_remote_list()
 
@@ -19,6 +21,7 @@ check_remote_set <- function() {
   }
 }
 
+#' @import log4r
 check_upstream_set <- function(remote_name) {
   repo <- get_simple_path()
 
@@ -55,6 +58,7 @@ check_upstream_set <- function(remote_name) {
   }
 }
 
+#' @import log4r
 get_env_url <- function() {
   env_url <- Sys.getenv("GHQC_GITHUB_URL")
   env_url <- gsub("/$", "", env_url)
@@ -92,6 +96,7 @@ get_gh_url <- function(remote_url) {
   return(env_url)
 }
 
+#' @import log4r
 check_remote_matches_env_url <- function(remote_url, env_url) {
   if (remote_url != env_url) {
     error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
@@ -131,7 +136,7 @@ get_gh_token <- function() {
 
 #' @import log4r
 #' @export
-check_github_credentials <- function() {
+check_github_credentials <- function(remote) {
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 
   # Check for errors
@@ -180,15 +185,42 @@ check_github_credentials <- function() {
       password = token
     )
 
-    tryCatch(
-      {
-        gitcreds::gitcreds_approve(creds)
-      },
-      error = function(e) {
-        rlang::abort(message = e$message)
-        error(.le$logger, glue::glue("Could not set github credentials for {api_url}. Double check token or create a new token, then set it as GHQC_GITHUB_PAT environment variable"))
-      }
-    )
+    tryCatch({
+      # Case 1: gitcreds_approve works if git isn't authenticated for the url
+      # OR if it is already authenticated
+      debug(.le$logger, glue::glue("Approving credentials..."))
+      gitcreds::gitcreds_approve(creds)
+      debug(.le$logger, glue::glue("Approved credentials"))
+
+      debug(.le$logger, glue::glue("Attempting test api call..."))
+      try_api_call(api_url)
+      info(.le$logger, glue::glue("Successful test api call"))
+    }, error = function(e) {
+      # Case 2: git is incorrectly authenticated for the url
+      tryCatch({
+          # get uncached creds
+          debug(.le$logger, e$message)
+          debug(.le$logger, glue::glue("Retrieving uncached credentials..."))
+          run_gitcreds_get(url = api_url, renviron_token = token)
+
+          # approve again (this has worked every time so far)
+          debug(.le$logger, glue::glue("Approving credentials..."))
+          gitcreds::gitcreds_approve(creds)
+          debug(.le$logger, glue::glue("Approved credentials"))
+
+          # try api call again
+          debug(.le$logger, glue::glue("Attempting test api call..."))
+          try_api_call(api_url)
+          info(.le$logger, glue::glue("Successful test api call"))
+        },
+        # Case 3: if authentication fails, have user run gitcreds manually
+        error = function(e) {
+          error(.le$logger, glue::glue("Could not set github credentials for {api_url}. Double check that the GHQC_GITHUB_PAT and GHQC_GITHUB_URL environment variables are correct, then run gitcreds::gitcreds_set()")) #, then run ghqc_authenticate() to set Github credentials.
+          rlang::abort(message = e$message)
+        } # error
+      ) # tryCatch
+    } # error
+    ) # tryCatch
 
     info(.le$logger, glue::glue("GitHub credentials set"))
   } else {
@@ -196,17 +228,6 @@ check_github_credentials <- function() {
     rlang::abort(message = "Token not equal to 40 characters. Please reset GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
   }
 
-
-  #confirm_creds()
-
-
-  return(creds)
-
+  return(remote)
 }
 
-#TODO
-# add the getcreds_get checks and api call logic here
-
-# confirm_creds <- function() {
-#
-# }

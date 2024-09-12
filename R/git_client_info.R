@@ -67,6 +67,7 @@ move_logo <- function(client_repo_path){
   new_logo_loc <- file.path(.libPaths()[1], "ghqc/assets/logo.jpeg")
   file.copy(file.path(client_repo_path,"logo.jpeg"), new_logo_loc)
   new_logo_loc
+  assign("new_logo_loc", new_logo_oc, envir = .lci)
 }
 
 #' @import log4r

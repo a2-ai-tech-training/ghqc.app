@@ -275,6 +275,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   date: {date}
   output:
     pdf_document:
+      latex_engine: xelatex
       pandoc_args: --listings
       toc: true
       toc_depth: 1

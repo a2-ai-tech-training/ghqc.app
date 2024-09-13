@@ -4,8 +4,9 @@ format_issue_body <- function(checklist_type, file_path) {
   file_items <- checklists[[checklist_type]]
   qc_checklist <- format_checklist_items(file_items)
   metadata <- format_metadata(checklist_type, file_path)
-  glue::glue("## {checklist_type}
-  Note: This checklist is NOT an exhaustive list of all checks. User is encouraged to personalise checklist for individual study needs.\n\n{qc_checklist}\n\n## Metadata\n\n{metadata}")}
+  issue_body_content <- format_body_content()
+  glue::glue(issue_body_content)
+}
 
 format_items <- function(items) {
   formatted_items <- sapply(items, function(item) {
@@ -123,4 +124,15 @@ get_file_history_url <- function(file_path) {
 
   # get something like https://github.com/A2-ai/project_x/commits/main/scripts/DA.R
   file_history_url <- glue::glue("{https_url}/commits/{branch}/{file_path}")
+}
+
+format_body_content <- function() {
+  if (file.exists(file.path(.lci$client_repo_path, "note"))) {
+    note <- readr::read_file(file.path(.lci$client_repo_path, "note"))
+    if (stringr::str_sub(note, start =-2) != "\n") note <- paste0(note,"\n")
+  } else {
+    note <- ""
+  }
+
+  paste0("# {checklist_type}\n", note, "\n\n{qc_checklist}\n\n## Metadata\n\n{metadata}")
 }

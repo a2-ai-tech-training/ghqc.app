@@ -1,9 +1,6 @@
 .lci <- new.env()
 
 #' @import log4r
-logo_file_path <- function() file.path(.lci$client_repo_path, "logo.png")
-
-#' @import log4r
 get_client_git_url <- function() {
   git_url <- Sys.getenv("GIT_CLIENT_URL")
 
@@ -63,13 +60,6 @@ check_client_local <- function(git_url){
   client_repo_path
 }
 
-move_logo <- function(client_repo_path){
-  new_logo_loc <- file.path(.libPaths()[1], "ghqc/assets/logo.png")
-  file.copy(file.path(client_repo_path,"logo.png"), new_logo_loc)
-  new_logo_loc
-  assign("new_logo_loc", new_logo_loc, envir = .lci)
-}
-
 #' @import log4r
 #' @export
 load_client_info <- function(){
@@ -81,6 +71,4 @@ load_client_info <- function(){
   # check if client local is cloned and most up to date commit
   client_repo_path <- check_client_local(git_url)
   assign("client_repo_path", client_repo_path, envir = .lci)
-
-  new_logo_loc <- move_logo(client_repo_path)
 }

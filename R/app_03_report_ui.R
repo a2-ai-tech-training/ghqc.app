@@ -22,7 +22,7 @@ ghqc_report_ui <- function(id) {
     div(
       id = ns("main_container"),
       gadgetTitleBar(
-        title = span(tags$img(src = "ghqc/assets/logo.png", height = 50, class = "logo-img"), "QC Report Shiny Tool"),
+        title = span("QC Report Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),

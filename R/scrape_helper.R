@@ -72,11 +72,13 @@ get_timeline_list <- function(timeline_events) {
 
 download_image <- function(url) {
   is_amz_redirect <- function(resp) {
+    # if the server is Amazon and there's a value for x-amz-request-id, it's an amz error
     bool <- httr2::resp_header(resp, "Server") == "AmazonS3" && nzchar(httr2::resp_header(resp, "x-amz-request-id", default = ""))
     bool
   }
 
   is_ghe_redirect <- function(resp) {
+    # if the server is Github and there's a value for x-github-request-id, it's a ghe error
     bool <- httr2::resp_header(resp, "Server") == "GitHub.com" && nzchar(httr2::resp_header(resp, "x-github-request-id", default = ""))
     bool
   }
@@ -90,6 +92,7 @@ download_image <- function(url) {
   # for the error, tis not really an error if its an amazon redirect, then we can go in and get the
   # url code
   req <- httr2::req_error(req, is_error = function(resp) {
+    # it's only considered an error if it's not an amz error and it's not a ghe error
     !is_amz_redirect(resp) && !is_ghe_redirect(resp)
   })
   req <- httr2::req_perform(req, verbosity = 1)

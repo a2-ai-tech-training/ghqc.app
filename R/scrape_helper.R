@@ -77,8 +77,7 @@ download_image <- function(url) {
   }
 
   is_ghe_redirect <- function(resp) {
-    # if the status is 404 or 302, return false
-    bool <- !(httr2::resp_status(resp) == 404 || (httr2::resp_status(resp) == 302))
+    bool <- httr2::resp_header(resp, "Server") == "GitHub.com" && nzchar(httr2::resp_header(resp, "x-github-request-id", default = ""))
     bool
   }
 
@@ -90,7 +89,9 @@ download_image <- function(url) {
   req <- httr2::req_auth_bearer_token(req, token)
   # for the error, tis not really an error if its an amazon redirect, then we can go in and get the
   # url code
-  req <- httr2::req_error(req, is_error = \(resp) !is_amz_redirect(resp) || !is_ghe_redirect(resp))
+  req <- httr2::req_error(req, is_error = function(resp) {
+    !is_amz_redirect(resp) && !is_ghe_redirect(resp)
+  })
   req <- httr2::req_perform(req, verbosity = 1)
 
   asset_url <- httr2::last_response() |> httr2::resp_url()

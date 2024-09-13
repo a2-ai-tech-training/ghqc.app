@@ -1,6 +1,7 @@
 #' @export
 get_checklists <- function() {
-  checklists_path <- system.file("checklists", package = "ghqc")
+  #checklists_path <- system.file("checklists", package = "ghqc")
+  checklists_path <- "~/poc-gsk-ghqc/checklists"
   yaml_checklists <- list.files(checklists_path, pattern = "\\.ya?ml$", full.names = TRUE)
   checklists_data <- sapply(yaml_checklists, function(yaml_checklist) {
     yaml::read_yaml(yaml_checklist)

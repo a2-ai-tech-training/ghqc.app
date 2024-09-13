@@ -5,3 +5,6 @@
 .DS_Store
 .quarto
 r_lib/
+inst/checklists2/
+inst/gsk.png
+inst/logo.png

@@ -1,8 +1,0 @@
-"mrgsolve model":
-- Model is based off of correct NONMEM model
-- Parameter estimates using either $NMXML, $NMEXT, or $PARAM are from correct model
-- Model code is translated correctly from NONMEM
-- Covariates are implemented correctly, typically using the reference groups as the
-  covariate parameter value in $PARAM
-- Scaling and concentration calculation is correctly performed (e.g. S2 = V2/1000;
-  IPRED = CENT/S2)

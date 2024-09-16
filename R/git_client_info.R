@@ -66,9 +66,6 @@ check_client_local <- function(git_url){
   }
   client_repo_path
 }
-install_client_repo <- function() {
-  pak::pkg_install(Sys.getenv("GIT_CLIENT_PATH"), upgrade = TRUE)
-}
 
 #' @import log4r
 #' @export

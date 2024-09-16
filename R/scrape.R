@@ -128,7 +128,6 @@ issue_to_markdown <- function(owner, repo, issue_number) {
 } # issue_to_markdown
 
 get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
-  browser()
   milestone_str <- glue::glue_collapse(milestone_names, "-")
 
   base_name <- {
@@ -173,6 +172,8 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
   fs::file_create(rmd)
+  browser()
+  print(rmd)
   # delete temporary rmd when it's time
   #suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
@@ -319,7 +320,10 @@ create_header <- function() {
     "}\n",
     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
     "\\usepackage{lastpage}\n",
-    "\\lstset{\nbreaklines=true\n}"
+    "\\lstset{\nbreaklines=true\n}",
+    "\\usepackage{pdflscape}",
+    "\\newcommand{\\blandscape}{\\begin{landscape}}",
+    "\\newcommand{\\elandscape}{\\end{landscape}}"
   )
   writeLines(header_tex, header_path)
 
@@ -343,7 +347,9 @@ create_summary_table_section <- function(summary_csv) {
   mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
   invisible(summary_df)\n```\n",
 
-    "## Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+    "\\newpage
+    \\blandscape
+    ## Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
   ft <- flextable::flextable(summary_df)
   dimensions <- dim_pretty(ft)
   col_widths <- dimensions$widths * 0.8
@@ -370,7 +376,7 @@ create_summary_table_section <- function(summary_csv) {
 
   ft <- width(ft, width = dim(ft)$widths*6.5 /(flextable_dim(ft)$widths))
   ft <- width(ft, j = 1, 1.5)
-  ft\n```\n\\newpage\n",
+  ft\n```\n\\elandscape\\newpage\n",
     .trim = FALSE)
 }
 

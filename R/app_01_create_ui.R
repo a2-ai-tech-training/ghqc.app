@@ -2,10 +2,12 @@
 #' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel miniButtonBlock
 #' @importFrom shinyjs useShinyjs
 #' @importFrom waiter use_waiter waiter_show_on_load spin_1
+#' @importFrom gsk.ghqc.info load_logo_png_shiny
 NULL
 
 ghqc_create_ui <- function(id) {
   ns <- NS(id)
+  browser()
   ui <- miniPage(
     use_waiter(),
     useShinyjs(),
@@ -25,7 +27,7 @@ ghqc_create_ui <- function(id) {
     div(
       id = ns("main_container"),
       gadgetTitleBar(
-        title = span("Create QC Shiny Tool"),
+        title = span(tags$img(src = gsk.ghqc.info::load_logo_png_shiny(), height = 50, class = "logo-img"), "Create QC Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),

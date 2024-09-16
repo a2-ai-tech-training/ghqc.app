@@ -30,7 +30,8 @@ check_client_local <- function(git_url){
     tryCatch(
       {
         gert::git_clone(git_url, path = client_repo_path)
-        info(.le$logger, glue::glue("Successfully cloned {client_repo_name}"))
+        install.packages(client_repo_path, repos = NULL, type = "source")
+        info(.le$logger, glue::glue("Successfully cloned and installed {client_repo_name}"))
       }, error = function(e) {
         error(.le$logger, glue::glue("Clone of {client_repo_name} was not successful"))
         rlang::abort(message = e$message)
@@ -46,7 +47,8 @@ check_client_local <- function(git_url){
       tryCatch(
         {
           gert::git_pull(repo = client_repo_path)
-          info(.le$logger, glue::glue("Update has been successfully pulled down to {client_repo_path}"))
+          install.packages(client_repo_path, repos = NULL, type = "source")
+          info(.le$logger, glue::glue("Update has been successfully pulled down to {client_repo_path} and installed"))
         }, error = function(e) {
           error(.le$logger, glue::glue("Update was unsuccessfully pulled down. Attempted to pull {client_repo_name} remote commit id {remote_commit_id} to {client_repo_path}"))
           rlang::abort(.le$logger, message = e$message)
@@ -59,6 +61,9 @@ check_client_local <- function(git_url){
   }
   client_repo_path
 }
+install_client_repo <- function() {
+  pak::pkg_install(Sys.getenv("GIT_CLIENT_PATH"))
+}
 
 #' @import log4r
 #' @export
@@ -66,9 +71,10 @@ load_client_info <- function(){
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 
   # get client url from ~./Renviron
-  git_url <- get_client_git_url()
+  # git_url <- get_client_git_url()
+  install_client_repo()
 
   # check if client local is cloned and most up to date commit
-  client_repo_path <- check_client_local(git_url)
-  assign("client_repo_path", client_repo_path, envir = .lci)
+  # client_repo_path <- check_client_local(git_url)
+  # assign("client_repo_path", client_repo_path, envir = .lci)
 }

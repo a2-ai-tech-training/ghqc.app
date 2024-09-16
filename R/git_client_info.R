@@ -62,7 +62,7 @@ check_client_local <- function(git_url){
   client_repo_path
 }
 install_client_repo <- function() {
-  pak::pkg_install(Sys.getenv("GIT_CLIENT_PATH"))
+  pak::pkg_install(Sys.getenv("GIT_CLIENT_PATH"), upgrade = TRUE)
 }
 
 #' @import log4r
@@ -71,10 +71,10 @@ load_client_info <- function(){
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 
   # get client url from ~./Renviron
-  # git_url <- get_client_git_url()
-  install_client_repo()
+  git_url <- get_client_git_url()
+  # install_client_repo()
 
   # check if client local is cloned and most up to date commit
-  # client_repo_path <- check_client_local(git_url)
-  # assign("client_repo_path", client_repo_path, envir = .lci)
+  client_repo_path <- check_client_local(git_url)
+  assign("client_repo_path", client_repo_path, envir = .lci)
 }

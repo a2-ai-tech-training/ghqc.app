@@ -1,5 +1,33 @@
 # ghqc (development version)
 
+# ghqc 0.0.0.9008
+
+## New features
+
+- ghqcLauncher is now ghqc.launcher to comply with standardized helper package naming conventions.
+
+- The report function is now a shiny app that can run in ghqc.launcher
+
+- The git credential authentication function is more robust in each case when
+    1) Git is already authenticated,
+    2) Git isn't already authenticated, and
+    3) Git is mis-authenticated.
+
+- Error handling for the git repo and Rproject is now more robust
+
+- The sidebar in `ghqc_create_app()` now scrolls for easy reading of long file and directory names
+
+- ghqc can function with multiple remotes set for a given repo, and the app selects the remote in the following hierarchy:
+   1) If a single remote exists, it selects it
+  
+   2) Else, if multiple remotes exist:
+  
+  - if the environment variable GHQC_REMOTE_NAME exists, it selects the one with that name
+
+  - else, if a remote named "origin" exists, it selects it
+
+  - else, it uses the first remote in the list of remotes
+
 # ghqc 0.0.0.9007
 
 ## New features

@@ -72,24 +72,30 @@ get_timeline_list <- function(timeline_events) {
 
 download_image <- function(url) {
   is_amz_redirect <- function(resp) {
-    httr2::resp_header(resp, "Server") == "AmazonS3" && nzchar(httr2::resp_header(resp, "x-amz-request-id", default = ""))
+    # if the server is Amazon and there's a value for x-amz-request-id, it's an amz error
+    bool <- httr2::resp_header(resp, "Server") == "AmazonS3" && nzchar(httr2::resp_header(resp, "x-amz-request-id", default = ""))
+    bool
   }
-  # token gets returned with a trailing newline that we need to strip
-  token <- gsub(x = processx::run("gh", c("auth", "token"))$stdout, "\\n$", "")
 
-  if (!grepl(x = token, "^gho_")) {
-    stop("check the token is actually a PAT/exists, it should start with gho_ likely")
+  is_ghe_redirect <- function(resp) {
+    # if the server is Github and there's a value for x-github-request-id, it's a ghe error
+    bool <- httr2::resp_header(resp, "Server") == "GitHub.com" && nzchar(httr2::resp_header(resp, "x-github-request-id", default = ""))
+    bool
   }
+
+  token <- Sys.getenv("GHQC_GITHUB_PAT")
 
   req <- httr2::request(url)
 
-  req |> httr2::req_headers(
-    "Accept" = "application/vnd.github.v3.raw"
-  ) |> httr2::req_auth_bearer_token(token) |>
-    # for the error, tis not really an error if its an amazon redirect, then we can go in and get the
-    # url code
-    httr2::req_error(is_error = \(resp) !is_amz_redirect(resp)) |>
-    httr2::req_perform(verbosity = 1)
+  req <- httr2::req_headers(req, "Accept" = "application/vnd.github.v3.raw")
+  req <- httr2::req_auth_bearer_token(req, token)
+  # for the error, tis not really an error if its an amazon redirect, then we can go in and get the
+  # url code
+  req <- httr2::req_error(req, is_error = function(resp) {
+    # it's only considered an error if it's not an amz error and it's not a ghe error
+    !is_amz_redirect(resp) && !is_ghe_redirect(resp)
+  })
+  req <- httr2::req_perform(req, verbosity = 1)
 
   asset_url <- httr2::last_response() |> httr2::resp_url()
 

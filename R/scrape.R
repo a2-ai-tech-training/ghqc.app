@@ -172,10 +172,8 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
   fs::file_create(rmd)
-  browser()
-  print(rmd)
   # delete temporary rmd when it's time
-  #suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
+  suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
 
   # create pdf from rmd
@@ -288,6 +286,10 @@ create_intro <- function(repo, milestone_names, header_path) {
   subtitle: \"Git repository: {repo}\"
   author: {author}
   date: {date}
+  header-includes:
+  - \\usepackage{{pdflscape}}
+  - \\newcommand{{\\blandscape}}{{\\begin{{landscape}}}}
+  - \\newcommand{{\\elandscape}}{{\\end{{landscape}}}}
   output:
     pdf_document:
       latex_engine: xelatex
@@ -320,10 +322,7 @@ create_header <- function() {
     "}\n",
     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
     "\\usepackage{lastpage}\n",
-    "\\lstset{\nbreaklines=true\n}",
-    "\\usepackage{pdflscape}",
-    "\\newcommand{\\blandscape}{\\begin{landscape}}",
-    "\\newcommand{\\elandscape}{\\end{landscape}}"
+    "\\lstset{\nbreaklines=true\n}"
   )
   writeLines(header_tex, header_path)
 
@@ -335,48 +334,34 @@ set_up_chunk <- function() {
     "```{{r setup, include=FALSE}}
   library(knitr)
   library(dplyr)
-  library(flextable)
+  library(gt)
   knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n")
 }
 
 create_summary_table_section <- function(summary_csv) {
+  #
   glue::glue(
-    "```{{r, include=FALSE, eval=TRUE}}
+    "\\newpage
+    \\thispagestyle{{empty}}
+    \\blandscape\n```{{r, include=FALSE, eval=TRUE}}
   summary_df <- read.csv(\"{summary_csv}\")\n
   summary_df <- summary_df %>%
   mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
   invisible(summary_df)\n```\n",
 
-    "\\newpage
-    \\blandscape
-    ## Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
-  ft <- flextable::flextable(summary_df)
-  dimensions <- dim_pretty(ft)
-  col_widths <- dimensions$widths * 0.8
-  #row_heights <- dimensions$heights * 0.8
-  ft <- ft %>%
-  set_header_labels(file_path = \"File Path\",
-  author = \"Author\",
-  qc_type = \"QC Type\",
-  # file_name = \"File Name\",
-  # git_sha = \"Git SHA\",
-  qcer = \"QCer\",
-  issue_closer = \"Issue Closer\",
-  close_date = \"Close Date\") %>%
+    "## Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+  gt_table <- summary_df %>%
+  gt::gt() %>%
+  gt::cols_label(
+    file_path = \"File Path\",
+    author = \"Author\",
+    qc_type = \"QC Type\",
+    qcer = \"QCer\",
+    issue_closer = \"Issue Closer\",
+    close_date = \"Close Date\"
+  )
 
-  set_table_properties(width = 1.0) %>% # , align = \"left\"
-  #width(j = seq_along(col_widths), width = col_widths) %>%
-
-  padding(padding = 35, part = \"all\") %>%
-  fit_to_width(9) %>%
-  #fontsize(size = 9, part = 'all') %>%
-  theme_vanilla()
-
-  ft <- ft %>% autofit()
-
-  ft <- width(ft, width = dim(ft)$widths*6.5 /(flextable_dim(ft)$widths))
-  ft <- width(ft, j = 1, 1.5)
-  ft\n```\n\\elandscape\\newpage\n",
+gt_table\n```\n\\elandscape\\newpage\n",
     .trim = FALSE)
 }
 

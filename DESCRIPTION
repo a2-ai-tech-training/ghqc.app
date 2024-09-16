@@ -42,8 +42,7 @@ Imports:
     log4r (>= 0.4.3),
     rprojroot (>= 2.0.3),
     usethis (>= 2.2.2),
-    gitcreds (>= 0.1.2),
-    tools (>= 4.4.1)
+    gitcreds (>= 0.1.2)
 Suggests: 
     testthat (>= 3.0.0),
     httptest,

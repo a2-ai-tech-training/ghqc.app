@@ -20,8 +20,8 @@ get_client_git_url <- function() {
 }
 
 #' @import log4r
-check_client_local <- function(git_url){
-  client_repo_name <- basename(tools::file_path_sans_ext(git_url))
+check_client_local <- function(git_url) {
+  client_repo_name <- get_remote_name(git_url)
   client_repo_path <- file.path("~",client_repo_name)
 
   if (!file.exists(client_repo_path)){

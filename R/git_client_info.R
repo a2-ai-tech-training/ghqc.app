@@ -36,12 +36,10 @@ check_client_local <- function(git_url) {
         rlang::abort(message = e$message)
       }
     )
-  } else {
-    remote_commit_id <- gert::git_remote_ls(repo = client_repo_path)$oid[1]
-    local_commit_id <- gert::git_info(repo = client_repo_path)$commit
-
-    if (remote_commit_id != local_commit_id){
-      # Case 2: Repo in home dir, but not most recent main branch commit
+  }
+  else {
+    if (local_repo_updates(client_repo_path) || remote_repo_updates(client_repo_path)) {
+      # Case 2: Repo in home dir, but local or remote changes
       debug(.le$logger, "Most recent remote commit ({remote_commit_id}) does not match local commit ({local_commit_id}). Attempting to pull down update to {client_repo_path}...")
       tryCatch(
         {
@@ -52,12 +50,31 @@ check_client_local <- function(git_url) {
           rlang::abort(.le$logger, message = e$message)
         }
       )
-    } else {
+    }
+    else {
       # Case 3: Repo in home dir and is most recent main branch commit
       info(.le$logger, glue::glue("Most recent commit found in {client_repo_path}. No updates needed"))
     }
   }
   client_repo_path
+}
+
+#' @import log4r
+local_repo_updates <- function(client_repo_path) {
+  status <- gert::git_status(repo = client_repo_path)
+  local_repo_updates <- "modified" %in% status$status
+  if (remote_repo_updates) {
+    info(.le$logger, glue::glue("Detected local changes to {client_repo_path}"))
+  }
+  return(local_repo_updates)
+}
+
+#' @import log4r
+remote_repo_updates <- function(client_repo_path) {
+  remote_commit_id <- gert::git_remote_ls(repo = client_repo_path)$oid[1]
+  local_commit_id <- gert::git_info(repo = client_repo_path)$commit
+  remote_repo_updates <- remote_commit_id != local_commit_id
+  return(remote_repo_updates)
 }
 
 #' @import log4r

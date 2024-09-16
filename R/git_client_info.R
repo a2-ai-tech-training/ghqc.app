@@ -4,9 +4,9 @@
 install_client_git_repo <- function(){
   git_repo <- Sys.getenv("GHQC_INFO_REPO")
 
-  if (length(git_repo) == 0){
-    error(.le$logger, "No github repo found. Please set GHQC_INFO_REPO environmental variable, likely in your ~/.Renviron file. (e.g. `a2-ai/{company_name}.ghqc.info`)")
-    rlang::abort(message = "No github repo found. Please set GHQC_INFO_REPO environmental variable, likely in your ~/.Renviron file. (e.g. `a2-ai/{company_name}.ghqc.info`)")
+  if (git_repo == ""){
+    error(.le$logger, "No github repo found. Please set GHQC_INFO_REPO environmental variable, likely in your ~/.Renviron file. (e.g. `GHQC_INFO_REPO=a2-ai/{company_name}.ghqc.info`)")
+    rlang::abort(message = "No github repo found. Please set GHQC_INFO_REPO environmental variable, likely in your ~/.Renviron file. (e.g. `GHQC_INFO_REPO=a2-ai/{company_name}.ghqc.info`)")
   }
 
   tryCatch(
@@ -15,7 +15,7 @@ install_client_git_repo <- function(){
       pkg_name <- pkg_dwn_inf$package
     }, error = function(e) {
       error(.le$logger, glue::glue("Installation of client specific package {git_repo} failed"))
-      rlang::abort(.le$logger, glue::glue("Installation of client specific package {git_repo} failed"))
+      rlang::abort(message = glue::glue("Installation of client specific package {git_repo} failed"))
     }
   )
 

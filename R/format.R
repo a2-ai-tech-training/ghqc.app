@@ -127,8 +127,9 @@ get_file_history_url <- function(file_path) {
 }
 
 format_body_content <- function() {
-  if (file.exists(file.path(.lci$client_repo_path, "note"))) {
-    note <- readr::read_file(file.path(.lci$client_repo_path, "note"))
+  note_path <- system.file("note", package = .lci$client_pkg_name)
+  if (note_path != "") {
+    note <- readr::read_file(note_path)
     if (stringr::str_sub(note, start =-2) != "\n") note <- paste0(note,"\n")
   } else {
     note <- ""

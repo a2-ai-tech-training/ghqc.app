@@ -24,7 +24,7 @@ check_client_local <- function(git_url) {
   client_repo_name <- get_remote_name(git_url)
   client_repo_path <- file.path("~",client_repo_name)
 
-  if (!file.exists(client_repo_path)){
+  if (!file.exists(client_repo_path)) {
     # Case 1: Repo not in home dir, cloning down
     debug(.le$logger, glue::glue("{client_repo_name} not found in home directory. Attempting to clone {git_url} to {client_repo_path}..."))
     tryCatch(
@@ -36,9 +36,19 @@ check_client_local <- function(git_url) {
         rlang::abort(message = e$message)
       }
     )
-  }
+  } # if client repo not cloned
   else {
-    if (local_repo_updates(client_repo_path) || remote_repo_updates(client_repo_path)) {
+    remote_updates <- remote_repo_updates(client_repo_path)
+    local_updates <- local_repo_updates(client_repo_path)
+
+    # if local changes
+    if (local_updates) {
+      stash <-  gert::git_stash_save(repo = client_repo_path)
+      info(.le$logger, glue::glue("Stashed local changes to {client_repo_path}"))
+    }
+
+    # if remote changes
+    if (remote_updates) {
       # Case 2: Repo in home dir, but local or remote changes
       debug(.le$logger, "Most recent remote commit ({remote_commit_id}) does not match local commit ({local_commit_id}). Attempting to pull down update to {client_repo_path}...")
       tryCatch(
@@ -51,19 +61,21 @@ check_client_local <- function(git_url) {
         }
       )
     }
-    else {
-      # Case 3: Repo in home dir and is most recent main branch commit
-      info(.le$logger, glue::glue("Most recent commit found in {client_repo_path}. No updates needed"))
+
+    if (!remote_updates && !local_updates) {
+      info(.le$logger, "No local or remote updates to ghqc storage repo")
     }
-  }
-  client_repo_path
+
+  } # else, client dir has already been cloned
+
+  return(client_repo_path)
 }
 
 #' @import log4r
 local_repo_updates <- function(client_repo_path) {
   status <- gert::git_status(repo = client_repo_path)
   local_repo_updates <- "modified" %in% status$status
-  if (remote_repo_updates) {
+  if (local_repo_updates) {
     info(.le$logger, glue::glue("Detected local changes to {client_repo_path}"))
   }
   return(local_repo_updates)

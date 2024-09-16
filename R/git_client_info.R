@@ -20,6 +20,11 @@ get_client_git_url <- function() {
 }
 
 #' @import log4r
+install_client_repo <- function(git_url) {
+  devtools::install_github(git_url)
+}
+
+#' @import log4r
 check_client_local <- function(git_url){
   client_repo_name <- basename(tools::file_path_sans_ext(git_url))
   client_repo_path <- file.path("~",client_repo_name)
@@ -75,6 +80,8 @@ load_client_info <- function(){
   # install_client_repo()
 
   # check if client local is cloned and most up to date commit
-  client_repo_path <- check_client_local(git_url)
+  #client_repo_path <- check_client_local(git_url)
+  client_repo_path <- ""
+  install_client_repo()
   assign("client_repo_path", client_repo_path, envir = .lci)
 }

@@ -79,6 +79,6 @@ load_client_info <- function(){
   # check if client local is cloned and most up to date commit
   #client_repo_path <- check_client_local(git_url)
   client_repo_path <- ""
-  install_client_repo()
+  install_client_repo(git_url)
   assign("client_repo_path", client_repo_path, envir = .lci)
 }

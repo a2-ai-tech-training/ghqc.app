@@ -128,28 +128,42 @@ issue_to_markdown <- function(owner, repo, issue_number) {
 } # issue_to_markdown
 
 get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
+  browser()
   milestone_str <- glue::glue_collapse(milestone_names, "-")
 
-  pdf_name <- {
+  base_name <- {
     if (is.null(input_name) || input_name == "") {
       if (just_tables) {
-        glue::glue("tables-{repo}-{milestone_str}.pdf")
+        glue::glue("tables-{repo}-{milestone_str}")
       }
       else {
-        glue::glue("{repo}-{milestone_str}.pdf")
+        glue::glue("{repo}-{milestone_str}")
       }
 
     }
-    else {
-      # they might have already put pdf in the name
-      if (stringr::str_detect(input_name, "\\.pdf$")) {
-        input_name
-      }
-      else {
-        glue::glue("{input_name}.pdf")
-      }
+    else { # remove .pdf if at the end
+      stringr::str_remove(input_name, "\\.pdf$")
     }
   }
+
+  # cleaning up:
+
+  # check num chars
+  if (nchar(base_name) > 60) {
+    base_name <- substr(base_name, 1, 60)
+  }
+
+  # replace spaces and _ with -
+  clean_name <- stringr::str_replace_all(base_name, "[ _]", "-")
+
+  # remove special characters except for dashes and numbers
+  clean_name <- stringr::str_remove_all(clean_name, "[^0-9A-Za-z\\-]")
+
+  # make lowercase
+  clean_name <- tolower(clean_name)
+
+  pdf_name <- glue::glue("{clean_name}.pdf")
+  return(pdf_name)
 }
 
 #' @import log4r

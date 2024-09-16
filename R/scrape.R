@@ -290,7 +290,7 @@ create_intro <- function(repo, milestone_names, header_path) {
 
 create_header <- function() {
   header_path <- system.file("header.tex", package = "ghqc")
-  image_path <- system.file("gsk.png", package = "ghqc")
+  image_path <- file.path(.lci$client_repo_path, "logo.png")
 
   header_tex <- paste0(
     "\\usepackage{fancyhdr}\n",

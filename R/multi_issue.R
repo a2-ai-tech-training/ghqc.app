@@ -8,7 +8,6 @@ create_issue <- function(file, issue_params) {
   issue_params$title <- file$name
   # body is checklist
   issue_params$body <- format_issue_body(file$checklist_type, file_path = file$name)
-
   # if file has assignees item, add to issue_params
   if (!is.null(file$assignees)) {
     issue_params$assignees <- I(file$assignees)

@@ -1,5 +1,11 @@
 # ghqc (development version)
 
+# ghqc 0.0.0.9009
+
+## New features
+
+- ghqc pulls client-specific information from a pre-existing repo using the environment variable `GIT_CLIENT_URL`, which is set equal to the https code link to the relevant github repo.
+
 # ghqc 0.0.0.9008
 
 ## New features

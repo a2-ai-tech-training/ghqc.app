@@ -3,13 +3,11 @@ NULL
 
 #' @export
 ghqc_create_app <- function() {
-  #logo_path <- do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny"), args = list())
-
-  logo_path <- "this/should/break"
+  logo_path <- do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny"), args = list())
   app <- shinyApp(
     ui = ghqc_create_ui(
       id = "ghqc_create_app",
-      logo_path = logo_path
+      logo_path = "this/should/break"
     ),
     server = function(input, output, session) {
       ghqc_create_server(

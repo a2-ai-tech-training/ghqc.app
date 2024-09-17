@@ -6,6 +6,7 @@ NULL
 
 ghqc_create_ui <- function(id) {
   ns <- NS(id)
+  print(do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny"))
   ui <- miniPage(
     use_waiter(),
     useShinyjs(),

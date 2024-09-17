@@ -4,6 +4,7 @@ NULL
 #' @export
 ghqc_create_app <- function() {
   #logo_path <- do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny"), args = list())
+
   logo_path <- "this/should/break"
   app <- shinyApp(
     ui = ghqc_create_ui(

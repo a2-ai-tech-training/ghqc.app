@@ -3,6 +3,7 @@ NULL
 
 #' @export
 ghqc_create_app <- function() {
+  info(.le$logger, do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny")))
   app <- shinyApp(
     ui = ghqc_create_ui(
       id = "ghqc_create_app"

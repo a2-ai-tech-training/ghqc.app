@@ -6,6 +6,7 @@ NULL
 
 ghqc_create_ui <- function(id) {
   ns <- NS(id)
+
   ui <- miniPage(
     use_waiter(),
     useShinyjs(),

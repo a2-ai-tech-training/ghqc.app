@@ -1,21 +1,39 @@
 .lci <- new.env()
 
 #' @import log4r
-install_client_git_repo <- function(){
-  git_repo <- Sys.getenv("GHQC_INFO_REPO")
+get_client_git_url <- function() {
+  git_url <- Sys.getenv("GIT_CLIENT_URL")
 
-  if (git_repo == ""){
-    error(.le$logger, "No github repo found. Please set GHQC_INFO_REPO environmental variable, likely in your ~/.Renviron file. (e.g. `GHQC_INFO_REPO=a2-ai/{company_name}.ghqc.info`)")
-    rlang::abort(message = "No github repo found. Please set GHQC_INFO_REPO environmental variable, likely in your ~/.Renviron file. (e.g. `GHQC_INFO_REPO=a2-ai/{company_name}.ghqc.info`)")
+  # error if CLIENT_INFO_URL not set
+  if (git_url == ""){
+    error(.le$logger, "No client github url found. Please set GIT_CLIENT_URL environmental variable, likely in your ~/.Renviron file.")
+    rlang::abort(message = "No client github url found. Please set GIT_CLIENT_URL environmental variable, likely in your ~/.Renviron file.")
   }
 
+  # error if not https
+  url_starts_with_https <- stringr::str_starts(git_url, "https://")
+  if (!url_starts_with_https) {
+    error(.le$logger, glue::glue("Retrieved GIT_CLIENT_URL: {git_url} does not start with https"))
+    rlang::abort(message = glue::glue("Retrieved GIT_CLIENT_URL: {git_url} does not start with https"))
+  }
+  git_url
+}
+
+#' @import log4r
+install_client_git_repo <- function(git_url){
   tryCatch(
     {
-      pkg_dwn_inf <- pak::pkg_install(git_repo, upgrade = TRUE)
-      pkg_name <- pkg_dwn_inf$package
+      host <- dirname(dirname(git_url))
+      repo_name <- file.path(basename(dirname(git_url)), basename(git_url))
+      if (grepl("https://github.com", host)) {
+        host <- "https://api.github.com"
+      } else {
+        host <- file.path(host, "api/v3")
+      }
+      pkg_name <- devtools::install_github(repo_name, host = host, auth_token = Sys.getenv("GHQC_GITHUB_PAT"))
     }, error = function(e) {
-      error(.le$logger, glue::glue("Installation of client specific package {git_repo} failed"))
-      rlang::abort(message = glue::glue("Installation of client specific package {git_repo} failed"))
+      error(.le$logger, glue::glue("Installation of client specific package from {git_url} failed"))
+      rlang::abort(message = glue::glue("Installation of client specific package from {git_url} failed"))
     }
   )
 
@@ -28,7 +46,7 @@ install_client_git_repo <- function(){
 #' @export
 load_client_info <- function(){
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
-
-  client_pkg_name <- install_client_git_repo()
+  git_url <- get_client_git_url()
+  client_pkg_name <- install_client_git_repo(git_url)
   assign("client_pkg_name", client_pkg_name, envir = .lci)
 }

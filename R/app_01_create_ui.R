@@ -4,7 +4,7 @@
 #' @importFrom waiter use_waiter waiter_show_on_load spin_1
 NULL
 
-ghqc_create_ui <- function(id) {
+ghqc_create_ui <- function(id, logo_path) {
   ns <- NS(id)
   ui <- miniPage(
     use_waiter(),
@@ -25,7 +25,7 @@ ghqc_create_ui <- function(id) {
     div(
       id = ns("main_container"),
       gadgetTitleBar(
-        title = span(tags$img(src = do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny"), args = list()),
+        title = span(tags$img(src = logo_path,
                               height = 50, class = "logo-img"), "Create QC Shiny Tool"),
         #title = span(tags$img(src = "a2ai.ghqc.info/logo.png", height = 50, class = "logo-img"), "Create QC Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),

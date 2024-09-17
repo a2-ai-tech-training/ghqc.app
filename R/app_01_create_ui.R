@@ -25,9 +25,9 @@ ghqc_create_ui <- function(id) {
     div(
       id = ns("main_container"),
       gadgetTitleBar(
-        #title = span(tags$img(src = do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny"), args = list()),
-        #                      height = 50, class = "logo-img"), "Create QC Shiny Tool"),
-        title = span(tags$img(src = "a2ai.gsk.info/logo.png", height = 50, class = "logo-img"), "Create QC Shiny Tool"),
+        title = span(tags$img(src = do.call(getExportedValue(.lci$client_pkg_name, "load_logo_png_shiny"), args = list()),
+                              height = 50, class = "logo-img"), "Create QC Shiny Tool"),
+        #title = span(tags$img(src = "a2ai.gsk.info/logo.png", height = 50, class = "logo-img"), "Create QC Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),

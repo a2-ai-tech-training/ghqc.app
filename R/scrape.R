@@ -175,7 +175,7 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
   # delete temporary rmd when it's time
   suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
-
+  browser()
   # create pdf from rmd
   location <- normalizePath(location)
   pdf_path <- file.path(location, pdf_name)
@@ -279,7 +279,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   author <- Sys.info()[["user"]]
   date <- format(Sys.Date(), '%B %d, %Y')
   milestone_names_list <- glue::glue_collapse(milestone_names, sep = ", ")
-
+  # https://stackoverflow.com/questions/25849814/rstudio-rmarkdown-both-portrait-and-landscape-layout-in-a-single-pdf
   intro <- glue::glue(
     "---
   title: \"QC Report: {milestone_names_list}\"
@@ -334,35 +334,42 @@ set_up_chunk <- function() {
     "```{{r setup, include=FALSE}}
   library(knitr)
   library(dplyr)
-  library(gt)
+  library(kableExtra)
   knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n")
 }
 
 create_summary_table_section <- function(summary_csv) {
   #
-  glue::glue(
-    "\\newpage
-    \\thispagestyle{{empty}}
-    \\blandscape\n```{{r, include=FALSE, eval=TRUE}}
-  summary_df <- read.csv(\"{summary_csv}\")\n
-  summary_df <- summary_df %>%
-  mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
-  invisible(summary_df)\n```\n",
+glue::glue(
+"\\newpage
+\\thispagestyle{{empty}}
+\\blandscape
 
-    "## Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
-  gt_table <- summary_df %>%
-  gt::gt() %>%
-  gt::cols_label(
-    file_path = \"File Path\",
-    author = \"Author\",
-    qc_type = \"QC Type\",
-    qcer = \"QCer\",
-    issue_closer = \"Issue Closer\",
-    close_date = \"Close Date\"
+```{{r, include=FALSE, eval=TRUE}}
+summary_df <- read.csv(\"{summary_csv}\")\n
+summary_df <- summary_df %>%
+mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
+invisible(summary_df)
+```
+
+## Summary Table
+```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+table <- summary_df %>%
+knitr::kable(
+  col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\")#,
+  #format = \"html\",
+  #escape = FALSE
+)
+```
+
+```{{r, echo=FALSE, results='asis'}}
+print(table)
+```
+
+\\elandscape
+\\newpage\n",
+  .trim = FALSE
   )
-
-gt_table\n```\n\\elandscape\\newpage\n",
-    .trim = FALSE)
 }
 
 create_set_of_issue_sections <- function(issues, owner, repo) {

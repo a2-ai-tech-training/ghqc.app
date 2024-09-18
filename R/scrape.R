@@ -168,21 +168,30 @@ get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
 #' @import log4r
 markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
   debug(.le$logger, "Creating report pdf...")
-
+browser()
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
+  #rmd <- file.path(location, "report.Rmd")
   fs::file_create(rmd)
   # delete temporary rmd when it's time
   suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
-  browser()
   # create pdf from rmd
   location <- normalizePath(location)
-  pdf_path <- file.path(location, pdf_name)
-  suppressWarnings(rmarkdown::render(rmd, output_file = pdf_path, quiet = TRUE))
+  suppressWarnings(
+    output_file <- rmarkdown::render(
+      input = rmd,
+      output_format = "pdf_document",
+      output_file = pdf_name,
+      output_dir = location,
+      #knit_root_dir = dirname(rmd),
+      run_pandoc = TRUE,
+      quiet = TRUE
+    )
+  )
   suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
 
-  pdf_path_abs <- get_simple_path(normalizePath(pdf_path))
+  pdf_path_abs <- get_simple_path(output_file)
 
   info(.le$logger, "Converted rmd to pdf")
   info(.le$logger, glue::glue("Created report pdf: {pdf_path_abs}"))
@@ -268,9 +277,10 @@ insert_breaks <- function(text, width) {
 create_summary_csv <- function(issues, env) {
   summary_df <- get_summary_df(issues)
   # wrap file paths
-  summary_df$file_path <- insert_breaks(summary_df$file_path, 20)
+  summary_df$file_path <- insert_breaks(summary_df$file_path, 15)
   summary_csv <- tempfile(fileext = ".csv")
   suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
+  #summary_csv <- file.path(getwd(), "summary.csv")
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
   return(summary_csv)
 }
@@ -356,13 +366,16 @@ invisible(summary_df)
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 table <- summary_df %>%
 knitr::kable(
-  col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\")#,
-  #format = \"html\",
-  #escape = FALSE
-)
+  col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\"),
+  format = \"html\",
+  booktabs = TRUE,
+  escape = TRUE
+) %>%
+  kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
+  column_spec(1, width = \"15em\")
 ```
 
-```{{r, echo=FALSE, results='asis'}}
+```{{r, echo=FALSE, eval=TRUE, results='asis'}}
 print(table)
 ```
 
@@ -528,12 +541,15 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Converting rmd to pdf...")
 
-  markdown_to_pdf(rmd_content = rmd_content,
-                  repo = repo,
-                  milestone_names = milestone_names,
-                  just_tables = just_tables,
-                  location = location,
-                  pdf_name = pdf_name)
+  suppressWarnings(
+    markdown_to_pdf(rmd_content = rmd_content,
+                    repo = repo,
+                    milestone_names = milestone_names,
+                    just_tables = just_tables,
+                    location = location,
+                    pdf_name = pdf_name)
+  )
+
 }
 
 get_simple_path <- function(working_dir = gert::git_find()) {

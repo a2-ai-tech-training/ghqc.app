@@ -11,7 +11,7 @@
 .onLoad <- function(...) {
   shiny::addResourcePath("ghqc", system.file(".", package = "ghqc"))
   logger <- init_logger()
-  client_info_path <- load_client_info()
+  #client_info_path <- load_client_info()
 }
 
 .onUnload <- function(...) {

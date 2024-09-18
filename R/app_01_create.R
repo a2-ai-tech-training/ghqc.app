@@ -3,6 +3,7 @@ NULL
 
 #' @export
 ghqc_create_app <- function() {
+  load_client_info()
   app <- shinyApp(
     ui = ghqc_create_ui(
       id = "ghqc_create_app"

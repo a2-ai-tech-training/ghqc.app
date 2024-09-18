@@ -33,7 +33,7 @@ install_client_git_repo <- function(git_url){
       pkg_name <- devtools::install_github(repo_name, host = host, auth_token = Sys.getenv("GHQC_GITHUB_PAT"))
     }, error = function(e) {
       error(.le$logger, glue::glue("Installation of client specific package from {git_url} failed"))
-      rlang::abort(message = glue::glue("Installation of client specific package from {git_url} failed"))
+      rlang::abort(message = glue::glue(message = e$message))
     }
   )
 

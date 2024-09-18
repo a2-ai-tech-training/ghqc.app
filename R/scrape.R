@@ -168,7 +168,6 @@ get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
 #' @import log4r
 markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
   debug(.le$logger, "Creating report pdf...")
-browser()
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
   #rmd <- file.path(location, "report.Rmd")
@@ -297,7 +296,11 @@ create_intro <- function(repo, milestone_names, header_path) {
   author: {author}
   date: {date}
   header-includes:
+  - \\usepackage{{booktabs}}
+  - \\usepackage{{graphicx}}
   - \\usepackage{{pdflscape}}
+  - \\usepackage{{array}}
+  - \\newcolumntype{{R}}[1]{{>{{\\raggedright\\arraybackslash}}p{{#1}}}}
   - \\newcommand{{\\blandscape}}{{\\begin{{landscape}}}}
   - \\newcommand{{\\elandscape}}{{\\end{{landscape}}}}
   output:
@@ -367,7 +370,7 @@ invisible(summary_df)
 table <- summary_df %>%
 knitr::kable(
   col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\"),
-  format = \"html\",
+  format = \"latex\",
   booktabs = TRUE,
   escape = TRUE
 ) %>%

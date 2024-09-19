@@ -78,7 +78,7 @@ ghqc_report_server <- function(id) {
 
                 HTML(warn_icon_html, glue::glue("There were no closed milestones found in {org()}/{repo()}.<br>
                                              Ensure that QC on each relevant milestone is finished, close relevant milestones on Github, then click \"Reset\" in the top right corner.<div style=\"margin-bottom: 9px;\"></div>")),
-                tags$a(href = milestone_list_url, "Click here close milestones on Github", target = "_blank"),
+                tags$a(href = milestone_list_url, "Click here to close milestones on Github", target = "_blank"),
                 easyClose = TRUE,
                 footer = NULL
               )

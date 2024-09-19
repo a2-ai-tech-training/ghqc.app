@@ -128,7 +128,6 @@ issue_to_markdown <- function(owner, repo, issue_number) {
 } # issue_to_markdown
 
 get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
-  browser()
   milestone_str <- glue::glue_collapse(milestone_names, "-")
 
   base_name <- {

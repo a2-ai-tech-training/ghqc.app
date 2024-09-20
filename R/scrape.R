@@ -285,12 +285,22 @@ insert_breaks <- function(text, width) {
 
 create_summary_csv <- function(issues, env) {
   summary_df <- get_summary_df(issues)
+  summary_df$issue_closer[is.na(summary_df$issue_closer)] <- "NA"
+  summary_df$close_date[is.na(summary_df$close_date)] <- "NA"
+  # summary_df <- data.frame(
+  #   file_path = c("scripts/sub_dir/long_titled_R_script_for_a_test.R", "short_file.txt", "mediummediummedium_file.R"),
+  #   author = c("jenna-a2ai <jenna@a2-ai.com>", "longergithubname <longergithubname@a2-ai.com", "longerlongerlongergithubname <longerlongerlongergithubname@a2-ai.com"),
+  #   qc_type = c("mrgsolve Model Validation", "qctypeqctypeqctypeqctypeqctypeqctype", "qctype qctype qctype qctype qctype "),
+  #   qcer = c("jenna-a2ai", "longernamelongernamelongername", "mediumname"),
+  #   issue_closer = c("jenna-a2ai", "mediumname", "longernamelongernamelongername"),
+  #   close_date = c("2024-09-18 18:34:50", "2024-09-18 18:34:50", "2024-09-18 18:34:50")
+  # )
   # wrap file paths
-  summary_df$file_path <- insert_breaks(summary_df$file_path, 20)
-  summary_df$author <- insert_breaks(summary_df$author, 30)
-  summary_df$qc_type <- insert_breaks(summary_df$qc_type, 25)
-  summary_df$qcer <- insert_breaks(summary_df$qcer, 15)
-  summary_df$issue_closer <- insert_breaks(summary_df$issue_closer, 15)
+  summary_df$file_path <- insert_breaks(summary_df$file_path, 17)
+  summary_df$author <- insert_breaks(summary_df$author, 28)
+  #summary_df$qc_type <- insert_breaks(summary_df$qc_type, 25)
+  summary_df$qcer <- insert_breaks(summary_df$qcer, 10)
+  summary_df$issue_closer <- insert_breaks(summary_df$issue_closer, 10)
   summary_df$close_date <- insert_breaks(summary_df$close_date, 20)
 
   summary_csv <- tempfile(fileext = ".csv")
@@ -304,7 +314,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   author <- Sys.info()[["user"]]
   date <- format(Sys.Date(), '%B %d, %Y')
   milestone_names_list <- glue::glue_collapse(milestone_names, sep = ", ")
-  # https://stackoverflow.com/questions/25849814/rstudio-rmarkdown-both-portrait-and-landscape-layout-in-a-single-pdf
+  #
   image_path <- file.path(.lci$client_repo_path, "logo.png")
   intro <- glue::glue(
     "---
@@ -346,29 +356,29 @@ create_intro <- function(repo, milestone_names, header_path) {
   ")
 }
 
-create_header <- function() {
-  header_path <- system.file("header.tex", package = "ghqc")
-  image_path <- file.path(.lci$client_repo_path, "logo.png")
-
-  header_tex <- paste0(
-    "\\usepackage{fancyhdr}\n",
-    "\\pagestyle{fancy}\n",
-    "\\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-    "\\fancyhead[C]{}\n",
-    "\\fancyhead[L]{}\n",
-    "\\setlength{\\headheight}{30pt}\n",
-    "\\fancypagestyle{plain}{%\n",
-    "    \\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-    "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
-    "}\n",
-    "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
-    "\\usepackage{lastpage}\n",
-    "\\lstset{\nbreaklines=true\n}"
-  )
-  writeLines(header_tex, header_path)
-
-  return(header_path)
-}
+# create_header <- function() {
+#   header_path <- system.file("header.tex", package = "ghqc")
+#   image_path <- file.path(.lci$client_repo_path, "logo.png")
+#
+#   header_tex <- paste0(
+#     "\\usepackage{fancyhdr}\n",
+#     "\\pagestyle{fancy}\n",
+#     "\\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
+#     "\\fancyhead[C]{}\n",
+#     "\\fancyhead[L]{}\n",
+#     "\\setlength{\\headheight}{30pt}\n",
+#     "\\fancypagestyle{plain}{%\n",
+#     "    \\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
+#     "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
+#     "}\n",
+#     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
+#     "\\usepackage{lastpage}\n",
+#     "\\lstset{\nbreaklines=true\n}"
+#   )
+#   writeLines(header_tex, header_path)
+#
+#   return(header_path)
+# }
 
 set_up_chunk <- function() {
   glue::glue(
@@ -380,10 +390,14 @@ set_up_chunk <- function() {
 }
 
 create_summary_table_section <- function(summary_csv) {
+
+
+
 glue::glue(
 "
 ```{{r, include=FALSE, eval=TRUE}}
 summary_df <- read.csv(\"{summary_csv}\")\n
+
 summary_df <- summary_df %>%
 mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
 invisible(summary_df)
@@ -397,15 +411,17 @@ knitr::kable(
   col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\"),
   format = \"latex\",
   booktabs = TRUE,
-  escape = TRUE
+  escape = TRUE,
+  linesep = \"\\\\addlinespace\\\\addlinespace\"
 ) %>%
   kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
   column_spec(1, width = \"10em\") %>%
   column_spec(2, width = \"14em\") %>%
   column_spec(3, width = \"12em\") %>%
-  column_spec(4, width = \"5em\") %>%
+  column_spec(4, width = \"6em\") %>%
   column_spec(5, width = \"6em\") %>%
   column_spec(6, width = \"9em\")
+
 ```
 
 ```{{r, echo=FALSE, eval=TRUE, results='asis'}}
@@ -532,7 +548,6 @@ ghqc_report <- function(milestone_names = NULL,
     # check that milestones exist and are non-empty
     check_milestones(milestone_names, owner, repo)
   }
-
 
   if (fs::is_file(location)) {
     error(.le$logger, glue::glue("Inputted directory {location} is a file path. Input an existing directory."))

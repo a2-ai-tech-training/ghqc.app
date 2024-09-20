@@ -189,6 +189,17 @@ browser()
       quiet = TRUE
     )
   )
+  suppressWarnings(
+    output_file <- rmarkdown::render(
+      input = rmd,
+      output_format = "pdf_document",
+      output_file = pdf_name,
+      output_dir = location,
+      #knit_root_dir = dirname(rmd),
+      run_pandoc = TRUE,
+      quiet = TRUE
+    )
+  )
   suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
 
   pdf_path_abs <- get_simple_path(output_file)
@@ -277,7 +288,7 @@ insert_breaks <- function(text, width) {
 create_summary_csv <- function(issues, env) {
   summary_df <- get_summary_df(issues)
   # wrap file paths
-  summary_df$file_path <- insert_breaks(summary_df$file_path, 15)
+  summary_df$file_path <- insert_breaks(summary_df$file_path, 20)
   summary_csv <- tempfile(fileext = ".csv")
   suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
   #summary_csv <- file.path(getwd(), "summary.csv")
@@ -365,18 +376,25 @@ invisible(summary_df)
 ## Summary Table
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 table <- summary_df %>%
-knitr::kable(
-  col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\"),
-  format = \"html\",
-  booktabs = TRUE,
-  escape = TRUE
-) %>%
-  kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
-  column_spec(1, width = \"15em\")
-```
+  gt::gt() %>%
+  gt::cols_label(
+    file_path = \"File Path\",
+    author = \"Author\",
+    qc_type = \"QC Type\",
+    qcer = \"QCer\",
+    issue_closer = \"Issue Closer\",
+    close_date = \"Close Date\"
+  ) %>%
 
-```{{r, echo=FALSE, eval=TRUE, results='asis'}}
-print(table)
+  gt::cols_width(
+    file_path ~ gt::pct(17),
+    author ~ gt::pct(23),
+    qc_type ~ gt::pct(20),
+    qcer ~ gt::pct(10),
+    issue_closer ~ gt::pct(10),
+    close_date ~ gt::pct(18)
+  )
+table
 ```
 
 \\elandscape

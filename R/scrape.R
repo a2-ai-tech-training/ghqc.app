@@ -405,7 +405,7 @@ knitr::kable(
   column_spec(3, width = \"12em\") %>%
   column_spec(4, width = \"5em\") %>%
   column_spec(5, width = \"6em\") %>%
-  column_spec(6, width = \"10em\")
+  column_spec(6, width = \"9em\")
 ```
 
 ```{{r, echo=FALSE, eval=TRUE, results='asis'}}

@@ -168,7 +168,6 @@ get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
 #' @import log4r
 markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
   debug(.le$logger, "Creating report pdf...")
-browser()
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
   #rmd <- file.path(location, "report.Rmd")
@@ -177,6 +176,7 @@ browser()
   suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
   # create pdf from rmd
+  browser()
   location <- normalizePath(location)
   suppressWarnings(
     output_file <- rmarkdown::render(
@@ -301,6 +301,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   date <- format(Sys.Date(), '%B %d, %Y')
   milestone_names_list <- glue::glue_collapse(milestone_names, sep = ", ")
   # https://stackoverflow.com/questions/25849814/rstudio-rmarkdown-both-portrait-and-landscape-layout-in-a-single-pdf
+  image_path <- file.path(.lci$client_repo_path, "logo.png")
   intro <- glue::glue(
     "---
   title: \"QC Report: {milestone_names_list}\"
@@ -308,18 +309,29 @@ create_intro <- function(repo, milestone_names, header_path) {
   author: {author}
   date: {date}
   header-includes:
+  - \\usepackage{{booktabs}}
+  - \\usepackage{{graphicx}}
   - \\usepackage{{pdflscape}}
+  - \\usepackage{{array}}
+  - \\usepackage{{fancyhdr}}
+  - \\pagestyle{{fancy}}
+  - \\newcolumntype{{R}}[1]{{>{{\\raggedright\\arraybackslash}}p{{#1}}}}
   - \\newcommand{{\\blandscape}}{{\\begin{{landscape}}}}
   - \\newcommand{{\\elandscape}}{{\\end{{landscape}}}}
+  - \\fancyfoot[C]{{Page \\thepage\\ of \\pageref{{LastPage}}}}
+  - \\usepackage{{lastpage}}
+  - \\lstset{{breaklines=true}}
+  - \"\\\\fancypagestyle{{plain}}{{\"
+  - \"\\\\fancyhead[R]{{\\\\includegraphics[width=2cm]{{{image_path}}}}}\"
+  - \"\\\\renewcommand{{\\\\headrulewidth}}{{0.4pt}}\"
+  - \"}}\"
   output:
     pdf_document:
       latex_engine: xelatex
       pandoc_args: --listings
       toc: true
       toc_depth: 1
-      includes:
-        in_header: {header_path}
-  ---
+---
 
   \\newpage
 
@@ -360,7 +372,6 @@ set_up_chunk <- function() {
 }
 
 create_summary_table_section <- function(summary_csv) {
-  #
 glue::glue(
 "\\newpage
 \\thispagestyle{{empty}}
@@ -376,25 +387,20 @@ invisible(summary_df)
 ## Summary Table
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 table <- summary_df %>%
-  gt::gt() %>%
-  gt::cols_label(
-    file_path = \"File Path\",
-    author = \"Author\",
-    qc_type = \"QC Type\",
-    qcer = \"QCer\",
-    issue_closer = \"Issue Closer\",
-    close_date = \"Close Date\"
-  ) %>%
 
-  gt::cols_width(
-    file_path ~ gt::pct(17),
-    author ~ gt::pct(23),
-    qc_type ~ gt::pct(20),
-    qcer ~ gt::pct(10),
-    issue_closer ~ gt::pct(10),
-    close_date ~ gt::pct(18)
-  )
-table
+knitr::kable(
+  col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\"),
+  format = \"latex\",
+  booktabs = TRUE,
+  escape = TRUE
+) %>%
+  kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
+  column_spec(1, width = \"15em\")
+  #column_spec(1, width = \"15em\")
+```
+
+```{{r, echo=FALSE, eval=TRUE, results='asis'}}
+print(table)
 ```
 
 \\elandscape
@@ -533,7 +539,7 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Creating report introduction...")
   # intro
-  header_path <- create_header()
+  #header_path <- create_header()
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
   info(.le$logger, "Created report introduction")

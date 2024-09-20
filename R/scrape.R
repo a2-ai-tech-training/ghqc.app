@@ -176,7 +176,6 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
   suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
   # create pdf from rmd
-  browser()
   location <- normalizePath(location)
   suppressWarnings(
     output_file <- rmarkdown::render(
@@ -184,7 +183,6 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
       output_format = "pdf_document",
       output_file = pdf_name,
       output_dir = location,
-      #knit_root_dir = dirname(rmd),
       run_pandoc = TRUE,
       quiet = TRUE
     )
@@ -278,7 +276,7 @@ insert_breaks <- function(text, width) {
   sapply(text, function(x) {
     if (nchar(x) > width) {
       # insert spaces into long words
-      paste(strsplit(x, paste0("(?<=.{", width, "})"), perl = TRUE)[[1]], collapse = " ")
+      paste(strsplit(x, paste0("(?<=.{", width, "})"), perl = TRUE)[[1]], collapse = "-")
     } else {
       x
     }
@@ -289,6 +287,12 @@ create_summary_csv <- function(issues, env) {
   summary_df <- get_summary_df(issues)
   # wrap file paths
   summary_df$file_path <- insert_breaks(summary_df$file_path, 20)
+  summary_df$author <- insert_breaks(summary_df$author, 30)
+  summary_df$qc_type <- insert_breaks(summary_df$qc_type, 25)
+  summary_df$qcer <- insert_breaks(summary_df$qcer, 15)
+  summary_df$issue_closer <- insert_breaks(summary_df$issue_closer, 15)
+  summary_df$close_date <- insert_breaks(summary_df$close_date, 20)
+
   summary_csv <- tempfile(fileext = ".csv")
   suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
   #summary_csv <- file.path(getwd(), "summary.csv")
@@ -318,6 +322,10 @@ create_intro <- function(repo, milestone_names, header_path) {
   - \\newcolumntype{{R}}[1]{{>{{\\raggedright\\arraybackslash}}p{{#1}}}}
   - \\newcommand{{\\blandscape}}{{\\begin{{landscape}}}}
   - \\newcommand{{\\elandscape}}{{\\end{{landscape}}}}
+  - \\fancyhead[R]{{\\includegraphics[width=2cm]{{{image_path}}}}}
+  - \\fancyhead[C]{{}}
+  - \\fancyhead[L]{{}}
+  - \\setlength{{\\headheight}}{{30pt}}
   - \\fancyfoot[C]{{Page \\thepage\\ of \\pageref{{LastPage}}}}
   - \\usepackage{{lastpage}}
   - \\lstset{{breaklines=true}}
@@ -373,10 +381,7 @@ set_up_chunk <- function() {
 
 create_summary_table_section <- function(summary_csv) {
 glue::glue(
-"\\newpage
-\\thispagestyle{{empty}}
-\\blandscape
-
+"
 ```{{r, include=FALSE, eval=TRUE}}
 summary_df <- read.csv(\"{summary_csv}\")\n
 summary_df <- summary_df %>%
@@ -395,15 +400,18 @@ knitr::kable(
   escape = TRUE
 ) %>%
   kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
-  column_spec(1, width = \"15em\")
-  #column_spec(1, width = \"15em\")
+  column_spec(1, width = \"10em\") %>%
+  column_spec(2, width = \"14em\") %>%
+  column_spec(3, width = \"12em\") %>%
+  column_spec(4, width = \"5em\") %>%
+  column_spec(5, width = \"6em\") %>%
+  column_spec(6, width = \"10em\")
 ```
 
 ```{{r, echo=FALSE, eval=TRUE, results='asis'}}
 print(table)
 ```
 
-\\elandscape
 \\newpage\n",
   .trim = FALSE
   )

@@ -168,21 +168,39 @@ get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
 #' @import log4r
 markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
   debug(.le$logger, "Creating report pdf...")
-
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
+  #rmd <- file.path(location, "report.Rmd")
   fs::file_create(rmd)
   # delete temporary rmd when it's time
-  #suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
+  suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
-
   # create pdf from rmd
   location <- normalizePath(location)
-  pdf_path <- file.path(location, pdf_name)
-  suppressWarnings(rmarkdown::render(rmd, output_file = pdf_path, quiet = TRUE))
+  suppressWarnings(
+    output_file <- rmarkdown::render(
+      input = rmd,
+      output_format = "pdf_document",
+      output_file = pdf_name,
+      output_dir = location,
+      run_pandoc = TRUE,
+      quiet = TRUE
+    )
+  )
+  suppressWarnings(
+    output_file <- rmarkdown::render(
+      input = rmd,
+      output_format = "pdf_document",
+      output_file = pdf_name,
+      output_dir = location,
+      #knit_root_dir = dirname(rmd),
+      run_pandoc = TRUE,
+      quiet = TRUE
+    )
+  )
   suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
 
-  pdf_path_abs <- get_simple_path(normalizePath(pdf_path))
+  pdf_path_abs <- get_simple_path(output_file)
 
   info(.le$logger, "Converted rmd to pdf")
   info(.le$logger, glue::glue("Created report pdf: {pdf_path_abs}"))
@@ -258,7 +276,7 @@ insert_breaks <- function(text, width) {
   sapply(text, function(x) {
     if (nchar(x) > width) {
       # insert spaces into long words
-      paste(strsplit(x, paste0("(?<=.{", width, "})"), perl = TRUE)[[1]], collapse = " ")
+      paste(strsplit(x, paste0("(?<=.{", width, "})"), perl = TRUE)[[1]], collapse = "-")
     } else {
       x
     }
@@ -267,10 +285,27 @@ insert_breaks <- function(text, width) {
 
 create_summary_csv <- function(issues, env) {
   summary_df <- get_summary_df(issues)
+  summary_df$issue_closer[is.na(summary_df$issue_closer)] <- "NA"
+  summary_df$close_date[is.na(summary_df$close_date)] <- "NA"
+  # summary_df <- data.frame(
+  #   file_path = c("scripts/sub_dir/long_titled_R_script_for_a_test.R", "short_file.txt", "mediummediummedium_file.R"),
+  #   author = c("jenna-a2ai <jenna@a2-ai.com>", "longergithubname <longergithubname@a2-ai.com", "longerlongerlongergithubname <longerlongerlongergithubname@a2-ai.com"),
+  #   qc_type = c("mrgsolve Model Validation", "qctypeqctypeqctypeqctypeqctypeqctype", "qctype qctype qctype qctype qctype "),
+  #   qcer = c("jenna-a2ai", "longernamelongernamelongername", "mediumname"),
+  #   issue_closer = c("jenna-a2ai", "mediumname", "longernamelongernamelongername"),
+  #   close_date = c("2024-09-18 18:34:50", "2024-09-18 18:34:50", "2024-09-18 18:34:50")
+  # )
   # wrap file paths
-  summary_df$file_path <- insert_breaks(summary_df$file_path, 20)
+  summary_df$file_path <- insert_breaks(summary_df$file_path, 17)
+  summary_df$author <- insert_breaks(summary_df$author, 28)
+  #summary_df$qc_type <- insert_breaks(summary_df$qc_type, 25)
+  summary_df$qcer <- insert_breaks(summary_df$qcer, 10)
+  summary_df$issue_closer <- insert_breaks(summary_df$issue_closer, 10)
+  summary_df$close_date <- insert_breaks(summary_df$close_date, 20)
+
   summary_csv <- tempfile(fileext = ".csv")
   suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
+  #summary_csv <- file.path(getwd(), "summary.csv")
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
   return(summary_csv)
 }
@@ -279,98 +314,123 @@ create_intro <- function(repo, milestone_names, header_path) {
   author <- Sys.info()[["user"]]
   date <- format(Sys.Date(), '%B %d, %Y')
   milestone_names_list <- glue::glue_collapse(milestone_names, sep = ", ")
-
+  #
+  image_path <- file.path(.lci$client_repo_path, "logo.png")
   intro <- glue::glue(
     "---
   title: \"QC Report: {milestone_names_list}\"
   subtitle: \"Git repository: {repo}\"
   author: {author}
   date: {date}
+  header-includes:
+  - \\usepackage{{booktabs}}
+  - \\usepackage{{graphicx}}
+  - \\usepackage{{pdflscape}}
+  - \\usepackage{{array}}
+  - \\usepackage{{fancyhdr}}
+  - \\pagestyle{{fancy}}
+  - \\newcolumntype{{R}}[1]{{>{{\\raggedright\\arraybackslash}}p{{#1}}}}
+  - \\newcommand{{\\blandscape}}{{\\begin{{landscape}}}}
+  - \\newcommand{{\\elandscape}}{{\\end{{landscape}}}}
+  - \\fancyhead[R]{{\\includegraphics[width=2cm]{{{image_path}}}}}
+  - \\fancyhead[C]{{}}
+  - \\fancyhead[L]{{}}
+  - \\setlength{{\\headheight}}{{30pt}}
+  - \\fancyfoot[C]{{Page \\thepage\\ of \\pageref{{LastPage}}}}
+  - \\usepackage{{lastpage}}
+  - \\lstset{{breaklines=true}}
+  - \"\\\\fancypagestyle{{plain}}{{\"
+  - \"\\\\fancyhead[R]{{\\\\includegraphics[width=2cm]{{{image_path}}}}}\"
+  - \"\\\\renewcommand{{\\\\headrulewidth}}{{0.4pt}}\"
+  - \"}}\"
   output:
     pdf_document:
       latex_engine: xelatex
       pandoc_args: --listings
       toc: true
       toc_depth: 1
-      includes:
-        in_header: {header_path}
-  ---
+---
 
   \\newpage
 
   ")
 }
 
-create_header <- function() {
-  header_path <- system.file("header.tex", package = "ghqc")
-  image_path <- file.path(.lci$client_repo_path, "logo.png")
-
-  header_tex <- paste0(
-    "\\usepackage{fancyhdr}\n",
-    "\\pagestyle{fancy}\n",
-    "\\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-    "\\fancyhead[C]{}\n",
-    "\\fancyhead[L]{}\n",
-    "\\setlength{\\headheight}{30pt}\n",
-    "\\fancypagestyle{plain}{%\n",
-    "    \\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-    "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
-    "}\n",
-    "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
-    "\\usepackage{lastpage}\n",
-    "\\lstset{\nbreaklines=true\n}"
-  )
-  writeLines(header_tex, header_path)
-
-  return(header_path)
-}
+# create_header <- function() {
+#   header_path <- system.file("header.tex", package = "ghqc")
+#   image_path <- file.path(.lci$client_repo_path, "logo.png")
+#
+#   header_tex <- paste0(
+#     "\\usepackage{fancyhdr}\n",
+#     "\\pagestyle{fancy}\n",
+#     "\\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
+#     "\\fancyhead[C]{}\n",
+#     "\\fancyhead[L]{}\n",
+#     "\\setlength{\\headheight}{30pt}\n",
+#     "\\fancypagestyle{plain}{%\n",
+#     "    \\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
+#     "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
+#     "}\n",
+#     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
+#     "\\usepackage{lastpage}\n",
+#     "\\lstset{\nbreaklines=true\n}"
+#   )
+#   writeLines(header_tex, header_path)
+#
+#   return(header_path)
+# }
 
 set_up_chunk <- function() {
   glue::glue(
     "```{{r setup, include=FALSE}}
   library(knitr)
   library(dplyr)
-  library(flextable)
+  library(kableExtra)
   knitr::opts_chunk$set(eval=FALSE, warning = FALSE)\n```\n\n")
 }
 
 create_summary_table_section <- function(summary_csv) {
-  glue::glue(
-    "```{{r, include=FALSE, eval=TRUE}}
-  summary_df <- read.csv(\"{summary_csv}\")\n
-  summary_df <- summary_df %>%
-  mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
-  invisible(summary_df)\n```\n",
 
-    "## Summary Table\n```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
-  ft <- flextable::flextable(summary_df)
-  dimensions <- dim_pretty(ft)
-  col_widths <- dimensions$widths * 0.8
-  #row_heights <- dimensions$heights * 0.8
-  ft <- ft %>%
-  set_header_labels(file_path = \"File Path\",
-  author = \"Author\",
-  qc_type = \"QC Type\",
-  # file_name = \"File Name\",
-  # git_sha = \"Git SHA\",
-  qcer = \"QCer\",
-  issue_closer = \"Issue Closer\",
-  close_date = \"Close Date\") %>%
 
-  set_table_properties(width = 1.0) %>% # , align = \"left\"
-  #width(j = seq_along(col_widths), width = col_widths) %>%
 
-  padding(padding = 35, part = \"all\") %>%
-  fit_to_width(9) %>%
-  #fontsize(size = 9, part = 'all') %>%
-  theme_vanilla()
+glue::glue(
+"
+```{{r, include=FALSE, eval=TRUE}}
+summary_df <- read.csv(\"{summary_csv}\")\n
 
-  ft <- ft %>% autofit()
+summary_df <- summary_df %>%
+mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
+invisible(summary_df)
+```
 
-  ft <- width(ft, width = dim(ft)$widths*6.5 /(flextable_dim(ft)$widths))
-  ft <- width(ft, j = 1, 1.5)
-  ft\n```\n\\newpage\n",
-    .trim = FALSE)
+## Summary Table
+```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+table <- summary_df %>%
+
+knitr::kable(
+  col.names = c(\"File Path\", \"Author\", \"QC Type\", \"QCer\", \"Issue Closer\", \"Close Date\"),
+  format = \"latex\",
+  booktabs = TRUE,
+  escape = TRUE,
+  linesep = \"\\\\addlinespace\\\\addlinespace\"
+) %>%
+  kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
+  column_spec(1, width = \"10em\") %>%
+  column_spec(2, width = \"14em\") %>%
+  column_spec(3, width = \"12em\") %>%
+  column_spec(4, width = \"6em\") %>%
+  column_spec(5, width = \"6em\") %>%
+  column_spec(6, width = \"9em\")
+
+```
+
+```{{r, echo=FALSE, eval=TRUE, results='asis'}}
+print(table)
+```
+
+\\newpage\n",
+  .trim = FALSE
+  )
 }
 
 create_set_of_issue_sections <- function(issues, owner, repo) {
@@ -489,7 +549,6 @@ ghqc_report <- function(milestone_names = NULL,
     check_milestones(milestone_names, owner, repo)
   }
 
-
   if (fs::is_file(location)) {
     error(.le$logger, glue::glue("Inputted directory {location} is a file path. Input an existing directory."))
     rlang::abort(message = glue::glue("Inputted directory {location} is a file path.<br>Input an existing directory."))
@@ -503,7 +562,7 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Creating report introduction...")
   # intro
-  header_path <- create_header()
+  #header_path <- create_header()
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
   info(.le$logger, "Created report introduction")
@@ -529,12 +588,15 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Converting rmd to pdf...")
 
-  markdown_to_pdf(rmd_content = rmd_content,
-                  repo = repo,
-                  milestone_names = milestone_names,
-                  just_tables = just_tables,
-                  location = location,
-                  pdf_name = pdf_name)
+  suppressWarnings(
+    markdown_to_pdf(rmd_content = rmd_content,
+                    repo = repo,
+                    milestone_names = milestone_names,
+                    just_tables = just_tables,
+                    location = location,
+                    pdf_name = pdf_name)
+  )
+
 }
 
 get_simple_path <- function(working_dir = gert::git_find()) {

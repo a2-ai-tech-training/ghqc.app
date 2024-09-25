@@ -329,6 +329,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   - \\usepackage{{pdflscape}}
   - \\usepackage{{array}}
   - \\usepackage{{fancyhdr}}
+  - \\usepackage{{xcolor}}
   - \\pagestyle{{fancy}}
   - \\newcolumntype{{R}}[1]{{>{{\\raggedright\\arraybackslash}}p{{#1}}}}
   - \\newcommand{{\\blandscape}}{{\\begin{{landscape}}}}
@@ -347,6 +348,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   output:
     pdf_document:
       latex_engine: xelatex
+      extra_dependencies: [\"xcolor\"]
       pandoc_args: --listings
       toc: true
       toc_depth: 1
@@ -378,7 +380,7 @@ mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
 invisible(summary_df)
 ```
 
-## Summary Table
+## Issue Summary
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 table <- summary_df %>%
 
@@ -524,19 +526,26 @@ mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
 invisible(milestone_df)
 ```
 
-## Milestone Table
+## Milestone Summary
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 
 table <- milestone_df %>%
 knitr::kable(
-  col.names = c(\"Title\", \"Description\", \"Issues\"),
+  col.names = c(\"Title\", \"Description\", \"Status\", \"Issues\"),
   format = \"latex\",
   booktabs = TRUE,
   escape = FALSE,
   linesep = \"\\\\addlinespace\\\\addlinespace\"
 ) %>%
   kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
-  footnote(general=c(\"‡ open issue\", \"§ issue with unchecked items\"), general_title = \"\")
+  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{‡}} open issue\", \"\\\\\\\\textcolor{{green}}{{§}} issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
+  column_spec(1, width = \"5em\", latex_valign = \"p\") %>%
+  column_spec(2, width = \"10em\", latex_valign = \"p\") %>%
+  column_spec(3, width = \"3em\", latex_valign = \"p\") %>%
+  column_spec(4, width = \"22em\", latex_valign = \"p\")
+  #collapse_rows(1:4, valign = \"top\")
+
+  #row_spec(1:4, latex_valign = \"t\")
 
   #column_spec(1, width = \"10em\")
 ```
@@ -568,10 +577,10 @@ create_milestone_df <- function(milestone_names, owner, repo) {
     issue_names <- lapply(issues, function(issue) {
       issue_name <- issue$title
       if (issue$state == "open") {
-        issue_name <- glue::glue("{issue_name}‡")
+        issue_name <- glue::glue("{issue_name}\\textcolor{{red}}{{‡}}")
       }
       if (unchecked_items_in_issue(issue)) {
-        issue_name <- glue::glue("{issue_name}§")
+        issue_name <- glue::glue("{issue_name}\\textcolor{{green}}{{§}}")
       }
       return(issue_name)
     })
@@ -579,7 +588,9 @@ create_milestone_df <- function(milestone_names, owner, repo) {
     return(issues_str)
   })
 
-
+  milestone_statuses <- sapply(milestone_objects, function(milestone) {
+    milestone$state
+  })
 
   milestone_descriptions <-  sapply(milestone_objects, function(milestone) {
     desc <- milestone$description
@@ -593,6 +604,7 @@ create_milestone_df <- function(milestone_names, owner, repo) {
   milestone_df <- data.frame(
     name = milestone_names,
     description = milestone_descriptions,
+    status = milestone_statuses,
     issues = issues_in_milestones
   )
 

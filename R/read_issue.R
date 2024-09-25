@@ -91,7 +91,6 @@ check_completeness <- function(milestone_names){
     unchecked_open_items <- check_checklists(milestone_issues$open)
     unchecked_items <- write_unchecked_items(unchecked_closed_issues, unchecked_open_issues)
   }
-  browser()
   # names(unchecked_closed_items) <- milestone_names
   # unchecked_closed_items <- unchecked_closed_items[unlist(lapply(unchecked_closed_items, function(x) length(x) != 0))]
   unchecked_open_items <- unchecked_open_items[unlist(lapply(unchecked_open_items, function(x) length(x) != 0))]

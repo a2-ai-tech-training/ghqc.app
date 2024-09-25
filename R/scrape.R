@@ -324,6 +324,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   date: {date}
   header-includes:
   - \\usepackage{{booktabs}}
+  - \\usepackage{{makecell}}
   - \\usepackage{{graphicx}}
   - \\usepackage{{pdflscape}}
   - \\usepackage{{array}}
@@ -356,29 +357,6 @@ create_intro <- function(repo, milestone_names, header_path) {
   ")
 }
 
-# create_header <- function() {
-#   header_path <- system.file("header.tex", package = "ghqc")
-#   image_path <- file.path(.lci$client_repo_path, "logo.png")
-#
-#   header_tex <- paste0(
-#     "\\usepackage{fancyhdr}\n",
-#     "\\pagestyle{fancy}\n",
-#     "\\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-#     "\\fancyhead[C]{}\n",
-#     "\\fancyhead[L]{}\n",
-#     "\\setlength{\\headheight}{30pt}\n",
-#     "\\fancypagestyle{plain}{%\n",
-#     "    \\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-#     "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
-#     "}\n",
-#     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
-#     "\\usepackage{lastpage}\n",
-#     "\\lstset{\nbreaklines=true\n}"
-#   )
-#   writeLines(header_tex, header_path)
-#
-#   return(header_path)
-# }
 
 set_up_chunk <- function() {
   glue::glue(
@@ -390,9 +368,6 @@ set_up_chunk <- function() {
 }
 
 create_summary_table_section <- function(summary_csv) {
-
-
-
 glue::glue(
 "
 ```{{r, include=FALSE, eval=TRUE}}
@@ -531,6 +506,102 @@ check_milestones <- function(milestone_names, owner, repo) {
   })
 }
 
+unchecked_items_in_issue <- function(issue) {
+  unchecked_items <- stringr::str_detect(issue$body, "- \\[ \\]")
+}
+
+create_milestone_table <- function(milestone_names, owner, repo) {
+  milestone_df <- create_milestone_df(milestone_names, owner, repo)
+  milestone_csv <- create_milestone_csv(milestone_df)
+
+  glue::glue(
+    "
+```{{r, include=FALSE, eval=TRUE}}
+milestone_df <- read.csv(\"{milestone_csv}\")\n
+
+milestone_df <- milestone_df %>%
+mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
+invisible(milestone_df)
+```
+
+## Milestone Table
+```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+
+table <- milestone_df %>%
+knitr::kable(
+  col.names = c(\"Title\", \"Description\", \"Issues\"),
+  format = \"latex\",
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = \"\\\\addlinespace\\\\addlinespace\"
+) %>%
+  kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
+  footnote(general=c(\"‡ open issue\", \"§ issue with unchecked items\"), general_title = \"\")
+
+  #column_spec(1, width = \"10em\")
+```
+
+```{{r, echo=FALSE, eval=TRUE, results='asis'}}
+print(table)
+```
+
+\\newpage\n",
+    .trim = FALSE
+  )
+}
+
+create_milestone_csv <- function(milestone_df) {
+  milestone_csv <- tempfile(fileext = ".csv")
+  #suppressMessages({withr::defer(fs::file_delete(milestone_csv))})
+  write.csv(milestone_df, file = milestone_csv, row.names = FALSE)
+  return(milestone_csv)
+}
+
+
+create_milestone_df <- function(milestone_names, owner, repo) {
+  milestone_objects <- lapply(milestone_names, function(milestone_name) {
+    get_milestone_from_name(owner, repo, milestone_name)
+  })
+
+  issues_in_milestones <- sapply(milestone_names, function(milestone_name) {
+    issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
+    issue_names <- lapply(issues, function(issue) {
+      issue_name <- issue$title
+      if (issue$state == "open") {
+        issue_name <- glue::glue("{issue_name}‡")
+      }
+      if (unchecked_items_in_issue(issue)) {
+        issue_name <- glue::glue("{issue_name}§")
+      }
+      return(issue_name)
+    })
+    issues_str <- glue::glue_collapse(issue_names, "\n")
+    return(issues_str)
+  })
+
+
+
+  milestone_descriptions <-  sapply(milestone_objects, function(milestone) {
+    desc <- milestone$description
+    if (is.null(desc)) {
+      desc <- "NA"
+    }
+    return(desc)
+  })
+
+
+  milestone_df <- data.frame(
+    name = milestone_names,
+    description = milestone_descriptions,
+    issues = issues_in_milestones
+  )
+
+  milestone_df$issues <- stringr::str_replace_all(milestone_df$issues, "_", "\\\\_")
+  milestone_df$issues <- kableExtra::linebreak(milestone_df$issues)
+
+  milestone_df
+}
+
 #' @export
 #' @import log4r
 ghqc_report <- function(milestone_names = NULL,
@@ -562,10 +633,12 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Creating report introduction...")
   # intro
-  #header_path <- create_header()
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
   info(.le$logger, "Created report introduction")
+
+  # create milestone table
+  milestone_table <- create_milestone_table(milestone_names, owner, repo)
 
   debug(.le$logger, "Creating milestone sections...")
   # create milestone sections
@@ -577,7 +650,11 @@ ghqc_report <- function(milestone_names = NULL,
 
   # appendix
 
-  rmd_content <- glue::glue_collapse(c(intro, set_up_chunk, milestone_sections), sep = "")
+  rmd_content <- glue::glue_collapse(c(intro,
+                                       set_up_chunk,
+                                       milestone_table,
+                                       milestone_sections
+                                       ), sep = "")
 
   pdf_name <- get_pdf_name(input_name = input_name,
                            milestone_names = milestone_names,

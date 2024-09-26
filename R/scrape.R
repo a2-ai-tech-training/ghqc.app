@@ -170,11 +170,14 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
   debug(.le$logger, "Creating report pdf...")
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
+
   #rmd <- file.path(location, "report.Rmd")
   fs::file_create(rmd)
+  debug(.le$logger, glue::glue("Rmd location: {rmd}"))
   # delete temporary rmd when it's time
-  suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
+ #suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
+
   # create pdf from rmd
   location <- normalizePath(location)
   suppressWarnings(
@@ -187,18 +190,8 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
       quiet = TRUE
     )
   )
-  suppressWarnings(
-    output_file <- rmarkdown::render(
-      input = rmd,
-      output_format = "pdf_document",
-      output_file = pdf_name,
-      output_dir = location,
-      #knit_root_dir = dirname(rmd),
-      run_pandoc = TRUE,
-      quiet = TRUE
-    )
-  )
-  suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
+
+  #suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
 
   pdf_path_abs <- get_simple_path(output_file)
 
@@ -304,7 +297,7 @@ create_summary_csv <- function(issues, env) {
   summary_df$close_date <- insert_breaks(summary_df$close_date, 20)
 
   summary_csv <- tempfile(fileext = ".csv")
-  suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
+  #suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
   #summary_csv <- file.path(getwd(), "summary.csv")
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
   return(summary_csv)
@@ -324,10 +317,12 @@ create_intro <- function(repo, milestone_names, header_path) {
   date: {date}
   header-includes:
   - \\usepackage{{booktabs}}
+  - \\usepackage{{makecell}}
   - \\usepackage{{graphicx}}
   - \\usepackage{{pdflscape}}
   - \\usepackage{{array}}
   - \\usepackage{{fancyhdr}}
+  - \\usepackage{{xcolor}}
   - \\pagestyle{{fancy}}
   - \\newcolumntype{{R}}[1]{{>{{\\raggedright\\arraybackslash}}p{{#1}}}}
   - \\newcommand{{\\blandscape}}{{\\begin{{landscape}}}}
@@ -346,6 +341,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   output:
     pdf_document:
       latex_engine: xelatex
+      extra_dependencies: [\"xcolor\"]
       pandoc_args: --listings
       toc: true
       toc_depth: 1
@@ -356,29 +352,6 @@ create_intro <- function(repo, milestone_names, header_path) {
   ")
 }
 
-# create_header <- function() {
-#   header_path <- system.file("header.tex", package = "ghqc")
-#   image_path <- file.path(.lci$client_repo_path, "logo.png")
-#
-#   header_tex <- paste0(
-#     "\\usepackage{fancyhdr}\n",
-#     "\\pagestyle{fancy}\n",
-#     "\\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-#     "\\fancyhead[C]{}\n",
-#     "\\fancyhead[L]{}\n",
-#     "\\setlength{\\headheight}{30pt}\n",
-#     "\\fancypagestyle{plain}{%\n",
-#     "    \\fancyhead[R]{\\includegraphics[width=2cm]{", image_path, "}}\n",
-#     "    \\renewcommand{\\headrulewidth}{0.4pt}\n",
-#     "}\n",
-#     "\\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}\n",
-#     "\\usepackage{lastpage}\n",
-#     "\\lstset{\nbreaklines=true\n}"
-#   )
-#   writeLines(header_tex, header_path)
-#
-#   return(header_path)
-# }
 
 set_up_chunk <- function() {
   glue::glue(
@@ -390,9 +363,6 @@ set_up_chunk <- function() {
 }
 
 create_summary_table_section <- function(summary_csv) {
-
-
-
 glue::glue(
 "
 ```{{r, include=FALSE, eval=TRUE}}
@@ -403,7 +373,7 @@ mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
 invisible(summary_df)
 ```
 
-## Summary Table
+## Issue Summary
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 table <- summary_df %>%
 
@@ -531,6 +501,121 @@ check_milestones <- function(milestone_names, owner, repo) {
   })
 }
 
+unchecked_items_in_issue <- function(issue) {
+  unchecked_items <- stringr::str_detect(issue$body, "- \\[ \\]")
+}
+
+create_milestone_table <- function(milestone_names, owner, repo) {
+  milestone_df <- create_milestone_df(milestone_names, owner, repo)
+  milestone_csv <- create_milestone_csv(milestone_df)
+
+  glue::glue(
+    "
+```{{r, include=FALSE, eval=TRUE}}
+milestone_df <- read.csv(\"{milestone_csv}\")\n
+
+milestone_df <- milestone_df %>%
+mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
+invisible(milestone_df)
+```
+
+## Milestone Summary
+```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
+
+table <- milestone_df %>%
+knitr::kable(
+  col.names = c(\"Title\", \"Description\", \"Status\", \"Issues\"),
+  format = \"latex\",
+  booktabs = TRUE,
+  escape = FALSE,
+  linesep = \"\\\\addlinespace\\\\addlinespace\"
+) %>%
+  kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
+  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{‡}} open issue\", \"\\\\\\\\textcolor{{green}}{{§}} issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
+  column_spec(1, width = \"5em\", latex_valign = \"p\") %>%
+  column_spec(2, width = \"10em\", latex_valign = \"p\") %>%
+  column_spec(3, width = \"3em\", latex_valign = \"p\") %>%
+  column_spec(4, width = \"22em\", latex_valign = \"p\")
+  #collapse_rows(1:4, valign = \"top\")
+
+  #row_spec(1:4, latex_valign = \"t\")
+
+  #column_spec(1, width = \"10em\")
+```
+
+```{{r, echo=FALSE, eval=TRUE, results='asis'}}
+print(table)
+```
+
+\\newpage\n",
+    .trim = FALSE
+  )
+}
+
+create_milestone_csv <- function(milestone_df) {
+  milestone_csv <- tempfile(fileext = ".csv")
+  #suppressMessages({withr::defer(fs::file_delete(milestone_csv))})
+  write.csv(milestone_df, file = milestone_csv, row.names = FALSE)
+  return(milestone_csv)
+}
+
+
+create_milestone_df <- function(milestone_names, owner, repo) {
+  milestone_objects <- lapply(milestone_names, function(milestone_name) {
+    get_milestone_from_name(owner, repo, milestone_name)
+  })
+
+  issues_in_milestones <- sapply(milestone_names, function(milestone_name) {
+    issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
+    issue_names <- lapply(issues, function(issue) {
+      issue_name <- issue$title
+      # insert line breaks here before adding makecell and additional chars
+      # milestone_df$title <- insert_breaks(milestone_df$title, 10)
+      # milestone_df$description <- insert_breaks(milestone_df$description, 10)
+      # milestone_df$status <- insert_breaks(milestone_df$status, 10)
+
+      issue_name <- insert_breaks(issue_name, 45)
+
+      if (issue$state == "open") {
+        issue_name <- glue::glue("{issue_name}\\textcolor{{red}}{{‡}}")
+      }
+      if (unchecked_items_in_issue(issue)) {
+        issue_name <- glue::glue("{issue_name}\\textcolor{{green}}{{§}}")
+      }
+
+      return(issue_name)
+    })
+
+    issues_str <- glue::glue_collapse(issue_names, "\n")
+    issues_str <- kableExtra::linebreak(issues_str)
+    return(issues_str)
+  })
+
+  milestone_statuses <- sapply(milestone_objects, function(milestone) {
+    milestone$state
+  })
+
+  milestone_descriptions <-  sapply(milestone_objects, function(milestone) {
+    desc <- milestone$description
+    if (is.null(desc)) {
+      desc <- "NA"
+    }
+    return(desc)
+  })
+
+
+  milestone_df <- data.frame(
+    name = milestone_names,
+    description = milestone_descriptions,
+    status = milestone_statuses,
+    issues = issues_in_milestones
+  )
+
+  milestone_df$issues <- stringr::str_replace_all(milestone_df$issues, "_", "\\\\_")
+
+  milestone_df
+}
+
 #' @export
 #' @import log4r
 ghqc_report <- function(milestone_names = NULL,
@@ -562,10 +647,12 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Creating report introduction...")
   # intro
-  #header_path <- create_header()
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
   info(.le$logger, "Created report introduction")
+
+  # create milestone table
+  milestone_table <- create_milestone_table(milestone_names, owner, repo)
 
   debug(.le$logger, "Creating milestone sections...")
   # create milestone sections
@@ -577,7 +664,11 @@ ghqc_report <- function(milestone_names = NULL,
 
   # appendix
 
-  rmd_content <- glue::glue_collapse(c(intro, set_up_chunk, milestone_sections), sep = "")
+  rmd_content <- glue::glue_collapse(c(intro,
+                                       set_up_chunk,
+                                       milestone_table,
+                                       milestone_sections
+                                       ), sep = "")
 
   pdf_name <- get_pdf_name(input_name = input_name,
                            milestone_names = milestone_names,

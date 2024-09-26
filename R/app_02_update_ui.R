@@ -22,7 +22,15 @@ ghqc_update_ui <- function(id) {
     div(
       id = ns("main_container"),
       gadgetTitleBar(
-        title = span("Update QC Shiny Tool"),
+        title = div(
+          style = "display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%;",
+          div(
+            style = "position: relative;",  # Keep this div centered
+            tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
+          ),
+          div("Update QC Shiny Tool", style = "white-space: nowrap;")
+        ),
+        #title = span("Update QC Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),

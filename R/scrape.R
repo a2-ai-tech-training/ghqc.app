@@ -170,11 +170,14 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
   debug(.le$logger, "Creating report pdf...")
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
+
   #rmd <- file.path(location, "report.Rmd")
   fs::file_create(rmd)
+  debug(.le$logger, glue::glue("Rmd location: {rmd}"))
   # delete temporary rmd when it's time
-  suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
+ #suppressMessages({withr::defer_parent(fs::file_delete(rmd))})
   writeLines(rmd_content, con = rmd)
+
   # create pdf from rmd
   location <- normalizePath(location)
   suppressWarnings(
@@ -187,18 +190,8 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
       quiet = TRUE
     )
   )
-  suppressWarnings(
-    output_file <- rmarkdown::render(
-      input = rmd,
-      output_format = "pdf_document",
-      output_file = pdf_name,
-      output_dir = location,
-      #knit_root_dir = dirname(rmd),
-      run_pandoc = TRUE,
-      quiet = TRUE
-    )
-  )
-  suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
+
+  #suppressMessages({withr::defer_parent(unlink(dirname(rmd)))})
 
   pdf_path_abs <- get_simple_path(output_file)
 
@@ -304,7 +297,7 @@ create_summary_csv <- function(issues, env) {
   summary_df$close_date <- insert_breaks(summary_df$close_date, 20)
 
   summary_csv <- tempfile(fileext = ".csv")
-  suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
+  #suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
   #summary_csv <- file.path(getwd(), "summary.csv")
   write.csv(summary_df, file = summary_csv, row.names = FALSE)
   return(summary_csv)
@@ -576,15 +569,25 @@ create_milestone_df <- function(milestone_names, owner, repo) {
     issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
     issue_names <- lapply(issues, function(issue) {
       issue_name <- issue$title
+      # insert line breaks here before adding makecell and additional chars
+      # milestone_df$title <- insert_breaks(milestone_df$title, 10)
+      # milestone_df$description <- insert_breaks(milestone_df$description, 10)
+      # milestone_df$status <- insert_breaks(milestone_df$status, 10)
+
+      issue_name <- insert_breaks(issue_name, 45)
+
       if (issue$state == "open") {
         issue_name <- glue::glue("{issue_name}\\textcolor{{red}}{{‡}}")
       }
       if (unchecked_items_in_issue(issue)) {
         issue_name <- glue::glue("{issue_name}\\textcolor{{green}}{{§}}")
       }
+
       return(issue_name)
     })
+
     issues_str <- glue::glue_collapse(issue_names, "\n")
+    issues_str <- kableExtra::linebreak(issues_str)
     return(issues_str)
   })
 
@@ -609,7 +612,6 @@ create_milestone_df <- function(milestone_names, owner, repo) {
   )
 
   milestone_df$issues <- stringr::str_replace_all(milestone_df$issues, "_", "\\\\_")
-  milestone_df$issues <- kableExtra::linebreak(milestone_df$issues)
 
   milestone_df
 }

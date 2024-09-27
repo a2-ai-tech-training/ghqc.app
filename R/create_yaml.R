@@ -1,11 +1,14 @@
 #' @export
 get_checklists <- function() {
-  #checklists_path <- system.file("checklists", package = "ghqc")
   checklists_path <- file.path(.lci$client_repo_path, "checklists")
   yaml_checklists <- list.files(checklists_path, pattern = "\\.ya?ml$", full.names = TRUE)
+  custom_checklist <- system.file("default_checklist", "custom.yaml", package = "ghqc")
+  yaml_checklists <- c(yaml_checklists, custom_checklist)
+
   checklists_data <- sapply(yaml_checklists, function(yaml_checklist) {
     yaml::read_yaml(yaml_checklist)
   }, USE.NAMES = FALSE)
+
   return(checklists_data)
 }
 

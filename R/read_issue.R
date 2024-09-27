@@ -21,15 +21,7 @@ parse_checklist <- function(body) {
   unchecked_elem <- unlist(lapply(unchecked_loc, function(uL) name_unchecked_elem(body, subsubheader_loc, uL)))
 }
 
-#' check_checklists
-#'
-#' @param issue
-#'
-#' @return
-#'
-#' @importFrom stringr str_split
-#'
-#' @examples
+
 check_checklists <- function(issue) {
   unchecked_issues <- list()
   for (i in issue) {
@@ -41,13 +33,7 @@ check_checklists <- function(issue) {
   unchecked_issues <- unchecked_issues[unlist(lapply(unchecked_issues, function(uI) class(uI) == "character"))]
 }
 
-#' pull_issue
-#'
-#' @param owner
-#' @param repo
-#' @param milestone_name
-#'
-#' @return pulled issue from github as list
+
 pull_issue <- function(owner, repo, milestone_name) {
   milestone_number <- look_up_existing_milestone_number(list(owner = owner,
                                                              repo = repo,
@@ -66,13 +52,7 @@ pull_issue <- function(owner, repo, milestone_name) {
   issue <- issue[unlist(lapply(issue, function(x) length(x) != 0))]
 }
 
-#' check_completeness
-#'
-#' @param milestone_name input$select_milestone
-#'
-#' @return
-#'
-#' @examples
+
 check_completeness <- function(milestone_names){
   owner <- get_organization()
   repo <- get_current_repo()

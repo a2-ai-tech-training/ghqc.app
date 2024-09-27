@@ -394,12 +394,25 @@ return "<div><strong>" + escape(item.username) + "</div>"
       w_create_qc_items$hide()
       milestone_url <- get_milestone_url(org(), repo(), rv_milestone())
 
+      custom_checklist_selected <- function() {
+        qc_items <- qc_items()
+        any(sapply(qc_items, function(x) x$checklist_type == "custom (manually input items on GitHub)"))
+      }
+      success_note <- {
+        if (custom_checklist_selected()) {
+          HTML("QC items created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
+        }
+        else {
+          "QC items created successfully."
+        }
+      }
+
       showModal(
         modalDialog(
           title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
           footer = NULL,
           easyClose = TRUE,
-          tags$p("QC items created successfully."),
+          tags$p(success_note),
           tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
         )
       )

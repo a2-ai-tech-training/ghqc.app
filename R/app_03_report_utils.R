@@ -3,6 +3,30 @@ generate_html_list_with_hyperlink <- function(items) {
   paste("<li><a href='", items$url, "'>", items$title, "</a></li>", collapse = "")
 }
 
+generate_tiered_html_list_with_hyperlink <- function(items) {
+  milestone_dfs <- split(items, items$milestone)
+
+  milestone_sections <- lapply(names(milestone_dfs), function(milestone_name) {
+    milestone_url <- milestone_dfs[[milestone_name]]$milestone_url[1]
+    #browser()
+    milestone_heading <- glue::glue("<a href='{milestone_url}'>{milestone_name}</a>:")
+
+    milestone_list_items <- paste(
+      "<li><a href='",
+      milestone_dfs[[milestone_name]]$url,
+      "'>",
+      milestone_dfs[[milestone_name]]$title,
+      "</a></li>",
+      collapse = ""
+    )
+    milestone_section <- glue::glue("<li>{milestone_heading}<ul>{milestone_list_items}</ul></li>")
+    return(milestone_section)
+  })
+
+  list <- glue::glue_collapse(milestone_sections, sep = "\n")
+  return(list)
+}
+
 #' @import log4r
 generate_open_milestone_message <- function(open_milestones, warning_icon_html) {
   messages <- c()
@@ -21,7 +45,7 @@ generate_open_issue_message <- function(open_issues, warning_icon_html) {
   if (length(open_issues) > 0) {
     messages <- c(messages, sprintf(
       "%s The selected milestones contain the following open issues:<ul>%s</ul><br>",
-      warning_icon_html, generate_html_list_with_hyperlink(open_issues)
+      warning_icon_html, generate_tiered_html_list_with_hyperlink(open_issues)
     ))
   }
   return(messages)
@@ -33,7 +57,7 @@ generate_open_checklist_message <- function(issues_with_open_checklists, warning
   if (length(issues_with_open_checklists) > 0) {
     messages <- c(messages, sprintf(
       "%s The selected milestones contain the following issues with open checklist items:<ul>%s</ul><br>",
-      warning_icon_html, generate_html_list_with_hyperlink(issues_with_open_checklists)
+      warning_icon_html, generate_tiered_html_list_with_hyperlink(issues_with_open_checklists)
     ))
   }
   return(messages)
@@ -105,7 +129,10 @@ check_for_open_issues <- function(owner, repo, milestone_names) {
 
     purrr::map_dfr(issues, function(issue) {
       if (issue$state == "open") {
-        data.frame(title = issue$title, url = issue$html_url)
+        data.frame(title = issue$title,
+                   url = issue$html_url,
+                   milestone = issue$milestone$title,
+                   milestone_url = issue$milestone$html_url)
       }
       else NULL
     })
@@ -127,7 +154,10 @@ check_for_open_checklists <- function(owner, repo, milestone_names) {
 
     purrr::map_dfr(issues, function(issue) {
       if (unchecked_items_in_issue(issue)) {
-        data.frame(title = issue$title, url = issue$html_url)
+        data.frame(title = issue$title,
+                   url = issue$html_url,
+                   milestone = issue$milestone$title,
+                   milestone_url = issue$milestone$html_url)
       } else NULL
     })
   })

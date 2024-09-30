@@ -1,9 +1,15 @@
+generate_html_list_with_hyperlink <- function(items) {
+  browser()
+  #paste("<li>", files, "</li>", collapse = "")
+  paste("<li><a href='", items$url, "'>", items$title, "</a></li>", collapse = "")
+}
+
 generate_open_milestone_message <- function(open_milestones, warning_icon_html) {
   messages <- c()
   if (length(open_milestones) > 0) {
     messages <- c(messages, sprintf(
       "%s The following selected milestones are open:<ul>%s</ul><br>",
-      warning_icon_html, generate_html_list(open_milestones$title)
+      warning_icon_html, generate_html_list_with_hyperlink(open_milestones)
     ))
   }
   return(messages)
@@ -14,7 +20,7 @@ generate_open_issue_message <- function(open_issues, warning_icon_html) {
   if (length(open_issues) > 0) {
     messages <- c(messages, sprintf(
       "%s The selected milestones contain the following open issues:<ul>%s</ul><br>",
-      warning_icon_html, generate_html_list(open_issues$title)
+      warning_icon_html, generate_html_list_with_hyperlink(open_issues)
     ))
   }
   return(messages)
@@ -25,7 +31,7 @@ generate_open_checklist_message <- function(issues_with_open_checklists, warning
   if (length(issues_with_open_checklists) > 0) {
     messages <- c(messages, sprintf(
       "%s The selected milestones contain the following issues with open checklist items:<ul>%s</ul><br>",
-      warning_icon_html, generate_html_list(issues_with_open_checklists$title)
+      warning_icon_html, generate_html_list_with_hyperlink(issues_with_open_checklists)
     ))
   }
   return(messages)

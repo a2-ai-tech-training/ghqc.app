@@ -1,5 +1,4 @@
 generate_html_list_with_hyperlink <- function(items) {
-  browser()
   #paste("<li>", files, "</li>", collapse = "")
   paste("<li><a href='", items$url, "'>", items$title, "</a></li>", collapse = "")
 }

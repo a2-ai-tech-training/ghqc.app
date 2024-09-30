@@ -184,6 +184,13 @@ ghqc_report_server <- function(id) {
             actionButton(ns("return"), "Return")
           ), style = "text-align: right;"),
           HTML(modal_check()$message),
+          tags$style(HTML("
+        .modal-content {
+          word-wrap: break-word; /* Allows long text to break into new lines */
+          overflow-wrap: break-word;
+          max-width: 100%; /* Ensures content fits within the modal */
+        }
+      ")),
           footer = NULL,
           easyClose = TRUE
         ))

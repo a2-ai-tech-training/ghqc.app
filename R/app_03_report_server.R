@@ -13,6 +13,7 @@ NULL
 ghqc_report_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    report_trigger <- reactiveVal(FALSE)
 
     git_creds <- reactive({
       tryCatch(
@@ -167,7 +168,35 @@ ghqc_report_server <- function(id) {
       }
     })
 
+    modal_check <- eventReactive(input$generate_report, {
+      determine_modal_message_report(org(), repo(), input$select_milestone)
+    })
+
     observeEvent(input$generate_report, {
+      req(modal_check())
+
+      if (!is.null(modal_check()$message)) {
+        showModal(modalDialog(
+          title = tags$div(tagList(
+            if (modal_check()$state == "warning") {
+              actionButton(ns("proceed"), "Proceed Anyway")
+            },
+            actionButton(ns("return"), "Return")
+          ), style = "text-align: right;"),
+          HTML(modal_check()$message),
+          footer = NULL,
+          easyClose = TRUE
+        ))
+      }
+      else {
+        report_trigger(TRUE)
+      }
+    })
+
+    observe({
+      req(report_trigger())
+      report_trigger(FALSE)
+
       milestone_num_str <- ifelse(length(input$select_milestone) == 1, "milestone", "milestones")
       milestones <- glue::glue_collapse(input$select_milestone, sep = ", ", last = " and ")
 
@@ -221,6 +250,17 @@ ghqc_report_server <- function(id) {
     observeEvent(input$reset, {
       debug(.le$logger, glue::glue("App was reset through the reset button."))
       session$reload()
+    })
+
+    observeEvent(input$proceed, {
+      debug(.le$logger, glue::glue("Report QC items action proceeded and modal removed."))
+      removeModal()
+      report_trigger(TRUE)
+    })
+
+    observeEvent(input$return, {
+      debug(.le$logger, glue::glue("Report QC items action returned and modal removed."))
+      removeModal()
     })
 
     return(input)

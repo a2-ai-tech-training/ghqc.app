@@ -84,10 +84,19 @@ create_timeline_section <- function(timeline) {
   timeline_section <- create_small_section("Detailed Timeline", timeline_body)
 }
 
+# clean_body <- function(body) {
+#   body <- stringr::str_replace_all(body, "(^#{1,4} (\\w+)|\n#{1,4} (\\w+))", function(x) {
+#     word <- stringr::str_extract(x, "(?<=#{1,4} )\\w+")
+#     paste0("**", word, "**")
+#   })
+#   return(body)
+# }
+
 clean_body <- function(body) {
-  body <- stringr::str_replace_all(body, "(^#{1,4} (\\w+)|\n#{1,4} (\\w+))", function(x) {
-    word <- stringr::str_extract(x, "(?<=#{1,4} )\\w+")
-    paste0("**", word, "**")
+  body <- stringr::str_replace_all(body, "(^#{1,4} .*|\\n#{1,4} .*)", function(x) {
+    line <- stringr::str_extract(x, "(?<=#{1,4} ).*")
+    line <- stringr::str_trim(line)
+    paste0("**", line, "**")
   })
   return(body)
 }

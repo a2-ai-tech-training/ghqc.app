@@ -179,11 +179,12 @@ ghqc_report_server <- function(id) {
         showModal(modalDialog(
           title = tags$div(tagList(
             if (modal_check()$state == "warning") {
+              tags$span("Warning", style = "float: left; font-weight: bold; font-size: 20px;")
               actionButton(ns("proceed"), "Proceed Anyway")
             },
             actionButton(ns("return"), "Return")
           ), style = "text-align: right;"),
-          HTML(modal_check()$message),
+          HTML(paste("It is recommended that relevant GitHub Issues and Milestones are closed upon completion of QC, and checklists within GitHub Issues are checked to indicate completed QCed items.<br><br> You may want to double check the following items for outstanding QC progress:<br><br>", modal_check()$message)),
           tags$style(HTML("
         .modal-content {
           word-wrap: break-word; /* Allows long text to break into new lines */

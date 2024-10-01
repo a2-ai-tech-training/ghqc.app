@@ -26,7 +26,7 @@ create_qc_data_section <- function(issue_creation_time, issue_creator, issue_tit
 
   # create body
   issue_body <- glue::glue_collapse(sections, sep = "\n\n")
-  issue_section <- create_section("QC Data", issue_body)
+  issue_section <- create_small_section("QC Data", issue_body)
 }
 
 create_milestone_section <- function(milestone_title, milestones) { # issue$milestone$title
@@ -49,17 +49,18 @@ create_milestone_section <- function(milestone_title, milestones) { # issue$mile
 create_assignees_section <- function(assignees) {
   assignees_list <- sapply(assignees, function(assignee) glue::glue("- {assignee$login}"))
   assignees_body <- glue::glue_collapse(assignees_list, sep = "\n\n")
-  assignees_section <- create_section("Assigned QCers", assignees_body)
+  assignees_section <- create_small_section("Assigned QCers", assignees_body)
 }
 create_comments_section <- function(issue_comments) {
   comments_list <- process_comments(issue_comments)
   comments_body <- glue::glue_collapse(comments_list, sep = "\n\n")
-  comments_section <- create_section("Comments", comments_body)
+  clean_comments_body <- clean_comment_body(comments_body)
+  comments_section <- create_small_section("Comments", clean_comments_body)
 }
 
 create_events_section <- function(events_list) {
   events_body <- glue::glue_collapse(events_list, sep = "\n")
-  events_section <- create_section("Events", events_body)
+  events_section <- create_small_section("Events", events_body)
 }
 
 create_status_section <- function(events_list, issue_state) {
@@ -74,13 +75,35 @@ create_status_section <- function(events_list, issue_state) {
       gsub("- ", "", last_closure)
     }
   }
-  status_section <- create_section("Issue Status", status)
+  status_section <- create_small_section("Issue Status", status)
 }
 
 create_timeline_section <- function(timeline) {
   timeline_list <- get_timeline_list(timeline)
   timeline_body <- glue::glue_collapse(timeline_list, sep = "\n")
-  timeline_section <- create_section("Detailed Timeline", timeline_body)
+  timeline_section <- create_small_section("Detailed Timeline", timeline_body)
+}
+
+clean_body <- function(body) {
+  body <- stringr::str_replace_all(body, "(^#{1,4} (\\w+)|\n#{1,4} (\\w+))", function(x) {
+    word <- stringr::str_extract(x, "(?<=#{1,4} )\\w+")
+    paste0("**", word, "**")
+  })
+  return(body)
+}
+
+clean_comment_body <- function(body) {
+  # cannot be more general here because "### Title" might exist in the code
+  stringr::str_replace_all(body, "(## )(File Difference|Metadata)", function(x) {
+    extracted <- stringr::str_remove(x, "## ")
+    new <- paste0("**", extracted, "**\n\n")
+    new
+  })
+}
+
+create_checklist_section <- function(issue_body) {
+  clean_issue_body <- clean_body(issue_body)
+  checklist_section <- create_small_section("Issue Body", clean_issue_body)
 }
 
 issue_to_markdown <- function(owner, repo, issue_number) {
@@ -107,7 +130,7 @@ issue_to_markdown <- function(owner, repo, issue_number) {
 
   status_section <- create_status_section(events_list, issue$state)
 
-  checklist_section <- create_section("Issue Body", issue$body)
+  checklist_section <- create_checklist_section(issue$body)
 
   comments_section <- create_comments_section(issue_comments)
 
@@ -265,6 +288,11 @@ create_medium_section <- function(section_title, contents) {
     "## {section_title}\n\n{contents}\n\n\\newpage\n\n", .trim = FALSE)
 } # create_section
 
+create_small_section <- function(section_title, contents) {
+  glue::glue(
+    "### {section_title}\n\n{contents}\n\n", .trim = FALSE)
+} # create_section
+
 insert_breaks <- function(text, width) {
   sapply(text, function(x) {
     if (nchar(x) > width) {
@@ -344,7 +372,7 @@ create_intro <- function(repo, milestone_names, header_path) {
       extra_dependencies: [\"xcolor\"]
       pandoc_args: --listings
       toc: true
-      toc_depth: 1
+      toc_depth: 2
 ---
 
   \\newpage
@@ -373,7 +401,7 @@ mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
 invisible(summary_df)
 ```
 
-## Issue Summary
+## **Issue Summary**
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 table <- summary_df %>%
 
@@ -519,7 +547,7 @@ mutate(across(everything(), ~ ifelse(is.na(.), \"NA\", .)))
 invisible(milestone_df)
 ```
 
-## Milestone Summary
+# Milestone Summary
 ```{{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}}
 
 table <- milestone_df %>%

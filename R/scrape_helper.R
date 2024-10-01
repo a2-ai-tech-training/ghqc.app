@@ -140,7 +140,7 @@ process_comments <- function(comments) {
       }
     }
     time <- humanize_time(comment$created_at)
-    glue::glue("### Comment by {comment$user$login} at {time}\n{text}\n\n", .trim = FALSE)
+    glue::glue("**Comment by {comment$user$login} at {time}:**\n\n{text}\n\n", .trim = FALSE)
   })
 } # process_comments
 

@@ -1,6 +1,6 @@
 #' @import log4r
 generate_html_list_with_hyperlink <- function(items) {
-  paste("<li><a href='", items$url, "'>", items$title, "</a></li>", collapse = "")
+  paste("<li><a href='", items$url, "' target='_blank'>", items$title, "</a></li>", collapse = "")
 }
 
 generate_tiered_html_list_with_hyperlink <- function(items) {
@@ -14,7 +14,7 @@ generate_tiered_html_list_with_hyperlink <- function(items) {
     milestone_list_items <- paste(
       "<li><a href='",
       milestone_dfs[[milestone_name]]$url,
-      "'>",
+      "' target='_blank'>",
       milestone_dfs[[milestone_name]]$title,
       "</a></li>",
       collapse = ""

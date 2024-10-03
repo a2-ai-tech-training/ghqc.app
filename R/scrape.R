@@ -625,6 +625,7 @@ create_milestone_df <- function(milestone_names, owner, repo) {
 
     issues_str <- glue::glue_collapse(issue_names, "\n")
     issues_str <- kableExtra::linebreak(issues_str)
+    issues_str <- stringr::str_replace_all(issues_str, "_", "\\\\_")
     return(issues_str)
   })
 
@@ -637,7 +638,17 @@ create_milestone_df <- function(milestone_names, owner, repo) {
     if (is.null(desc)) {
       desc <- "NA"
     }
+
+    desc <- insert_breaks(desc, 23) #LB
+    desc <- kableExtra::linebreak(desc)
+    desc <- stringr::str_replace_all(desc, "_", "\\\\_")
     return(desc)
+  })
+
+  milestone_names <- sapply(milestone_names, function(milestone_name) {
+    milestone_name <- insert_breaks(milestone_name, 10) #LB
+    milestone_name <- kableExtra::linebreak(milestone_name)
+    milestone_name <- stringr::str_replace_all(milestone_name, "_", "\\\\_")
   })
 
 
@@ -648,7 +659,9 @@ create_milestone_df <- function(milestone_names, owner, repo) {
     issues = issues_in_milestones
   )
 
-  milestone_df$issues <- stringr::str_replace_all(milestone_df$issues, "_", "\\\\_")
+  # milestone_df$issues <- stringr::str_replace_all(milestone_df$issues, "_", "\\\\_")
+  # milestone_df$name <- stringr::str_replace_all(milestone_df$name, "_", "\\\\_")
+  # milestone_df$description <- stringr::str_replace_all(milestone_df$description, "_", "\\\\_")
 
   milestone_df
 }

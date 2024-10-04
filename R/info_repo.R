@@ -45,6 +45,7 @@ repo_clone <- function(repo_path) {
     cli::cli_alert_success(glue::glue("Successfully cloned {info_repo_name()}"))
     cli::cli_h2(glue::glue("{basename(repo_path)} Local Content"))
     info_files_desc(repo_path)
+    ghqc_set_info_repo(repo_path)
   }, error = function(e) {
     error(.le$logger, glue::glue("Clone of {info_repo_name()} was not successful"))
     rlang::abort(message = e$message)
@@ -67,6 +68,7 @@ repo_pull <- function(repo_path) {
   tryCatch({
     gert::git_pull(repo = repo_path, verbose = FALSE)
     cli::cli_alert_success(glue::glue("Successfully pulled updates of {info_repo_name()}"))
+    ghqc_set_info_repo(repo_path)
   }, error = function(e) {
     if (grepl("prevents checkout", e$message)) {
       repo_pull_conflict(repo_path)
@@ -164,7 +166,7 @@ ghqc_set_info_repo <- function(repo_path = file.path("~/.local/share/ghqc.launch
   if (!file.exists(file.path(repo_path, "checklists"))) not_files <- append(not_files, "Checklists directory")
   if (!file.exists(file.path(repo_path, "logo.png"))) not_files <- append(not_files, "logo.png")
   if (!is.null(not_files)) info_repo_files_not_found(not_files, repo_path)
-  if (!exists("info_repo_path", .le)) assign("info_repo_path", repo_path, envir = .le)
+  assign("info_repo_path", repo_path, envir = .le)
 }
 
 info_repo_files_not_found <- function(not_files, repo_path) {

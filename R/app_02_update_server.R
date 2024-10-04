@@ -81,7 +81,7 @@ ghqc_update_server <- function(id) {
       updateSelectInput(
         session,
         "select_milestone",
-        choices = c("All QC Items", milestone_list())
+        choices = c("Show All Issues", milestone_list())
       )
     })
 
@@ -94,7 +94,7 @@ ghqc_update_server <- function(id) {
 
       tryCatch(
         {
-          if (input$select_milestone == "All QC Items") {
+          if (input$select_milestone == "Show All Issues") {
             all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
             issue_choices <- convert_issue_df_format(all_issues)
           } else {
@@ -343,8 +343,8 @@ ghqc_update_server <- function(id) {
             "- Message: {input$message}\n",
             "- Show Diff: {input$show_diff}\n",
             "- Compare Type: {input$compare}\n",
-            "- Comparator Commit: {commits_for_compare$comparator_commit}\n",
-            "- Reference Commit: {commits_for_compare$reference_commit}\n",
+            "- Current Commit: {commits_for_compare$comparator_commit}\n",
+            "- Previous Commit: {commits_for_compare$reference_commit}\n",
             "Error Message: {e$message}"
           )
           error(.le$logger, log_string)

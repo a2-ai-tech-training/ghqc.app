@@ -35,10 +35,10 @@ create_metadata_body <- function(reference_commit,
   comparator_script_hash <- get_script_hash(comparator_script)
 
   glue::glue("## Metadata\n",
-             "* reference commit: {reference_commit}\n",
-             "* reference script hash: {reference_script_hash}\n",
-             "* comparator commit: {comparator_commit}\n",
-             "* comparator script hash: {comparator_script_hash}\n")
+             "* previous commit: {reference_commit}\n",
+             "* previous script hash: {reference_script_hash}\n",
+             "* current commit: {comparator_commit}\n",
+             "* current script hash: {comparator_script_hash}\n")
 }
 
 create_diff_body <- function(diff, reference_commit, reference_script, comparator_commit, comparator_script) {
@@ -46,14 +46,14 @@ create_diff_body <- function(diff, reference_commit, reference_script, comparato
 
   else {
     # get context for diff
-    context <- glue::glue(
-      "reference commit (older version): {reference_commit}\n
-        comparator commit (newer version): {comparator_commit}\n"
-    )
+    # context <- glue::glue(
+    #   "reference commit (older version): {reference_commit}\n
+    #     comparator commit (newer version): {comparator_commit}\n"
+    # )
 
     diff_formatted <- format_diff(reference_script = reference_script, comparator_script = comparator_script)
     glue::glue("## File Difference\n",
-               "{context}\n",
+               #"{context}\n",
                "{diff_formatted}\n\n",)
   }
 }
@@ -111,8 +111,8 @@ create_comment_body <- function(owner,
 
   info(.le$logger, glue::glue("Created comment body for issue #{issue_number} in {owner}/{repo} with
                               Assignee(s):       {log_assignees}
-                              Reference commit:  {reference_commit}
-                              Comparator commit: {comparator_commit}"))
+                              Previous commit:  {reference_commit}
+                              Original commit: {comparator_commit}"))
 
   as.character(comment_body)
 }

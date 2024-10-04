@@ -28,7 +28,7 @@ ghqc_update_ui <- function(id) {
             style = "position: relative;",  # Keep this div centered
             tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
           ),
-          div("Update QC Shiny Tool", style = "white-space: nowrap;")
+          div("Update QC", style = "white-space: nowrap;")
         ),
         #title = span("Update QC Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
@@ -37,33 +37,33 @@ ghqc_update_ui <- function(id) {
       miniContentPanel(
         div(
           id = ns("center_content"),
-          selectInput(ns("select_milestone"), "Select QC Item List (Github milestone)", choices = "", multiple = FALSE),
-          selectInput(ns("select_issue"), "Select QC Item (Github issue)", choices = "", multiple = FALSE),
+          selectInput(ns("select_milestone"), "Filter Issues by Milestone", choices = "", multiple = FALSE),
+          selectInput(ns("select_issue"), "Select Issue", choices = "", multiple = FALSE),
           textAreaInput(ns("message"), "Message", ""),
           checkboxInput(ns("show_diff"), "Show file difference?", TRUE),
-          radioButtons(ns("compare"), "Compare to:",
+          radioButtons(ns("compare"), "Compare file versions:",
             inline = TRUE,
             choices = c(
-              "Compare original with most recent" = "init",
-              "Select commit comparators" = "comparators"
+              "Original vs. Current" = "init",
+              "Previous vs. Current" = "comparators"
             )
           ),
           conditionalPanel(
             condition = "input.compare === 'comparators'", ns = ns,
             div(
               class = "inline-selectize",
-              selectizeInput(ns("ref_commits"), "Reference",
+              selectizeInput(ns("ref_commits"), "Previous",
                 choices = "",
                 multiple = FALSE,
                 options = list(
                   placeholder = "No commits since QC initialization."
                 )
               ),
-              selectizeInput(ns("comp_commits"), "Comparator",
+              selectizeInput(ns("comp_commits"), "Current",
                 choices = "",
                 multiple = FALSE,
                 options = list(
-                  placeholder = "No commits since reference commit."
+                  placeholder = "No commits since previous commit."
                 )
               )
             )

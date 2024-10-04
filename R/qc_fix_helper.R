@@ -73,13 +73,13 @@ format_line_numbers <- function(numbers) {
   reference <- glue::glue("{numbers$reference[1]}-{numbers$reference[1]+numbers$reference[2]-1}")
   comparator <- glue::glue("{numbers$comparator[1]}-{numbers$comparator[1]+numbers$comparator[2]-1}")
 
-  glue::glue("@@ - reference:  lines {reference} @@\n@@ + comparator: lines {comparator} @@")
+  glue::glue("@@ - previous: lines {reference} @@\n@@ + current:  lines {comparator} @@")
 }
 
 add_line_numbers <- function(text) {
   # get start and end lines for ref and comp
-  reference_lines <- stringr::str_match(text, "@@ \\- reference:  lines (\\d+)-(\\d+) @@")[,2:3]
-  comparator_lines <- stringr::str_match(text,"@@ \\+ comparator: lines (\\d+)-(\\d+) @@")[,2:3]
+  reference_lines <- stringr::str_match(text, "@@ \\- previous: lines (\\d+)-(\\d+) @@")[,2:3]
+  comparator_lines <- stringr::str_match(text,"@@ \\+ current:  lines (\\d+)-(\\d+) @@")[,2:3]
 
   reference_lines_start <- as.numeric(reference_lines[1])
   comparator_lines_start <- as.numeric(comparator_lines[1])

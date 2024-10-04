@@ -29,7 +29,7 @@ create_message_body <- function(message) {
 
 get_script_hash <- function(script) {
   collapsed_script <- glue::glue_collapse(script, "\n")
-  digest::digest(collapsed_script)
+  digest::digest(collapsed_script, algo = "blake3")
 }
 
 create_metadata_body <- function(reference_commit,

@@ -137,60 +137,60 @@ format_diff_section <- function(diff_lines) {
   diff_with_line_numbers <- add_line_numbers(diff_cat)
 }
 
-format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
-
-  # create copy
-  copied_file <- name_file_copy(file_path)
-  file.copy(file_path, copied_file)
-  withr::defer_parent(
-    clean_up(file_path, copied_file)
-  )
-
-  # get file contents at the specified commits
-  compared_script <- read_file_at_commit(commit_sha_orig, file_path)
-  current_script <- read_file_at_commit(commit_sha_new, file_path)
-
-  # get diff
-  diff_output <- diffobj::diffChr(compared_script,
-                                  current_script,
-                                  format = "raw",
-                                  mode = "unified",
-                                  pager = "off",
-                                  disp.width = 200) #,unwrap.atomic = FALSE
-
-  diff_lines <- as.character(diff_output)
-
-
-  # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
-  if (diff_lines[1] == "No visible differences between objects.") {
-    #2
-    return("\nNo difference between file versions.\n")
-  }
-
-  # delete the lines with the file names
-  diff_lines <- diff_lines[-c(1, 2)]
-
-  # lines that start with @@
-  section_indices <- grep("^@@", diff_lines)
-
-  # add the end index to the section indices
-  section_indices <- c(section_indices, length(diff_lines) + 1)
-
-  # split into sections
-  sections <- lapply(1:(length(section_indices) - 1), function(i) {
-    start_idx <- section_indices[i]
-    end_idx <- section_indices[i + 1] - 1
-    paste(diff_lines[start_idx:end_idx], collapse = "\n")
-  })
-
-  # apply diff to each section
-  diff_sections <- lapply(sections, format_diff_section)
-
-  # combine sections to one body of text
-  diff_sections_cat <- glue::glue_collapse(diff_sections, sep = "\n")
-
-  glue::glue("```diff\n{diff_sections_cat}\n```")
-}
+# format_diff <- function(file_path, commit_sha_orig, commit_sha_new) {
+#
+#   # create copy
+#   copied_file <- name_file_copy(file_path)
+#   file.copy(file_path, copied_file)
+#   withr::defer_parent(
+#     clean_up(file_path, copied_file)
+#   )
+#
+#   # get file contents at the specified commits
+#   compared_script <- read_file_at_commit(commit_sha_orig, file_path)
+#   current_script <- read_file_at_commit(commit_sha_new, file_path)
+#
+#   # get diff
+#   diff_output <- diffobj::diffChr(compared_script,
+#                                   current_script,
+#                                   format = "raw",
+#                                   mode = "unified",
+#                                   pager = "off",
+#                                   disp.width = 200) #,unwrap.atomic = FALSE
+#
+#   diff_lines <- as.character(diff_output)
+#
+#
+#   # get the line indices with the file names (either 1,2 or 2,3 depending on if the the files were the same)
+#   if (diff_lines[1] == "No visible differences between objects.") {
+#     #2
+#     return("\nNo difference between file versions.\n")
+#   }
+#
+#   # delete the lines with the file names
+#   diff_lines <- diff_lines[-c(1, 2)]
+#
+#   # lines that start with @@
+#   section_indices <- grep("^@@", diff_lines)
+#
+#   # add the end index to the section indices
+#   section_indices <- c(section_indices, length(diff_lines) + 1)
+#
+#   # split into sections
+#   sections <- lapply(1:(length(section_indices) - 1), function(i) {
+#     start_idx <- section_indices[i]
+#     end_idx <- section_indices[i + 1] - 1
+#     paste(diff_lines[start_idx:end_idx], collapse = "\n")
+#   })
+#
+#   # apply diff to each section
+#   diff_sections <- lapply(sections, format_diff_section)
+#
+#   # combine sections to one body of text
+#   diff_sections_cat <- glue::glue_collapse(diff_sections, sep = "\n")
+#
+#   glue::glue("```diff\n{diff_sections_cat}\n```")
+# }
 
 get_comments <- function(owner, repo, issue_number) {
   comments <- gh::gh(
@@ -205,32 +205,32 @@ get_comments <- function(owner, repo, issue_number) {
 
 # returns true if the user can check "compare to most recent qc fix"
 # false otherwise
-check_if_there_are_update_comments <- function(owner, repo, issue_number) {
-  comments <- get_comments(owner, repo, issue_number)
-  if (length(comments) == 0) return(FALSE)
-  most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
-  if (is.na(most_recent_qc_commit)) return(FALSE)
-  else return(TRUE)
-}
+# check_if_there_are_update_comments <- function(owner, repo, issue_number) {
+#   comments <- get_comments(owner, repo, issue_number)
+#   if (length(comments) == 0) return(FALSE)
+#   most_recent_qc_commit <- get_commit_from_most_recent_update_comment(comments)
+#   if (is.na(most_recent_qc_commit)) return(FALSE)
+#   else return(TRUE)
+# }
 
 # gets the most recent qc update commit from the comments in the issue
 # if there are no update comments from the author, it returns NA
-get_commit_from_most_recent_update_comment <- function(comments_df) {
-  # sort by descending creation time
-  comments_df <- comments_df %>% dplyr::arrange(dplyr::desc(created_at))
+# get_commit_from_most_recent_update_comment <- function(comments_df) {
+#   # sort by descending creation time
+#   comments_df <- comments_df %>% dplyr::arrange(dplyr::desc(created_at))
+#
+#   # loop through comments, grab the first one
+#   for (i in seq_len(nrow(comments_df))) {
+#     comment <- comments_df[i, ]
+#     commit_from_comment <- get_current_commit_from_comment(comment$body)
+#     if (!is.na(commit_from_comment)) {
+#       return(commit_from_comment)
+#     }
+#   }
+#
+#   return(NA)
+# }
 
-  # loop through comments, grab the first one
-  for (i in seq_len(nrow(comments_df))) {
-    comment <- comments_df[i, ]
-    commit_from_comment <- get_current_commit_from_comment(comment$body)
-    if (!is.na(commit_from_comment)) {
-      return(commit_from_comment)
-    }
-  }
-
-  return(NA)
-}
-
-get_current_commit_from_comment <- function(body) {
-  stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
-}
+# get_current_commit_from_comment <- function(body) {
+#   stringr::str_match(body, "\\* current QC request commit: ([a-f0-9]+)")[,2]
+# }

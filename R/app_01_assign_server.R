@@ -7,7 +7,7 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_create_server <- function(id) {
+ghqc_assign_server <- function(id) {
   rproj_root_dir <- reactive({
     tryCatch(
       {

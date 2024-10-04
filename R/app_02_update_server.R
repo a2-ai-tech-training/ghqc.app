@@ -81,7 +81,7 @@ ghqc_update_server <- function(id) {
       updateSelectInput(
         session,
         "select_milestone",
-        choices = c("Show All Issues", milestone_list())
+        choices = c("All Issues", milestone_list())
       )
     })
 
@@ -94,7 +94,7 @@ ghqc_update_server <- function(id) {
 
       tryCatch(
         {
-          if (input$select_milestone == "Show All Issues") {
+          if (input$select_milestone == "All Issues") {
             all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
             issue_choices <- convert_issue_df_format(all_issues)
           } else {
@@ -360,7 +360,7 @@ ghqc_update_server <- function(id) {
         footer = NULL,
         easyClose = TRUE,
         tags$p("Update comment posted successfully."),
-        tags$a(href = post_comment(), "Click here to visit the QC Checklist on Github", target = "_blank")
+        tags$a(href = post_comment(), "Click here to visit the updated issue on Github", target = "_blank")
       ))
     })
 

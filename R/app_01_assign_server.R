@@ -121,7 +121,7 @@ ghqc_assign_server <- function(id) {
             updateSelectizeInput(
               session,
               "milestone_existing",
-              options = list(placeholder = "No existing QC Item List")
+              options = list(placeholder = "No existing milestones")
             )
             return()
           }
@@ -413,7 +413,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           footer = NULL,
           easyClose = TRUE,
           tags$p(success_note),
-          tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
+          tags$a(href = milestone_url, "Click here to visit the milestone on Github", target = "_blank")
         )
       )
     })

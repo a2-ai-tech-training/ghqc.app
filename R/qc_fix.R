@@ -1,6 +1,13 @@
 get_init_qc_commit <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
-  get_metadata(issue$body)$`git sha`
+  init_commit <- get_metadata(issue$body)$`initial qc commit`
+  if (is.null(init_commit)) {
+    init_commit <- get_metadata(issue$body)$`git sha`
+  }
+  if (is.null(init_commit)) {
+    init_commit <- get_metadata(issue$body)$`git_sha`
+  }
+  return(init_commit)
 }
 
 create_assignees_list <- function(assignees) {

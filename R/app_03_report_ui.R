@@ -36,11 +36,11 @@ ghqc_report_ui <- function(id) {
       miniContentPanel(
         div(
           id = ns("center_content"),
-          checkboxInput(ns("closed_only"), "Only Closed Milestones", TRUE),
+          checkboxInput(ns("closed_only"), "Only closed milestones", TRUE),
           selectizeInput(ns("select_milestone"), "Select Milestones", choices = "", multiple = TRUE),
           textAreaInput(ns("pdf_name"), "PDF Name", placeholder = "(Optional)"),
           textAreaInput(ns("pdf_location"), "PDF Location", value = get_simple_path()),
-          checkboxInput(ns("just_tables"), "Just Tables", FALSE)
+          checkboxInput(ns("just_tables"), "Just tables", FALSE)
         )
       ),
       div(

@@ -40,7 +40,7 @@ ghqc_update_ui <- function(id) {
           selectInput(ns("select_milestone"), "Filter Issues by Milestone", choices = "", multiple = FALSE),
           selectInput(ns("select_issue"), "Select Issue", choices = "", multiple = FALSE),
           textAreaInput(ns("message"), "Message", ""),
-          checkboxInput(ns("show_diff"), "Show file difference?", TRUE),
+          checkboxInput(ns("show_diff"), "Show file difference", TRUE),
           radioButtons(ns("compare"), "Compare file versions:",
             inline = TRUE,
             choices = c(

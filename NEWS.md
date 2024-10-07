@@ -1,5 +1,21 @@
 # ghqc (development version)
 
+# ghqc 0.0.0.9010
+
+## Minor improvements
+
+- terminology changed to match GitHub terminology like "Issue" and "Milestone"
+
+- git commit terminology changed from "reference" and "comparator" to "previous" and "current", respectively
+
+- current commit moved to top of metadata section
+
+- metadata sections moved to top of issue/comment bodies
+
+- "Create" app renamed to "Assign" app
+
+- "git sha" in metadata renamed to "initial qc commit" and moved to top of metadata section
+
 # ghqc 0.0.0.9009
 
 ## New features

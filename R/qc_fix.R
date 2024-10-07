@@ -117,8 +117,8 @@ create_comment_body <- function(owner,
   log_assignees <- if (length(assignees_list) == 0) "None" else paste(assignees_list, collapse = ', ')
 
   info(.le$logger, glue::glue("Created comment body for issue #{issue_number} in {owner}/{repo} with
-                              Assignee(s):       {log_assignees}
-                              Previous commit:  {reference_commit}
+                              Assignee(s):     {log_assignees}
+                              Previous commit: {reference_commit}
                               Original commit: {comparator_commit}"))
 
   as.character(comment_body)

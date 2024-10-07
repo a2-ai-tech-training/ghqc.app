@@ -42,10 +42,10 @@ create_metadata_body <- function(reference_commit,
   comparator_script_hash <- get_script_hash(comparator_script)
 
   glue::glue("## Metadata\n",
-             "* previous commit: {reference_commit}\n",
-             "* previous script hash: {reference_script_hash}\n",
              "* current commit: {comparator_commit}\n",
-             "* current script hash: {comparator_script_hash}\n")
+             "* current script hash: {comparator_script_hash}\n",
+             "* previous commit: {reference_commit}\n",
+             "* previous script hash: {reference_script_hash}\n\n")
 }
 
 create_diff_body <- function(diff, reference_commit, reference_script, comparator_commit, comparator_script) {
@@ -109,8 +109,8 @@ create_comment_body <- function(owner,
 
   comment_body <- glue::glue("{assignees_body}",
                              "{message_body}",
-                             "{diff_body}",
                              "{metadata_body}",
+                             "{diff_body}",
                              .trim = FALSE)
 
   # log

@@ -111,12 +111,12 @@ ghqc_report_server <- function(id) {
                   style = "overflow: hidden; text-align: right;"
                 ),
                 HTML(error_icon_html, glue::glue("There were no milestones found in {org()}/{repo()}.<br>
-                                             Initialize QC Checklists by using the ghqc create app.<br>")),
+                                             Create a milestone by using the ghqc assign app.<br>")),
                 easyClose = TRUE,
                 footer = NULL
               )
             )
-            error(.le$logger, glue::glue("There were no milestones found in {org()}/{repo()}. Initialize QC Checklists by using the ghqc create app."))
+            error(.le$logger, glue::glue("There were no milestones found in {org()}/{repo()}. Create a milestone by using the ghqc assign app."))
           } # if (length(all_milestones) == 0)
 
           rev(all_milestones)

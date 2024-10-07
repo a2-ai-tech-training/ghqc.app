@@ -4,8 +4,12 @@ format_issue_body <- function(checklist_type, file_path) {
   file_items <- checklists[[checklist_type]]
   qc_checklist <- format_checklist_items(file_items)
   metadata <- format_metadata(checklist_type, file_path)
-  issue_body_content <- format_body_content()
-  glue::glue(issue_body_content)
+  note <- format_note()
+
+  issue_body_content <- format_body_content(metadata = metadata,
+                                            checklist_type = checklist_type,
+                                            note = note,
+                                            qc_checklist = qc_checklist)
 }
 
 format_items <- function(items) {
@@ -93,12 +97,12 @@ format_metadata <- function(checklist_type, file_path) {
   script_hash_section <- glue::glue("* script hash: {script_hash}")
 
   git_sha <- get_sha()
-  git_sha_section <- glue::glue("* git sha: {git_sha}")
+  git_sha_section <- glue::glue("* initial qc commit: {git_sha}")
 
   file_history_url <- get_file_history_url(file_path)
   file_history_url_section <- glue::glue("* file history: {file_history_url}")
 
-  metadata <- c(metadata, qc_type_section, script_hash_section, git_sha_section, file_history_url_section)
+  metadata <- c(git_sha_section, metadata, qc_type_section, script_hash_section, file_history_url_section)
 
   glue::glue_collapse(metadata, "\n")
 }
@@ -126,13 +130,24 @@ get_file_history_url <- function(file_path) {
   file_history_url <- glue::glue("{https_url}/commits/{branch}/{file_path}")
 }
 
-format_body_content <- function() {
-  if (file.exists(file.path(.lci$client_repo_path, "note"))) {
-    note <- readr::read_file(file.path(.lci$client_repo_path, "note"))
-    if (stringr::str_sub(note, start =-2) != "\n") note <- paste0(note,"\n")
-  } else {
-    note <- ""
+format_note <- function() {
+  note <- {
+    if (file.exists(file.path(.lci$client_repo_path, "note"))) {
+      readr::read_file(file.path(.lci$client_repo_path, "note"))
+      if (stringr::str_sub(note, start =-2) != "\n") paste0(note,"\n")
+    }
+    else {
+      ""
+    }
   }
 
-  paste0("# {checklist_type}\n", note, "\n\n{qc_checklist}\n\n## Metadata\n\n{metadata}")
+  return(note)
+}
+
+format_body_content <- function(metadata, checklist_type, note, qc_checklist) {
+  glue::glue("## Metadata\n\n
+             {metadata}\n\n
+             # {checklist_type}\n\n
+             {note}\n\n
+             {qc_checklist}")
 }

@@ -1,6 +1,13 @@
 get_init_qc_commit <- function(owner, repo, issue_number) {
   issue <- get_issue(owner, repo, issue_number)
-  get_metadata(issue$body)$`git sha`
+  init_commit <- get_metadata(issue$body)$`initial qc commit`
+  if (is.null(init_commit)) {
+    init_commit <- get_metadata(issue$body)$`git sha`
+  }
+  if (is.null(init_commit)) {
+    init_commit <- get_metadata(issue$body)$`git_sha`
+  }
+  return(init_commit)
 }
 
 create_assignees_list <- function(assignees) {
@@ -22,7 +29,7 @@ create_message_body <- function(message) {
 
 get_script_hash <- function(script) {
   collapsed_script <- glue::glue_collapse(script, "\n")
-  digest::digest(collapsed_script)
+  digest::digest(collapsed_script, algo = "blake3")
 }
 
 create_metadata_body <- function(reference_commit,
@@ -35,10 +42,10 @@ create_metadata_body <- function(reference_commit,
   comparator_script_hash <- get_script_hash(comparator_script)
 
   glue::glue("## Metadata\n",
-             "* reference commit: {reference_commit}\n",
-             "* reference script hash: {reference_script_hash}\n",
-             "* comparator commit: {comparator_commit}\n",
-             "* comparator script hash: {comparator_script_hash}\n")
+             "* current commit: {comparator_commit}\n",
+             "* current script hash: {comparator_script_hash}\n",
+             "* previous commit: {reference_commit}\n",
+             "* previous script hash: {reference_script_hash}\n\n")
 }
 
 create_diff_body <- function(diff, reference_commit, reference_script, comparator_commit, comparator_script) {
@@ -46,14 +53,14 @@ create_diff_body <- function(diff, reference_commit, reference_script, comparato
 
   else {
     # get context for diff
-    context <- glue::glue(
-      "reference commit (older version): {reference_commit}\n
-        comparator commit (newer version): {comparator_commit}\n"
-    )
+    # context <- glue::glue(
+    #   "reference commit (older version): {reference_commit}\n
+    #     comparator commit (newer version): {comparator_commit}\n"
+    # )
 
     diff_formatted <- format_diff(reference_script = reference_script, comparator_script = comparator_script)
     glue::glue("## File Difference\n",
-               "{context}\n",
+               #"{context}\n",
                "{diff_formatted}\n\n",)
   }
 }
@@ -102,17 +109,17 @@ create_comment_body <- function(owner,
 
   comment_body <- glue::glue("{assignees_body}",
                              "{message_body}",
-                             "{diff_body}",
                              "{metadata_body}",
+                             "{diff_body}",
                              .trim = FALSE)
 
   # log
   log_assignees <- if (length(assignees_list) == 0) "None" else paste(assignees_list, collapse = ', ')
 
   info(.le$logger, glue::glue("Created comment body for issue #{issue_number} in {owner}/{repo} with
-                              Assignee(s):       {log_assignees}
-                              Reference commit:  {reference_commit}
-                              Comparator commit: {comparator_commit}"))
+                              Assignee(s):     {log_assignees}
+                              Previous commit: {reference_commit}
+                              Original commit: {comparator_commit}"))
 
   as.character(comment_body)
 }

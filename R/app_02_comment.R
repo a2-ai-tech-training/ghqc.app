@@ -2,14 +2,14 @@
 NULL
 
 #' @export
-ghqc_update_app <- function() {
+ghqc_comment_app <- function() {
   app <- shinyApp(
-    ui = ghqc_update_ui(
-      id = "ghqc_update_app"
+    ui = ghqc_comment_ui(
+      id = "ghqc_comment_app"
     ),
     server = function(input, output, session) {
-      ghqc_update_server(
-        id = "ghqc_update_app"
+      ghqc_comment_server(
+        id = "ghqc_comment_app"
       )
     }
   )

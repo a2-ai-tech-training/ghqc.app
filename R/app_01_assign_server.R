@@ -8,6 +8,7 @@
 NULL
 
 ghqc_assign_server <- function(id) {
+  #browser()
   rproj_root_dir <- reactive({
     tryCatch(
       {
@@ -206,9 +207,13 @@ ghqc_assign_server <- function(id) {
           )
         ),
         div(
-          style = "display: flex; align-items: center; column-gap: 5px;",
-          h5("Select Files for QC"),
-          actionButton(ns("file_info"), "checklist info", class = "preview-button")
+          style = "display: flex; column-gap: 20px; row-gap: 5px; flex-direction: column; align-items: flex-start;",
+          actionButton(ns("file_info"),
+                       label = HTML("<span style='font-size:2.0em;'>Preview checklists</span>"),
+                       class = "preview-button",
+                       style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;"
+                       ),
+          h5("Select Files for QC")
         ),
         treeNavigatorUI(ns("treeNavigator"))
       )

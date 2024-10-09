@@ -61,7 +61,8 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         )
         button_input <- actionButton(
           ns(button_input_id),
-          label = "preview",
+          label = HTML("<span style='font-size:2.0em;'>Preview file contents</span>"),
+          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
           class = "preview-button"
         )
 

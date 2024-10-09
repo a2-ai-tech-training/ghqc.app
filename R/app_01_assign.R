@@ -3,6 +3,7 @@ NULL
 
 #' @export
 ghqc_assign_app <- function() {
+  # check for errors
   app <- shinyApp(
     ui = ghqc_assign_ui(
       id = "ghqc_assign_app"

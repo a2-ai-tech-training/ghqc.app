@@ -1,6 +1,6 @@
 Package: ghqc
 Title: Create QC Checklists in Github Issues
-Version: 0.0.0.9009
+Version: 0.0.0.9010
 Authors@R: c(
     person("Jenna", "Johnson", , "jenna@a2-ai.com", role = c("aut", "cre")),
     person("Anne", "Zheng", , "anne@a2-ai.com", role = "aut", "cre"),

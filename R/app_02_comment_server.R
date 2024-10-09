@@ -6,7 +6,7 @@
 #' @importFrom gert git_status git_ahead_behind
 NULL
 
-ghqc_update_server <- function(id) {
+ghqc_comment_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)
@@ -62,7 +62,7 @@ ghqc_update_server <- function(id) {
 
           if (length(milestone_list) == 0) {
             w_gh$hide()
-            showModal(modalDialog(glue::glue("There were no open milestones found in {org()}/{repo()}. Please use the Create QC app before using the Update QC app."), footer = NULL))
+            showModal(modalDialog(glue::glue("There were no open milestones found in {org()}/{repo()}. Please use the Assign QC app before using the Comment QC app."), footer = NULL))
             return()
           }
 
@@ -359,7 +359,7 @@ ghqc_update_server <- function(id) {
         title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
         footer = NULL,
         easyClose = TRUE,
-        tags$p("Update comment posted successfully."),
+        tags$p("QC changes commented successfully."),
         tags$a(href = post_comment(), "Click here to visit the updated issue on Github", target = "_blank")
       ))
     })

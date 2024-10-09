@@ -190,11 +190,14 @@ ghqc_assign_server <- function(id) {
             options = list(placeholder = "(required)")
           ),
         ),
-        textAreaInput(
-          ns("milestone_description"),
-          "Milestone Description",
-          placeholder = "(optional)",
-          width = "100%"
+        conditionalPanel(
+          condition = "input.milestone_toggle == `New`", ns = ns,
+          textAreaInput(
+            ns("milestone_description"),
+            "Milestone Description",
+            placeholder = "(optional)",
+            width = "100%"
+          )
         ),
         selectizeInput(
           ns("assignees"),
@@ -208,11 +211,6 @@ ghqc_assign_server <- function(id) {
         ),
         div(
           style = "display: flex; column-gap: 20px; row-gap: 5px; flex-direction: column; align-items: flex-start;",
-          actionButton(ns("file_info"),
-                       label = HTML("<span style='font-size:2.0em;'>Preview checklists</span>"),
-                       class = "preview-button",
-                       style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;"
-                       ),
           h5("Select Files for QC")
         ),
         treeNavigatorUI(ns("treeNavigator"))
@@ -280,18 +278,30 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
     })
 
-    output$main_panel <- renderUI({
-      validate(need(length(selected_items()) > 0, "No files selected"))
-      w_load_items$show()
+    output$main_panel_static <- renderUI({
+      div(
+        style = "display: flex; justify-content: flex-end; padding-bottom: 20px;",
+        actionButton(ns("file_info"),
+                     label = HTML("<span style='font-size:2.0em;'>Preview checklists</span>"),
+                     class = "preview-button",
+                     style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;"
+        ) #actionButton
+      ) #div
 
-      log_string <- glue::glue_collapse(selected_items(), sep = ", ")
-      debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
+    })
 
-      list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
-      isolate_rendered_list(input, session, selected_items())
+    output$main_panel_dynamic <- renderUI({
+          validate(need(length(selected_items()) > 0, "No files selected"))
+          w_load_items$show()
 
-      session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
-      return(list)
+          log_string <- glue::glue_collapse(selected_items(), sep = ", ")
+          debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
+
+          list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
+          isolate_rendered_list(input, session, selected_items())
+
+          session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
+          return(list)
     })
 
     observe({
@@ -473,7 +483,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     observeEvent(input$proceed, {
-      debug(.le$logger, glue::glue("Create QC items action proceeded and modal removed."))
+      debug(.le$logger, glue::glue("Create Issues action proceeded and modal removed."))
       removeModal()
       qc_trigger(TRUE)
     })

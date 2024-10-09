@@ -45,13 +45,6 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         assignee_input_id <- generate_input_id("assignee", name)
         button_input_id <- generate_input_id("button", name)
 
-        checklist_input <- selectizeInput(
-          ns(checklist_input_id),
-          label = NULL,
-          choices = checklist_choices,
-          width = "100%",
-          options = list(placeholder = "select checklist")
-        )
         assignee_input <- selectizeInput(
           ns(assignee_input_id),
           label = NULL,
@@ -59,9 +52,25 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
           width = "100%",
           options = list(placeholder = "No Assignee")
         )
+
+        checklist_input <- selectizeInput(
+          ns(checklist_input_id),
+          label = NULL,
+          choices = checklist_choices,
+          width = "100%",
+          options = list(placeholder = "select checklist")
+        )
+
         button_input <- actionButton(
           ns(button_input_id),
           label = HTML("<span style='font-size:2.0em;'>Preview file contents</span>"),
+          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
+          class = "preview-button"
+        )
+
+        preview_checklist <- actionButton(
+          ns(button_input_id),
+          label = HTML("<span style='font-size:2.0em;'>Preview checklist</span>"),
           style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
           class = "preview-button"
         )
@@ -72,8 +81,9 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         ul <- tagAppendChild(ul, div(
           class = "grid-items",
           div(class = "item-a", HTML(modified_name), button_input),
-          div(class = "item-b", checklist_input),
-          div(class = "item-c", assignee_input)
+          div(class = "item-b", assignee_input),
+          div(class = "item-c", checklist_input),
+          div(class = "item-d", preview_checklist)
         ))
       }
       debug(.le$logger, "Rendered selected list successfully")
@@ -105,19 +115,21 @@ isolate_rendered_list <- function(input, session, items) {
   for (name in items) {
     debug(.le$logger, glue::glue("Updating selectize inputs for item: {name}"))
 
-    checklist_input_id <- generate_input_id("checklist", name)
     assignee_input_id <- generate_input_id("assignee", name)
 
-    updateSelectizeInput(
-      session,
-      checklist_input_id,
-      selected = isolate(input[[checklist_input_id]])
-    )
+    checklist_input_id <- generate_input_id("checklist", name)
+
     updateSelectizeInput(
       session,
       assignee_input_id,
       choices = c("No Assignee", input$assignees),
       selected = isolate(input[[assignee_input_id]])
+    )
+
+    updateSelectizeInput(
+      session,
+      checklist_input_id,
+      selected = isolate(input[[checklist_input_id]])
     )
   }
 }

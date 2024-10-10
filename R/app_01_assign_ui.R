@@ -24,9 +24,7 @@ ghqc_assign_ui <- function(id) {
     ),
     div(
       id = ns("main_container"),
-      gadgetTitleBar(
-        #title = span(tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "vertical-align: middle; margin-right: 5px;"), "Create QC Shiny Tool"),
-        title = div(
+      gadgetTitleBar(title = div(
           style = "display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%;",
           div(
             style = "position: relative;",  # Keep this div centered

@@ -49,7 +49,8 @@ export function adjust_grid(ns) {
     rows.forEach((row, index) => {
       if (row) {
         row.style.transition = 'all 0.5s ease';
-        row.style.gridTemplateColumns = `minmax(100px, ${maxWidth}px) minmax(125px, 1fr) minmax(125px, 1fr)`;
+        //row.style.gridTemplateColumns = `minmax(100px, ${maxWidth}px) minmax(125px, 1fr) minmax(125px, 1fr)`;
+        row.style.gridTemplateColumns = `100px 100px 100px 100px`;
       } else {
         console.warn(`Row ${index} is undefined`);
       }
@@ -73,4 +74,5 @@ export function adjust_grid(ns) {
           setTimeout(adjust_grid(ns), 100);
         });
     });
+
 

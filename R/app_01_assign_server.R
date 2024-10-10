@@ -269,7 +269,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       req(selected_items())
       tryCatch(
         {
-          extract_file_data(input, selected_items())
+          file_data <- extract_file_data(input, selected_items())
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error extracting file data from {selected_items()}:{e$message}"))
@@ -325,6 +325,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         )
       }
     })
+
 
     modal_check <- eventReactive(input$create_qc_items, {
       req(qc_items())
@@ -435,6 +436,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     #--- checklist info button begin
     observeEvent(input$file_info, {
+      browser
       req(checklists())
       debug(.le$logger, glue::glue("file_info button was triggered."))
 
@@ -451,6 +453,31 @@ return "<div><strong>" + escape(item.username) + "</div>"
           uiOutput(ns("file_info_panel"))
         )
       )
+    })
+
+
+    observeEvent(input$checklist_input_id, {
+      browser()
+      selected_checklist <- input$checklist_input_id
+
+
+      # Customize behavior based on the selected checklist
+      observeEvent(input[[ns(preview_checklist_id)]], {
+        browser()
+        showModal(
+          modalDialog(
+            title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+            footer = NULL,
+            easyClose = TRUE,
+            "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
+            "See below for a reference of all types and their items.",
+            br(),
+            br(),
+            selectInput(ns("checklist_info"), NULL, choices = names(checklists()), width = "100%"),
+            uiOutput(ns("file_info_panel"))
+          )
+        )
+      })
     })
 
     output$file_info_panel <- renderUI({
@@ -501,6 +528,25 @@ return "<div><strong>" + escape(item.username) + "</div>"
     observeEvent(input$reset, {
       debug(.le$logger, glue::glue("App was reset through the reset button."))
       session$reload()
+    })
+
+    #HERE
+    observeEvent(selected_items(), {
+      req(checklists())
+      items <- selected_items()
+      for (name in items) {
+        log_string <- glue::glue_collapse(items, sep = ", ")
+        debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
+        tryCatch(
+          {
+            create_checklist_preview_event(input, name = name, checklists())
+          },
+          error = function(e) {
+            error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))
+            rlang::abort(e$message)
+          }
+        )
+      }
     })
 
     return(input)

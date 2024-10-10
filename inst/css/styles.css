@@ -131,31 +131,19 @@ div[id$="-main_container"] {
 
 
 .grid-container-depth-0 {
-  display: flex;
-  width: 100%;
+  display: grid;
   align-items: center;
   padding-left: 15px;
 }
 
-
 .grid-items {
-  display: flex;
+  display: grid;
   column-gap: 10px;
-  /*grid-template-columns: minmax(100px, auto) 50px minmax(100px, 1fr) minmax(125px, 1fr);*/
-  grid-template-columns: 100px 100px 100px 100px;
-  align-items: center;
-  width: 100%;
+  grid-template-columns: minmax(100px, auto) minmax(100px, 1fr) minmax(125px, 1fr) minmax(50px, 100px);
   margin-bottom: 15px;
 }
 
-
-
-
 .item-a {
-  white-space: nowrap;
-}
-
-.item-c {
   white-space: nowrap;
 }
 

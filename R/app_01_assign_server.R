@@ -385,7 +385,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       req(qc_trigger())
       qc_trigger(FALSE)
 
-      w_create_qc_items <- create_waiter(ns, "Creating issues ...")
+      w_create_qc_items <- create_waiter(ns, "Assigning file(s) for QC ...")
       w_create_qc_items$show()
       tryCatch(
         {
@@ -416,10 +416,10 @@ return "<div><strong>" + escape(item.username) + "</div>"
       }
       success_note <- {
         if (custom_checklist_selected()) {
-          HTML("Issues created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
+          HTML("Issue(s) created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
         }
         else {
-          "Issues created successfully."
+          "Issue(s) created successfully."
         }
       }
 

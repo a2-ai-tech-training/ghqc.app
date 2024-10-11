@@ -170,7 +170,7 @@ extract_file_data <- function(input, items) {
 
 
 
-        file_data <- append(file_data, list(create_file_data_structure(file_name = generate_input_id(name = name), assignees = assignee_input_value, checklist_type = checklist_input_value, preview_type = preview_input_value)))
+        file_data <- append(file_data, list(create_file_data_structure(file_name = generate_input_id(name = name), assignees = assignee_input_value, checklist_type = checklist_input_value)))
       }
       debug(.le$logger, "Extracted file data successfully")
       return(file_data)

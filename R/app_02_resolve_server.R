@@ -359,7 +359,7 @@ ghqc_resolve_server <- function(id) {
         title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
         footer = NULL,
         easyClose = TRUE,
-        tags$p("QC changes commented successfully."),
+        tags$p("Resolved QC finding(s) commented successfully."),
         tags$a(href = post_comment(), "Click here to visit the updated issue on Github", target = "_blank")
       ))
     })

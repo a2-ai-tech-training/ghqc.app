@@ -4,7 +4,7 @@
 #' @importFrom waiter use_waiter waiter_show_on_load spin_1
 NULL
 
-ghqc_report_ui <- function(id) {
+ghqc_record_ui <- function(id) {
   ns <- NS(id)
   ui <- miniPage(
     use_waiter(),
@@ -28,7 +28,7 @@ ghqc_report_ui <- function(id) {
             style = "position: relative;",  # Keep this div centered
             tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
           ),
-          div("Report QC", style = "white-space: nowrap;")
+          div("Generate QC Record", style = "white-space: nowrap;")
         ),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
@@ -46,7 +46,7 @@ ghqc_report_ui <- function(id) {
       div(
         class = "button_block",
         miniButtonBlock(
-          actionButton(ns("generate_report"), "Generate QC Report")
+          actionButton(ns("generate_report"), "Generate QC Record")
         )
       )
     )

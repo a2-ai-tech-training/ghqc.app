@@ -6,7 +6,7 @@
 #' @importFrom gert git_status git_ahead_behind
 NULL
 
-ghqc_comment_server <- function(id) {
+ghqc_resolve_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)

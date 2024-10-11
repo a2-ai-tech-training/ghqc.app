@@ -10,7 +10,7 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_report_server <- function(id) {
+ghqc_record_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     report_trigger <- reactiveVal(FALSE)

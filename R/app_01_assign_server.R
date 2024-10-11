@@ -201,7 +201,7 @@ ghqc_assign_server <- function(id) {
         ),
         selectizeInput(
           ns("assignees"),
-          "Select Assignees",
+          "Select Assignee(s)",
           choices = "No Assignee",
           multiple = TRUE,
           width = "100%",
@@ -210,8 +210,8 @@ ghqc_assign_server <- function(id) {
           )
         ),
         div(
-          style = "display: flex; column-gap: 20px; row-gap: 5px; flex-direction: column; align-items: flex-start;",
-          h5("Select Files for QC")
+          style = "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif !important; font-weight: bold;",
+          "Select File(s) for QC"
         ),
         treeNavigatorUI(ns("treeNavigator"))
       )

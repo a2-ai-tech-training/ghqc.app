@@ -133,8 +133,11 @@ get_file_history_url <- function(file_path) {
 format_note <- function() {
   note <- {
     if (file.exists(file.path(.lci$client_repo_path, "note"))) {
-      readr::read_file(file.path(.lci$client_repo_path, "note"))
-      if (stringr::str_sub(note, start =-2) != "\n") paste0(note,"\n")
+      custom_note <- readr::read_file(file.path(.lci$client_repo_path, "note"))
+      if (stringr::str_sub(custom_note, start =-2) != "\n") {
+        custom_note <- paste0(custom_note,"\n")
+      }
+      custom_note
     }
     else {
       ""

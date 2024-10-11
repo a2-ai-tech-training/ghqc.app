@@ -24,15 +24,13 @@ ghqc_assign_ui <- function(id) {
     ),
     div(
       id = ns("main_container"),
-      gadgetTitleBar(
-        #title = span(tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "vertical-align: middle; margin-right: 5px;"), "Create QC Shiny Tool"),
-        title = div(
+      gadgetTitleBar(title = div(
           style = "display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%;",
           div(
             style = "position: relative;",  # Keep this div centered
             tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
           ),
-          div("Assign QC", style = "white-space: nowrap;")
+          div("Assign file(s) for QC", style = "white-space: nowrap;")
         ),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
@@ -44,12 +42,15 @@ ghqc_assign_ui <- function(id) {
           id = ns("divider"),
           actionButton(ns("toggle_sidebar"), "", icon = icon("angle-double-left"), class = "toggle-sidebar-btn")
         ),
-        miniContentPanel(uiOutput(ns("main_panel")))
+        miniContentPanel(tagList(
+          uiOutput(ns("main_panel_static")),  # Static button
+          uiOutput(ns("main_panel_dynamic"))  # Reactive content
+        ))
       ),
       div(
         class = "button_block",
         miniButtonBlock(
-          actionButton(ns("create_qc_items"), "Create Issues")
+          actionButton(ns("create_qc_items"), "Assign file(s) for QC")
         )
       )
     )

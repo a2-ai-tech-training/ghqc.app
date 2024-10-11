@@ -143,6 +143,7 @@ treeNavigatorServer <- function(
           list(
             text = basename(rootFolder()),
             type = "folder",
+            #state = list(opened = TRUE),
             children = FALSE,
             li_attr = list(
               class = "jstree-x"
@@ -166,6 +167,10 @@ treeNavigatorServer <- function(
         selectLeavesOnly = TRUE
       ))
     })
+
+    # observe({
+    #   session$sendCustomMessage(type = "expandRoot", list())
+    # })
 
     # example: given input "testTree/inst/www", full_path will be "/path/to/proj/testTree/inst/www"
     observeEvent(input[["path_from_js"]], {

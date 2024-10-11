@@ -4,7 +4,7 @@
 #' @importFrom waiter use_waiter waiter_show_on_load spin_1
 NULL
 
-ghqc_update_ui <- function(id) {
+ghqc_resolve_ui <- function(id) {
   ns <- NS(id)
   ui <- miniPage(
     use_waiter(),
@@ -28,9 +28,8 @@ ghqc_update_ui <- function(id) {
             style = "position: relative;",  # Keep this div centered
             tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
           ),
-          div("Update QC", style = "white-space: nowrap;")
+          div("Resolve QC finding(s)", style = "white-space: nowrap;")
         ),
-        #title = span("Update QC Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),
@@ -39,7 +38,7 @@ ghqc_update_ui <- function(id) {
           id = ns("center_content"),
           selectInput(ns("select_milestone"), "Filter Issues by Milestone", choices = "", multiple = FALSE),
           selectInput(ns("select_issue"), "Select Issue", choices = "", multiple = FALSE),
-          textAreaInput(ns("message"), "Message", ""),
+          textAreaInput(ns("message"), "Message", "", placeholder = "(optional)"),
           checkboxInput(ns("show_diff"), "Show file difference", TRUE),
           radioButtons(ns("compare"), "Compare file versions:",
             inline = TRUE,

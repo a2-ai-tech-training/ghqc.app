@@ -8,6 +8,7 @@
 NULL
 
 ghqc_assign_server <- function(id) {
+  #browser()
   rproj_root_dir <- reactive({
     tryCatch(
       {
@@ -189,15 +190,18 @@ ghqc_assign_server <- function(id) {
             options = list(placeholder = "(required)")
           ),
         ),
-        textAreaInput(
-          ns("milestone_description"),
-          "Milestone Description",
-          placeholder = "(optional)",
-          width = "100%"
+        conditionalPanel(
+          condition = "input.milestone_toggle == `New`", ns = ns,
+          textAreaInput(
+            ns("milestone_description"),
+            "Milestone Description",
+            placeholder = "(optional)",
+            width = "100%"
+          )
         ),
         selectizeInput(
           ns("assignees"),
-          "Select Assignees",
+          "Select Assignee(s)",
           choices = "No Assignee",
           multiple = TRUE,
           width = "100%",
@@ -206,9 +210,8 @@ ghqc_assign_server <- function(id) {
           )
         ),
         div(
-          style = "display: flex; align-items: center; column-gap: 5px;",
-          h5("Select Files for QC"),
-          actionButton(ns("file_info"), "checklist info", class = "preview-button")
+          style = "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif !important; font-weight: bold;",
+          "Select File(s) for QC"
         ),
         treeNavigatorUI(ns("treeNavigator"))
       )
@@ -266,7 +269,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       req(selected_items())
       tryCatch(
         {
-          extract_file_data(input, selected_items())
+          file_data <- extract_file_data(input, selected_items())
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error extracting file data from {selected_items()}:{e$message}"))
@@ -275,18 +278,30 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
     })
 
-    output$main_panel <- renderUI({
-      validate(need(length(selected_items()) > 0, "No files selected"))
-      w_load_items$show()
+    output$main_panel_static <- renderUI({
+      div(
+        style = "display: flex; justify-content: flex-end; padding-bottom: 20px;",
+        actionButton(ns("file_info"),
+                     label = HTML("<span style='font-size:2.0em;'>Preview all available checklists</span>"),
+                     class = "preview-button",
+                     style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;"
+        ) #actionButton
+      ) #div
 
-      log_string <- glue::glue_collapse(selected_items(), sep = ", ")
-      debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
+    })
 
-      list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
-      isolate_rendered_list(input, session, selected_items())
+    output$main_panel_dynamic <- renderUI({
+          validate(need(length(selected_items()) > 0, "No files selected"))
+          w_load_items$show()
 
-      session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
-      return(list)
+          log_string <- glue::glue_collapse(selected_items(), sep = ", ")
+          debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
+
+          list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
+          isolate_rendered_list(input, session, selected_items())
+
+          session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
+          return(list)
     })
 
     observe({
@@ -310,6 +325,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         )
       }
     })
+
 
     modal_check <- eventReactive(input$create_qc_items, {
       req(qc_items())
@@ -369,7 +385,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       req(qc_trigger())
       qc_trigger(FALSE)
 
-      w_create_qc_items <- create_waiter(ns, "Creating issues ...")
+      w_create_qc_items <- create_waiter(ns, "Assigning file(s) for QC ...")
       w_create_qc_items$show()
       tryCatch(
         {
@@ -400,10 +416,10 @@ return "<div><strong>" + escape(item.username) + "</div>"
       }
       success_note <- {
         if (custom_checklist_selected()) {
-          HTML("Issues created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
+          HTML("Issue(s) created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
         }
         else {
-          "Issues created successfully."
+          "Issue(s) created successfully."
         }
       }
 
@@ -420,6 +436,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     #--- checklist info button begin
     observeEvent(input$file_info, {
+      browser
       req(checklists())
       debug(.le$logger, glue::glue("file_info button was triggered."))
 
@@ -436,6 +453,31 @@ return "<div><strong>" + escape(item.username) + "</div>"
           uiOutput(ns("file_info_panel"))
         )
       )
+    })
+
+
+    observeEvent(input$checklist_input_id, {
+      browser()
+      selected_checklist <- input$checklist_input_id
+
+
+      # Customize behavior based on the selected checklist
+      observeEvent(input[[ns(preview_checklist_id)]], {
+        browser()
+        showModal(
+          modalDialog(
+            title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+            footer = NULL,
+            easyClose = TRUE,
+            "Each file input will require a checklist type. Each checklist type will have its own items associated with it.",
+            "See below for a reference of all types and their items.",
+            br(),
+            br(),
+            selectInput(ns("checklist_info"), NULL, choices = names(checklists()), width = "100%"),
+            uiOutput(ns("file_info_panel"))
+          )
+        )
+      })
     })
 
     output$file_info_panel <- renderUI({
@@ -468,7 +510,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     observeEvent(input$proceed, {
-      debug(.le$logger, glue::glue("Create QC items action proceeded and modal removed."))
+      debug(.le$logger, glue::glue("Create Issues action proceeded and modal removed."))
       removeModal()
       qc_trigger(TRUE)
     })
@@ -486,6 +528,25 @@ return "<div><strong>" + escape(item.username) + "</div>"
     observeEvent(input$reset, {
       debug(.le$logger, glue::glue("App was reset through the reset button."))
       session$reload()
+    })
+
+    #HERE
+    observeEvent(selected_items(), {
+      req(checklists())
+      items <- selected_items()
+      for (name in items) {
+        log_string <- glue::glue_collapse(items, sep = ", ")
+        debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
+        tryCatch(
+          {
+            create_checklist_preview_event(input, name = name, checklists())
+          },
+          error = function(e) {
+            error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))
+            rlang::abort(e$message)
+          }
+        )
+      }
     })
 
     return(input)

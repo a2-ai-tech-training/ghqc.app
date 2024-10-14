@@ -281,7 +281,6 @@ create_checklist_preview_event <- function(input, ns, name, checklists) {
 
       observeEvent(input[[checklist_input_id]], {
         checklist_input <- input[[checklist_input_id]]
-        browser()
         if (checklist_input == "") {
           addClass(checklist_input_id, "input-error")
         } else {

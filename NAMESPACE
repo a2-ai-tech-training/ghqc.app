@@ -14,10 +14,7 @@ export(get_gh_url)
 export(get_remote)
 export(ghqc_assign_app)
 export(ghqc_authenticate)
-<<<<<<< HEAD
-=======
 export(ghqc_record_app)
->>>>>>> 0ca7d2188e6c60ac4bfda024e91d436d55b85935
 export(ghqc_report)
 export(ghqc_resolve_app)
 export(ghqc_toggle_logger)

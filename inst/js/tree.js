@@ -14,6 +14,14 @@ Shiny.addCustomMessageHandler("getChildren", function (x) {
   childrenFlag = true;
 });
 
+Shiny.addCustomMessageHandler('expandRoot', function(message) {
+  var tree = $('#treeNavigator').jstree(true);
+  if (tree) {
+    // Expand the root node (node with ID '#')
+    tree.open_node('#');
+  }
+});
+
 Shiny.addCustomMessageHandler("noChildrenFound", function (x) {
   console.log("childrenFlag set to false.");
   childrenFlag = false;

@@ -44,6 +44,15 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         checklist_input_id <- generate_input_id("checklist", name)
         assignee_input_id <- generate_input_id("assignee", name)
         button_input_id <- generate_input_id("button", name)
+        preview_input_id <- generate_input_id("preview", name)
+
+        assignee_input <- selectizeInput(
+          ns(assignee_input_id),
+          label = NULL,
+          choices = c("No Assignee", input$assignees),
+          width = "100%",
+          options = list(placeholder = "No Assignee")
+        )
 
         checklist_input <- selectizeInput(
           ns(checklist_input_id),
@@ -52,16 +61,18 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
           width = "100%",
           options = list(placeholder = "select checklist")
         )
-        assignee_input <- selectizeInput(
-          ns(assignee_input_id),
-          label = NULL,
-          choices = c("No Assignee", input$assignees),
-          width = "100%",
-          options = list(placeholder = "No Assignee")
-        )
+
         button_input <- actionButton(
           ns(button_input_id),
-          label = "preview",
+          label = HTML("<span style='font-size:2.0em;'>Preview file contents</span>"),
+          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
+          class = "preview-button"
+        )
+
+        preview_input <- actionButton(
+          ns(preview_input_id),
+          label = HTML("<span style='font-size:2.0em;'>Preview checklist</span>"),
+          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
           class = "preview-button"
         )
 
@@ -71,8 +82,9 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         ul <- tagAppendChild(ul, div(
           class = "grid-items",
           div(class = "item-a", HTML(modified_name), button_input),
-          div(class = "item-b", checklist_input),
-          div(class = "item-c", assignee_input)
+          div(class = "item-b", assignee_input),
+          div(class = "item-c", checklist_input),
+          div(class = "item-d", preview_input)
         ))
       }
       debug(.le$logger, "Rendered selected list successfully")
@@ -104,19 +116,21 @@ isolate_rendered_list <- function(input, session, items) {
   for (name in items) {
     debug(.le$logger, glue::glue("Updating selectize inputs for item: {name}"))
 
-    checklist_input_id <- generate_input_id("checklist", name)
     assignee_input_id <- generate_input_id("assignee", name)
 
-    updateSelectizeInput(
-      session,
-      checklist_input_id,
-      selected = isolate(input[[checklist_input_id]])
-    )
+    checklist_input_id <- generate_input_id("checklist", name)
+
     updateSelectizeInput(
       session,
       assignee_input_id,
       choices = c("No Assignee", input$assignees),
       selected = isolate(input[[assignee_input_id]])
+    )
+
+    updateSelectizeInput(
+      session,
+      checklist_input_id,
+      selected = isolate(input[[checklist_input_id]])
     )
   }
 }
@@ -140,9 +154,11 @@ extract_file_data <- function(input, items) {
       for (name in items) {
         checklist_input_id <- generate_input_id("checklist", name)
         assignee_input_id <- generate_input_id("assignee", name)
+        preview_input_id <- generate_input_id("preview", name)
 
         checklist_input_value <- input[[checklist_input_id]]
         assignee_input_value <- input[[assignee_input_id]]
+        preview_input_value <- input[[preview_input_id]]
 
         if (!isTruthy(assignee_input_value) || assignee_input_value == "No Assignee") {
           assignee_input_value <- NULL
@@ -151,6 +167,8 @@ extract_file_data <- function(input, items) {
         if (!isTruthy(checklist_input_value)) {
           return(NULL)
         }
+
+
 
         file_data <- append(file_data, list(create_file_data_structure(file_name = generate_input_id(name = name), assignees = assignee_input_value, checklist_type = checklist_input_value)))
       }
@@ -224,7 +242,7 @@ create_button_preview_event <- function(input, name) {
       button_input_id <- generate_input_id("button", name)
       clean_name <- generate_input_id(name = name)
 
-      observeEvent(input[[button_input_id]],
+      observeEvent(input[[button_input_id]], # input[[checklist_id_specific to file]]
         {
           showModal(
             modalDialog(
@@ -232,13 +250,51 @@ create_button_preview_event <- function(input, name) {
               footer = NULL,
               easyClose = TRUE,
               renderUI({
-                renderPrint(cat(readLines(clean_name), sep = "\n"))
+                renderPrint(cat(readLines(clean_name), sep = "\n")) # checklist specfic
               })
             )
           )
         },
         ignoreInit = TRUE
       )
+      debug(.le$logger, glue::glue("Created button preview event for item: {name} successfully"))
+    },
+    error = function(e) {
+      log4r::error(glue::glue("Error creating observe event for item {name}: {e$message}"))
+      rlang::abort(e$message)
+    }
+  )
+}
+
+
+create_checklist_preview_event <- function(input, name, checklists) {
+
+  tryCatch(
+    {
+      preview_input_id <- generate_input_id("preview", name)
+      checklist_input_id <- generate_input_id("checklist", name)
+
+      observeEvent(input[[preview_input_id]], {
+        selected_checklist <- input[[checklist_input_id]]
+        info <- checklists[[selected_checklist]]
+        showModal(
+          modalDialog(
+            title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+            footer = NULL,
+            easyClose = TRUE,
+            renderUI({
+              header <- tags$h3(selected_checklist)
+              list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+              tagList(
+                header,
+                tags$ul(list)
+              )
+            })
+          )
+        )
+      },
+      ignoreInit = TRUE)
+
       debug(.le$logger, glue::glue("Created button preview event for item: {name} successfully"))
     },
     error = function(e) {

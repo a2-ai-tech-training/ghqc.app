@@ -23,3 +23,9 @@ read_and_validate_yaml <- function(yaml, dry = FALSE) {
   #validate_yaml_contents(contents, dry)
   contents
 }
+
+read_and_validate_yaml_2 <- function(yaml, dry = FALSE) {
+  contents <- yaml::yaml.load_file(yaml)
+  validate_yaml_contents(contents, dry)
+  contents
+}

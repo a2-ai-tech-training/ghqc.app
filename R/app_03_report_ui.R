@@ -28,9 +28,8 @@ ghqc_report_ui <- function(id) {
             style = "position: relative;",  # Keep this div centered
             tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
           ),
-          div("Report QC Shiny Tool", style = "white-space: nowrap;")
+          div("Report QC", style = "white-space: nowrap;")
         ),
-        #title = span("QC Report Shiny Tool"),
         left = actionButton(ns("close"), "Close", class = "btn-sm"),
         right = actionButton(ns("reset"), "Reset", class = "btn-sm")
       ),
@@ -38,9 +37,9 @@ ghqc_report_ui <- function(id) {
         div(
           id = ns("center_content"),
           checkboxInput(ns("closed_only"), "Only closed milestones", TRUE),
-          selectizeInput(ns("select_milestone"), "Select QC Item List(s)", choices = "", multiple = TRUE),
-          textAreaInput(ns("pdf_name"), "PDF name", placeholder = "(Optional)"),
-          textAreaInput(ns("pdf_location"), "PDF location", value = get_simple_path()),
+          selectizeInput(ns("select_milestone"), "Select Milestones", choices = "", multiple = TRUE),
+          textAreaInput(ns("pdf_name"), "PDF Name", placeholder = "(Optional)"),
+          textAreaInput(ns("pdf_location"), "PDF Location", value = get_simple_path()),
           checkboxInput(ns("just_tables"), "Just tables", FALSE)
         )
       ),

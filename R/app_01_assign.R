@@ -2,15 +2,19 @@
 NULL
 
 #' @export
+<<<<<<< HEAD:R/app_01_create.R
 ghqc_create_app <- function() {
   if (!exists("info_repo_path", .le)) ghqc_set_info_repo()
+=======
+ghqc_assign_app <- function() {
+>>>>>>> main:R/app_01_assign.R
   app <- shinyApp(
-    ui = ghqc_create_ui(
-      id = "ghqc_create_app"
+    ui = ghqc_assign_ui(
+      id = "ghqc_assign_app"
     ),
     server = function(input, output, session) {
-      ghqc_create_server(
-        id = "ghqc_create_app"
+      ghqc_assign_server(
+        id = "ghqc_assign_app"
       )
     }
   )

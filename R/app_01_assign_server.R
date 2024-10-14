@@ -7,7 +7,7 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_create_server <- function(id) {
+ghqc_assign_server <- function(id) {
   rproj_root_dir <- reactive({
     tryCatch(
       {
@@ -121,7 +121,7 @@ ghqc_create_server <- function(id) {
             updateSelectizeInput(
               session,
               "milestone_existing",
-              options = list(placeholder = "No existing QC Item List")
+              options = list(placeholder = "No existing milestones")
             )
             return()
           }
@@ -170,34 +170,34 @@ ghqc_create_server <- function(id) {
 
     output$sidebar <- renderUI({
       tagList(
-        radioButtons(ns("milestone_toggle"), "State of QC Item List", choices = c("New", "Existing"), inline = TRUE),
+        radioButtons(ns("milestone_toggle"), "Milestone State", choices = c("New", "Existing"), inline = TRUE),
         conditionalPanel(
           condition = "input.milestone_toggle == `New`", ns = ns,
           textInput(ns("milestone"),
-            "Create a QC Item List (Github milestone)",
-            placeholder = "Name new QC Item List (required)",
+            "Milestone Name",
+            placeholder = "(required)",
             width = "100%"
           )
         ),
         conditionalPanel(
           condition = "input.milestone_toggle == `Existing`", ns = ns,
           selectizeInput(ns("milestone_existing"),
-            "Select a QC Item List (Github milestone)",
+            "Select an existing milestone",
             choices = "",
             multiple = FALSE,
             width = "100%",
-            options = list(placeholder = "Select existing QC Item List (required)")
+            options = list(placeholder = "(required)")
           ),
         ),
         textAreaInput(
           ns("milestone_description"),
-          "Create a description for the QC Item List",
+          "Milestone Description",
           placeholder = "(optional)",
           width = "100%"
         ),
         selectizeInput(
           ns("assignees"),
-          "Select assignees for QC",
+          "Select Assignees",
           choices = "No Assignee",
           multiple = TRUE,
           width = "100%",
@@ -207,7 +207,7 @@ ghqc_create_server <- function(id) {
         ),
         div(
           style = "display: flex; align-items: center; column-gap: 5px;",
-          h5("Select files for QC"),
+          h5("Select Files for QC"),
           actionButton(ns("file_info"), "checklist info", class = "preview-button")
         ),
         treeNavigatorUI(ns("treeNavigator"))
@@ -369,7 +369,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       req(qc_trigger())
       qc_trigger(FALSE)
 
-      w_create_qc_items <- create_waiter(ns, "Creating QC items ...")
+      w_create_qc_items <- create_waiter(ns, "Creating issues ...")
       w_create_qc_items$show()
       tryCatch(
         {
@@ -386,7 +386,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           addClass("create_qc_items", "disabled-btn")
         },
         error = function(e) {
-          error(.le$logger, glue::glue("There was an error creating QC items {qc_items()}: {e$message}"))
+          error(.le$logger, glue::glue("There was an error creating the milestone {qc_items()}: {e$message}"))
           rlang::abort(e$message)
         }
       )
@@ -396,14 +396,14 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       custom_checklist_selected <- function() {
         qc_items <- qc_items()
-        any(sapply(qc_items, function(x) x$checklist_type == "custom (manually input items on GitHub)"))
+        any(sapply(qc_items, function(x) x$checklist_type == "custom (manually input checklist items on GitHub)"))
       }
       success_note <- {
         if (custom_checklist_selected()) {
-          HTML("QC items created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
+          HTML("Issues created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
         }
         else {
-          "QC items created successfully."
+          "Issues created successfully."
         }
       }
 
@@ -413,7 +413,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           footer = NULL,
           easyClose = TRUE,
           tags$p(success_note),
-          tags$a(href = milestone_url, "Click here to visit the QC items on Github", target = "_blank")
+          tags$a(href = milestone_url, "Click here to visit the milestone on Github", target = "_blank")
         )
       )
     })

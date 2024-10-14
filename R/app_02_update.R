@@ -3,6 +3,7 @@ NULL
 
 #' @export
 ghqc_update_app <- function() {
+  if (!exists("info_repo_path", .le)) ghqc_set_info_repo()
   app <- shinyApp(
     ui = ghqc_update_ui(
       id = "ghqc_update_app"

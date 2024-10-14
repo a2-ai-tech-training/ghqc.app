@@ -202,7 +202,7 @@ ghqc_assign_server <- function(id) {
         selectizeInput(
           ns("assignees"),
           "Select Assignee(s)",
-          choices = "No Assignee",
+          choices = "No assignee",
           multiple = TRUE,
           width = "100%",
           options = list(
@@ -502,10 +502,13 @@ return "<div><strong>" + escape(item.username) + "</div>"
       addClass("create_qc_items", "disabled-btn")
 
       if (length(selected_items()) > 0 && isTruthy(rv_milestone())) {
-        debug(.le$logger, glue::glue("create_qc_items buttons are activated because there are {length(selected_items())} selected items and milestone is named {rv_milestone()}"))
+        file_data <- extract_file_data(input, selected_items())
+        if (!is.null(file_data)) {
+          debug(.le$logger, glue::glue("create_qc_items buttons are activated because there are {length(selected_items())} selected items and milestone is named {rv_milestone()}"))
+          removeClass("create_qc_items", "disabled-btn")
+          addClass("create_qc_items", "enabled-btn")
+        }
 
-        removeClass("create_qc_items", "disabled-btn")
-        addClass("create_qc_items", "enabled-btn")
       }
     })
 
@@ -539,7 +542,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
         tryCatch(
           {
-            create_checklist_preview_event(input, name = name, checklists())
+            create_checklist_preview_event(input, ns, name = name, checklists())
           },
           error = function(e) {
             error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))

@@ -49,17 +49,18 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         assignee_input <- selectizeInput(
           ns(assignee_input_id),
           label = NULL,
-          choices = c("No Assignee", input$assignees),
+          choices = c("No assignee", input$assignees),
           width = "100%",
-          options = list(placeholder = "No Assignee")
+          options = list(placeholder = "No assignee")
         )
 
         checklist_input <- selectizeInput(
           ns(checklist_input_id),
           label = NULL,
-          choices = checklist_choices,
+          choices = c("", checklist_choices), #select checklist (required)
           width = "100%",
-          options = list(placeholder = "select checklist")
+          selected = NULL,  # Ensures no default selection
+          options = list(placeholder = "Select checklist (required)")
         )
 
         button_input <- actionButton(
@@ -123,7 +124,7 @@ isolate_rendered_list <- function(input, session, items) {
     updateSelectizeInput(
       session,
       assignee_input_id,
-      choices = c("No Assignee", input$assignees),
+      choices = c("No assignee", input$assignees),
       selected = isolate(input[[assignee_input_id]])
     )
 
@@ -160,11 +161,11 @@ extract_file_data <- function(input, items) {
         assignee_input_value <- input[[assignee_input_id]]
         preview_input_value <- input[[preview_input_id]]
 
-        if (!isTruthy(assignee_input_value) || assignee_input_value == "No Assignee") {
+        if (!isTruthy(assignee_input_value) || assignee_input_value == "No assignee") {
           assignee_input_value <- NULL
         }
         # requires the widget and input to be available before proceeding
-        if (!isTruthy(checklist_input_value)) {
+        if (!isTruthy(checklist_input_value) || checklist_input_value == "") {
           return(NULL)
         }
 
@@ -266,32 +267,62 @@ create_button_preview_event <- function(input, name) {
   )
 }
 
-
-create_checklist_preview_event <- function(input, name, checklists) {
+#' @import shiny
+#' @import glue
+#' @import log4r
+#' @importFrom shinyjs enable disable addClass removeClass delay
+create_checklist_preview_event <- function(input, ns, name, checklists) {
 
   tryCatch(
     {
       preview_input_id <- generate_input_id("preview", name)
       checklist_input_id <- generate_input_id("checklist", name)
 
+
+      observeEvent(input[[checklist_input_id]], {
+        checklist_input <- input[[checklist_input_id]]
+        browser()
+        if (checklist_input == "") {
+          addClass(checklist_input_id, "input-error")
+        } else {
+          removeClass(checklist_input_id, "input-error")
+        }
+      })
+
       observeEvent(input[[preview_input_id]], {
         selected_checklist <- input[[checklist_input_id]]
-        info <- checklists[[selected_checklist]]
-        showModal(
-          modalDialog(
-            title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
-            footer = NULL,
-            easyClose = TRUE,
-            renderUI({
-              header <- tags$h3(selected_checklist)
-              list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
-              tagList(
-                header,
-                tags$ul(list)
-              )
-            })
+
+        if (selected_checklist == "") {
+          showModal(
+            modalDialog(
+              title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+              footer = NULL,
+              easyClose = TRUE,
+              renderUI({
+                "Select a checklist to preview in the checklists dropdown."
+              })
+            )
           )
-        )
+        }
+        else {
+          info <- checklists[[selected_checklist]]
+          showModal(
+            modalDialog(
+              title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),
+              footer = NULL,
+              easyClose = TRUE,
+              renderUI({
+                header <- tags$h3(selected_checklist)
+                list <- convert_list_to_ui(info) # checklists needs additional formatting for list of named elements
+                tagList(
+                  header,
+                  tags$ul(list)
+                )
+              })
+            )
+          )
+        }
+
       },
       ignoreInit = TRUE)
 

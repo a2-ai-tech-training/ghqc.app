@@ -422,11 +422,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       custom_checklist_selected <- function() {
         qc_items <- qc_items()
-        any(sapply(qc_items, function(x) x$checklist_type == "custom (manually input checklist items on GitHub)"))
+        any(sapply(qc_items, function(x) x$checklist_type == "Custom"))
       }
       success_note <- {
         if (custom_checklist_selected()) {
-          HTML("Issue(s) created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
+          HTML("Issue(s) created successfully.<br><b>Remember to manually edit Custom QC checklists on GitHub.</b>")
         }
         else {
           "Issue(s) created successfully."

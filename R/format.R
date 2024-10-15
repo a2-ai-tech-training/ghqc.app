@@ -94,7 +94,7 @@ format_metadata <- function(checklist_type, file_path) {
   qc_type_section <- glue::glue("* qc type: {qc_type}")
 
   script_hash <- digest::digest(file = file_path)
-  script_hash_section <- glue::glue("* script hash: {script_hash}")
+  script_hash_section <- glue::glue("* md5 checksum: {script_hash}")
 
   git_sha <- get_sha()
   git_sha_section <- glue::glue("* initial qc commit: {git_sha}")

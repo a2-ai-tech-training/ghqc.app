@@ -245,12 +245,20 @@ get_summary_table_col_vals <- function(issue) {
     }, error = function(e) {
       # rename file path to issue title if not a ghqc issue
 
-      list(
-        `qc type` = "NA"
-      )
+      tryCatch({
+        list(
+          `qc type` = "NA"
+        )
+      }, error = function(e) {
+        rlang::abort(glue::glue("Issue: \"{issue$title}\" in milestone: \"{issue$milestone$title}\" has a metadata section that cannot be parsed."))
+      })
+
     })
   }
 
+  if(length(metadata) == 0) {
+    rlang::abort(glue::glue("Issue: \"{issue$title}\" in milestone: \"{issue$milestone$title}\" was not created with ghqc and therefore cannot be parsed."))
+  }
 
   close_data <- get_close_info(issue)
 

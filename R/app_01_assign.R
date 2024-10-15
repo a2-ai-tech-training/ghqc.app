@@ -5,11 +5,10 @@ NULL
 ghqc_assign_app <- function() {
   if (!exists("info_repo_path", .le)) ghqc_set_info_repo()
 
-  # error handling
+  # error handling before starting app
   root_dir <- rproj_root_dir()
   remote <- check_github_credentials()
 
-  # check for errors
   app <- shinyApp(
     ui = ghqc_assign_ui(
       id = "ghqc_assign_app"

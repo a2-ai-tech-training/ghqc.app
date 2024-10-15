@@ -17,7 +17,6 @@ ghqc_assign_server <- function(id, remote, root_dir) {
   })
 
   observe({
-    #browser()
     req(root_dir)
     if (getwd() != root_dir) {
       setwd(root_dir)
@@ -442,7 +441,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     #--- checklist info button begin
     observeEvent(input$file_info, {
-      browser
       req(checklists())
       debug(.le$logger, glue::glue("file_info button was triggered."))
 
@@ -463,13 +461,9 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
 
     observeEvent(input$checklist_input_id, {
-      browser()
       selected_checklist <- input$checklist_input_id
 
-
-      # Customize behavior based on the selected checklist
       observeEvent(input[[ns(preview_checklist_id)]], {
-        browser()
         showModal(
           modalDialog(
             title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),

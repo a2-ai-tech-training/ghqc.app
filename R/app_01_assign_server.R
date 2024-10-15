@@ -8,34 +8,29 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_assign_server <- function(id) {
+ghqc_assign_server <- function(id, remote, root_dir) {
   iv <- shinyvalidate::InputValidator$new()
 
-  #browser()
-  rproj_root_dir <- reactive({
-    tryCatch(
-      {
-        rprojroot::find_rstudio_root_file()
-      },
-      error = function(e) {
-        waiter_hide()
-        error(.le$logger, glue::glue("There was no Rproj file found within the directory '{getwd()}'."))
-        showModal(modalDialog(glue::glue("There was no Rproj file found within the directory '{getwd()}'."), footer = NULL))
-      }
-    )
+  observe({
+    req(remote, root_dir)
+      waiter_hide()
   })
 
   observe({
-    req(rproj_root_dir())
-    if (getwd() != rproj_root_dir()) {
-      setwd(rproj_root_dir())
-      info(.le$logger, glue::glue("Directory changed to project root: {rproj_root_dir()}"))
+    req(root_dir)
+    if (getwd() != root_dir) {
+      setwd(root_dir)
+      info(.le$logger, glue::glue("Directory changed to project root: {root_dir)}"))
     }
+  })
+
+  root_dir_reactive <- reactive({
+    root_dir
   })
 
   selected_items <- treeNavigatorServer(
     id,
-    rootFolder = rproj_root_dir,
+    rootFolder = root_dir_reactive,
     search = FALSE,
     pattern = exclude_patterns(),
     all.files = FALSE
@@ -46,23 +41,23 @@ ghqc_assign_server <- function(id) {
 
     qc_trigger <- reactiveVal(FALSE)
     # used reactive vs observe here to stop downstream
-    git_creds <- reactive({
-      req(rproj_root_dir())
-      tryCatch(
-        {
-          remote <- check_github_credentials()
-          waiter_hide()
-          return(remote)
-        },
-        error = function(e) {
-          waiter_hide()
-          showModal(modalDialog("There was an error setting up the app. Please check log messages.", footer = NULL))
-        }
-      )
-    })
+    # git_creds <- reactive({
+    #   #req(rproj_root_dir())
+    #   tryCatch(
+    #     {
+    #       #remote <- check_github_credentials()
+    #       waiter_hide()
+    #       #return(remote)
+    #     },
+    #     error = function(e) {
+    #       waiter_hide()
+    #       showModal(modalDialog("There was an error setting up the app. Please check log messages.", footer = NULL))
+    #     }
+    #   )
+    # })
 
     org <- reactive({
-      req(git_creds(), rproj_root_dir())
+      req(remote, root_dir)
       tryCatch(
         {
           get_organization()
@@ -75,10 +70,10 @@ ghqc_assign_server <- function(id) {
     })
 
     repo <- reactive({
-      req(git_creds(), rproj_root_dir())
+      req(remote, root_dir)
       tryCatch(
         {
-          get_current_repo(git_creds())
+          get_current_repo(remote)
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
@@ -88,7 +83,7 @@ ghqc_assign_server <- function(id) {
     })
 
     members <- reactive({
-      req(git_creds(), rproj_root_dir())
+      req(remote, root_dir)
       tryCatch(
         {
           get_collaborators(owner = org(), repo = repo())
@@ -178,19 +173,19 @@ ghqc_assign_server <- function(id) {
         conditionalPanel(
           condition = "input.milestone_toggle == `New`", ns = ns,
           textInput(ns("milestone"),
-            "Milestone Name",
-            placeholder = "Name this QC",
-            width = "100%"
+                    "Milestone Name",
+                    placeholder = "Name this QC",
+                    width = "100%"
           )
         ),
         conditionalPanel(
           condition = "input.milestone_toggle == `Existing`", ns = ns,
           selectizeInput(ns("milestone_existing"),
-            "Select an existing milestone",
-            choices = "",
-            multiple = FALSE,
-            width = "100%",
-            options = list(placeholder = "(required)")
+                         "Select an existing milestone",
+                         choices = "",
+                         multiple = FALSE,
+                         width = "100%",
+                         options = list(placeholder = "(required)")
           ),
         ),
         conditionalPanel(
@@ -263,7 +258,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         {
           issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
           issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
-          issue_titles_with_root_dir <- file.path(basename(rproj_root_dir()), issue_titles)
+          issue_titles_with_root_dir <- file.path(basename(root_dir), issue_titles)
           issue_titles_with_root_dir
         },
         error = function(e) {
@@ -276,7 +271,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     qc_items <- reactive({
-      req(selected_items())
+      req(root_dir, selected_items())
       tryCatch(
         {
           file_data <- extract_file_data(input, selected_items())
@@ -301,17 +296,17 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     output$main_panel_dynamic <- renderUI({
-          validate(need(length(selected_items()) > 0, "No files selected"))
-          w_load_items$show()
+      validate(need(length(selected_items()) > 0, "No files selected"))
+      w_load_items$show()
 
-          log_string <- glue::glue_collapse(selected_items(), sep = ", ")
-          debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
+      log_string <- glue::glue_collapse(selected_items(), sep = ", ")
+      debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
 
-          list <- render_selected_list(input, ns, iv, items = selected_items(), checklist_choices = get_checklists())
-          isolate_rendered_list(input, session, selected_items())
+      list <- render_selected_list(input, ns, iv, items = selected_items(), checklist_choices = get_checklists())
+      isolate_rendered_list(input, session, selected_items())
 
-          session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
-          return(list)
+      session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
+      return(list)
     })
 
     observe({
@@ -400,11 +395,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
       tryCatch(
         {
           create_yaml("test",
-            org = org(),
-            repo = repo(),
-            milestone = rv_milestone(),
-            description = input$milestone_description,
-            files = qc_items()
+                      org = org(),
+                      repo = repo(),
+                      milestone = rv_milestone(),
+                      description = input$milestone_description,
+                      files = qc_items()
           )
 
           create_checklists("test.yaml")
@@ -446,7 +441,6 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     #--- checklist info button begin
     observeEvent(input$file_info, {
-      browser
       req(checklists())
       debug(.le$logger, glue::glue("file_info button was triggered."))
 
@@ -467,13 +461,9 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
 
     observeEvent(input$checklist_input_id, {
-      browser()
       selected_checklist <- input$checklist_input_id
 
-
-      # Customize behavior based on the selected checklist
       observeEvent(input[[ns(preview_checklist_id)]], {
-        browser()
         showModal(
           modalDialog(
             title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),

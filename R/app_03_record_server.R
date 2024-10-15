@@ -10,28 +10,18 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_record_server <- function(id) {
+ghqc_record_server <- function(id, remote) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     report_trigger <- reactiveVal(FALSE)
 
-    git_creds <- reactive({
-      tryCatch(
-        {
-          remote <- check_github_credentials()
-          waiter_hide()
-          return(remote)
-
-        },
-        error = function(e) {
-          waiter_hide()
-          showModal(modalDialog("There was an error setting up the app. Please check log messages.", footer = NULL))
-        }
-      )
+    observe({
+      req(remote)
+      waiter_hide()
     })
 
     org <- reactive({
-      req(git_creds())
+      req(remote)
       tryCatch(
         {
           get_organization()
@@ -44,10 +34,10 @@ ghqc_record_server <- function(id) {
     })
 
     repo <- reactive({
-      req(git_creds())
+      req(remote)
       tryCatch(
         {
-          get_current_repo(git_creds())
+          get_current_repo(remote)
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
@@ -169,6 +159,10 @@ ghqc_record_server <- function(id) {
     })
 
     modal_check <- eventReactive(input$generate_report, {
+      w_check_status <- create_waiter(ns, glue::glue("Checking QC status in selected Milestone(s)..."))
+      w_check_status$show()
+      on.exit(w_check_status$hide())
+
       determine_modal_message_report(org(), repo(), input$select_milestone)
     })
 

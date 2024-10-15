@@ -16,8 +16,8 @@ check_remote_set <- function() {
   remotes <- gert::git_remote_list()
 
   if (nrow(remotes) == 0) {
-    error(.le$logger, "There was no remote URL set.")
-    rlang::abort("There was no remote URL set.")
+    error(.le$logger, "There is no GitHub remote URL set.")
+    rlang::abort("There is no GitHub remote URL set.")
   }
 }
 
@@ -136,7 +136,7 @@ get_gh_token <- function() {
 
 #' @import log4r
 #' @export
-check_github_credentials <- function(remote) {
+check_github_credentials <- function() {
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 
   # Check for errors
@@ -145,7 +145,7 @@ check_github_credentials <- function(remote) {
   check_remote_set()
 
   remote <- get_remote()
-  remote_name <- get_remote()$name
+  remote_name <- remote$name
   remote_url <- get_remote_url(remote)
 
   check_upstream_set(remote_name)

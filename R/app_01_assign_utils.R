@@ -60,7 +60,7 @@ render_selected_list <- function(input, ns, iv, items = NULL, checklist_choices 
           choices = c("", checklist_choices), #select checklist (required)
           width = "100%",
           selected = NULL,  # Ensures no default selection
-          options = list(placeholder = "Select checklist (required)")
+          options = list(placeholder = "Checklist")
         )
 
         button_input <- actionButton(
@@ -285,7 +285,6 @@ create_checklist_preview_event <- function(input, iv, ns, name, checklists) {
       preview_input_id <- generate_input_id("preview", name)
       checklist_input_id <- generate_input_id("checklist", name)
 
-      browser()
       if (is.null(input[[checklist_input_id]])) {
         iv$add_rule(checklist_input_id, shinyvalidate::sv_required())
       }

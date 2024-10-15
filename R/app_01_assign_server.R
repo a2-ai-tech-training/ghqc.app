@@ -179,7 +179,7 @@ ghqc_assign_server <- function(id) {
           condition = "input.milestone_toggle == `New`", ns = ns,
           textInput(ns("milestone"),
             "Milestone Name",
-            placeholder = "Name this set of QC files",
+            placeholder = "Name this QC",
             width = "100%"
           )
         ),

@@ -1,4 +1,5 @@
 #' @import shiny
+#' @import shinyvalidate
 #' @import glue
 #' @import log4r
 #' @importFrom shinyjs enable disable addClass removeClass delay
@@ -8,6 +9,8 @@
 NULL
 
 ghqc_assign_server <- function(id) {
+  iv <- shinyvalidate::InputValidator$new()
+
   #browser()
   rproj_root_dir <- reactive({
     tryCatch(
@@ -176,7 +179,7 @@ ghqc_assign_server <- function(id) {
           condition = "input.milestone_toggle == `New`", ns = ns,
           textInput(ns("milestone"),
             "Milestone Name",
-            placeholder = "(required)",
+            placeholder = "Name this QC",
             width = "100%"
           )
         ),
@@ -215,6 +218,13 @@ ghqc_assign_server <- function(id) {
         ),
         treeNavigatorUI(ns("treeNavigator"))
       )
+    })
+
+    observe({
+      req(input$milestone_toggle)
+      if (input$milestone_toggle == "New") {
+        iv$add_rule("milestone", shinyvalidate::sv_required())
+      }
     })
 
     observe({
@@ -297,7 +307,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           log_string <- glue::glue_collapse(selected_items(), sep = ", ")
           debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
 
-          list <- render_selected_list(input, ns, items = selected_items(), checklist_choices = get_checklists())
+          list <- render_selected_list(input, ns, iv, items = selected_items(), checklist_choices = get_checklists())
           isolate_rendered_list(input, session, selected_items())
 
           session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
@@ -412,11 +422,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
       custom_checklist_selected <- function() {
         qc_items <- qc_items()
-        any(sapply(qc_items, function(x) x$checklist_type == "custom (manually input checklist items on GitHub)"))
+        any(sapply(qc_items, function(x) x$checklist_type == "Custom"))
       }
       success_note <- {
         if (custom_checklist_selected()) {
-          HTML("Issue(s) created successfully.<br><b>Remember to manually edit custom QC checklists on GitHub.</b>")
+          HTML("Issue(s) created successfully.<br><b>Remember to manually edit Custom QC checklists on GitHub.</b>")
         }
         else {
           "Issue(s) created successfully."
@@ -542,7 +552,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
         debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
         tryCatch(
           {
-            create_checklist_preview_event(input, ns, name = name, checklists())
+            create_checklist_preview_event(input, iv, ns, name = name, checklists())
           },
           error = function(e) {
             error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))
@@ -552,6 +562,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       }
     })
 
+    iv$enable()
     return(input)
   })
 }

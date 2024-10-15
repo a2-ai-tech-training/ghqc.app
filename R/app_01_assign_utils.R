@@ -33,7 +33,7 @@ generate_input_id <- function(prefix = NULL, name) {
 #' @param checklist_choices A vector of checklist choices for the selectize input fields.
 #'
 #' @noRd
-render_selected_list <- function(input, ns, items = NULL, checklist_choices = NULL, depth = 0) {
+render_selected_list <- function(input, ns, iv, items = NULL, checklist_choices = NULL, depth = 0) {
   tryCatch(
     {
       debug(.le$logger, glue::glue("Rendering selected list with items: {paste(items, collapse = ', ')}"))
@@ -60,33 +60,39 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
           choices = c("", checklist_choices), #select checklist (required)
           width = "100%",
           selected = NULL,  # Ensures no default selection
-          options = list(placeholder = "Select checklist (required)")
+          options = list(placeholder = "Checklist")
         )
 
         button_input <- actionButton(
           ns(button_input_id),
-          label = HTML("<span style='font-size:2.0em;'>Preview file contents</span>"),
-          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
-          class = "preview-button"
+          label = HTML("<span>Preview file<br>contents</span>"),
+          style = "height: 34px !important; font-size: 12px !important; padding: 2px 2px 2px 2px !important; color: #5f5f5f !important; line-height: 1.2em",
+          #style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
+          class = "file-preview-button"
         )
 
         preview_input <- actionButton(
           ns(preview_input_id),
-          label = HTML("<span style='font-size:2.0em;'>Preview checklist</span>"),
-          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
-          class = "preview-button"
+          label = HTML("<span>Preview<br>checklist</span>"),
+          style = "height: 34px !important; font-size: 12px !important; padding: 2px 2px 2px 2px !important; color: #5f5f5f !important; line-height: 1.2em",
+          #style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
+          #class = "checklist-preview-button"
         )
 
         # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)
         modified_name <- gsub("([^a-zA-Z0-9])", "\\1<wbr>", generate_input_id(name = name))
 
-        ul <- tagAppendChild(ul, div(
-          class = "grid-items",
-          div(class = "item-a", HTML(modified_name), button_input),
-          div(class = "item-b", assignee_input),
-          div(class = "item-c", checklist_input),
-          div(class = "item-d", preview_input)
-        ))
+        ul <- tagAppendChild(ul, div(HTML(modified_name), style = "padding-bottom: 5px;"))
+
+        ul <- tagAppendChild(ul,
+                             div(
+                               class = "grid-items",
+                               div(class = "item-a", button_input),
+                               div(class = "item-b", assignee_input),
+                               div(class = "item-c", checklist_input),
+                               div(class = "item-d", preview_input)
+                             )
+        )
       }
       debug(.le$logger, "Rendered selected list successfully")
       ul
@@ -271,13 +277,17 @@ create_button_preview_event <- function(input, name) {
 #' @import glue
 #' @import log4r
 #' @importFrom shinyjs enable disable addClass removeClass delay
-create_checklist_preview_event <- function(input, ns, name, checklists) {
+create_checklist_preview_event <- function(input, iv, ns, name, checklists) {
+
 
   tryCatch(
     {
       preview_input_id <- generate_input_id("preview", name)
       checklist_input_id <- generate_input_id("checklist", name)
 
+      if (is.null(input[[checklist_input_id]])) {
+        iv$add_rule(checklist_input_id, shinyvalidate::sv_required())
+      }
 
       observeEvent(input[[checklist_input_id]], {
         checklist_input <- input[[checklist_input_id]]

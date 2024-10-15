@@ -82,13 +82,17 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
         # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)
         modified_name <- gsub("([^a-zA-Z0-9])", "\\1<wbr>", generate_input_id(name = name))
 
-        ul <- tagAppendChild(ul, div(
-          class = "grid-items",
-          div(class = "item-a", HTML(modified_name), button_input),
-          div(class = "item-b", assignee_input),
-          div(class = "item-c", checklist_input),
-          div(class = "item-d", preview_input)
-        ))
+        ul <- tagAppendChild(ul, div(HTML(modified_name), style = "padding-bottom: 5px;"))
+
+        ul <- tagAppendChild(ul,
+                             div(
+                               class = "grid-items",
+                               div(class = "item-a", button_input),
+                               div(class = "item-b", assignee_input),
+                               div(class = "item-c", checklist_input),
+                               div(class = "item-d", preview_input)
+                             )
+        )
       }
       debug(.le$logger, "Rendered selected list successfully")
       ul

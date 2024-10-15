@@ -33,7 +33,7 @@ generate_input_id <- function(prefix = NULL, name) {
 #' @param checklist_choices A vector of checklist choices for the selectize input fields.
 #'
 #' @noRd
-render_selected_list <- function(input, ns, items = NULL, checklist_choices = NULL, depth = 0) {
+render_selected_list <- function(input, ns, iv, items = NULL, checklist_choices = NULL, depth = 0) {
   tryCatch(
     {
       debug(.le$logger, glue::glue("Rendering selected list with items: {paste(items, collapse = ', ')}"))
@@ -277,13 +277,18 @@ create_button_preview_event <- function(input, name) {
 #' @import glue
 #' @import log4r
 #' @importFrom shinyjs enable disable addClass removeClass delay
-create_checklist_preview_event <- function(input, ns, name, checklists) {
+create_checklist_preview_event <- function(input, iv, ns, name, checklists) {
+
 
   tryCatch(
     {
       preview_input_id <- generate_input_id("preview", name)
       checklist_input_id <- generate_input_id("checklist", name)
 
+      browser()
+      if (is.null(input[[checklist_input_id]])) {
+        iv$add_rule(checklist_input_id, shinyvalidate::sv_required())
+      }
 
       observeEvent(input[[checklist_input_id]], {
         checklist_input <- input[[checklist_input_id]]

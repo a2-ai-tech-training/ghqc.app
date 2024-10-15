@@ -65,16 +65,18 @@ render_selected_list <- function(input, ns, items = NULL, checklist_choices = NU
 
         button_input <- actionButton(
           ns(button_input_id),
-          label = HTML("<span style='font-size:2.0em;'>Preview file contents</span>"),
-          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
-          class = "preview-button"
+          label = HTML("<span>Preview file<br>contents</span>"),
+          style = "height: 34px !important; font-size: 12px !important; padding: 2px 2px 2px 2px !important; color: #5f5f5f !important; line-height: 1.2em",
+          #style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
+          class = "file-preview-button"
         )
 
         preview_input <- actionButton(
           ns(preview_input_id),
-          label = HTML("<span style='font-size:2.0em;'>Preview checklist</span>"),
-          style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
-          class = "preview-button"
+          label = HTML("<span>Preview<br>checklist</span>"),
+          style = "height: 34px !important; font-size: 12px !important; padding: 2px 2px 2px 2px !important; color: #5f5f5f !important; line-height: 1.2em",
+          #style = "min-width: auto; display: inline-block; text-align: center; line-height: 2em; height: 2em;",
+          #class = "checklist-preview-button"
         )
 
         # no css only way to set line breaks on certain chr; used <wbr> to designate non-alphanumeric values as wbr (https://stackoverflow.com/a/24489931)

@@ -46,7 +46,6 @@ get_final_issue_qc_commit <- function(owner, repo, issue) {
 
 
 get_comments <- function(owner, repo, issue_number) {
-  browser()
   comments <- gh::gh(
     "GET /repos/:owner/:repo/issues/:issue_number/comments",
     .api_url = Sys.getenv("GHQC_API_URL"),

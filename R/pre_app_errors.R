@@ -12,3 +12,17 @@ rproj_root_dir <- function() {
   )
 }
 
+
+get_valid_checklists <- function() {
+  tryCatch(
+      {
+        yaml_checklists <- get_checklists()
+      },
+      error = function(e) {
+        error(.le$logger, glue::glue("There was an error retrieving checklists: {e$message}"))
+        showModal(modalDialog("Error in getting checklists: ", e$message, footer = NULL))
+      }
+  )
+
+  return(yaml_checklists)
+} # get_valid_checklists

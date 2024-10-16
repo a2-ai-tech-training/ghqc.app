@@ -24,12 +24,5 @@ get_valid_checklists <- function() {
       }
   )
 
-  invalid_search <- grepl("INVALID - ", yaml_checklists)
-  if (any(invalid_search)) {
-    invalid_checklists <- paste(yaml_checklists[which(invalid_search)], collapse = ", ")
-    warn(.le$logger, glue::glue("Checklists {invalid_checklists} are invalid and are not listed as options to choose in the app."))
-    yaml_checklists <- yaml_checklists[!invalid_search]
-  }
-
   return(yaml_checklists)
 } # get_valid_checklists

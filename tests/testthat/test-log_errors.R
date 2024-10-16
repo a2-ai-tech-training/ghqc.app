@@ -9,7 +9,6 @@ test_that("A descriptive error shall occur if a user is not in an Rproj", {
       })
     })
   })
-  browser()
   logs_collapsed <- glue::glue_collapse(logs, sep = "\n")
   expect_true(stringr::str_detect(
     logs_collapsed,

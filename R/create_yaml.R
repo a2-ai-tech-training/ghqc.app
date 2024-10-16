@@ -12,7 +12,7 @@ get_checklists <- function() {
       basename(invalid_checklist) %>% stringr::str_remove("\\.ya?ml$") %>% stringr::str_remove("INVALID - ")
     })
     invalid_checklist_names_col <- glue::glue_collapse(invalid_checklist_names, sep = ", ", last = " and ")
-    warn(.le$logger, glue::glue("The following checklist(s) are invalid and will therefore not be selectable in the app: {invalid_checklist_names_col}. Run ghqc_check_configuration() for guidance."))
+    warn(.le$logger, glue::glue("The following checklist(s) are invalid and will therefore not be selectable in the app: {invalid_checklist_names_col}. Run check_ghqc_configuration() for guidance."))
 
     # remove bad checklists
     yaml_checklists <- yaml_checklists[!invalid_search]

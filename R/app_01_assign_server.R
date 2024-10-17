@@ -11,14 +11,6 @@ NULL
 ghqc_assign_server <- function(id, remote, root_dir, checklists, org, repo, members, milestone_list) {
   iv <- shinyvalidate::InputValidator$new()
 
-  if (length(milestone_list) == 0) {
-    updateSelectizeInput(
-      session,
-      "milestone_existing",
-      options = list(placeholder = "No existing milestones")
-    )
-    return()
-  }
 
   observe({
     req(remote, root_dir)
@@ -47,6 +39,14 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists, org, repo, memb
 
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
+    if (length(milestone_list) == 0) {
+      updateSelectizeInput(
+        session,
+        "milestone_existing",
+        options = list(placeholder = "No Existing Milestones")
+      )
+    }
 
     qc_trigger <- reactiveVal(FALSE)
 
@@ -164,7 +164,7 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists, org, repo, memb
         conditionalPanel(
           condition = "input.milestone_toggle == `Existing`", ns = ns,
           selectizeInput(ns("milestone_existing"),
-                         "Select an existing milestone",
+                         "Select Existing Milestone",
                          choices = "",
                          multiple = FALSE,
                          width = "100%",
@@ -202,6 +202,9 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists, org, repo, memb
       req(input$milestone_toggle)
       if (input$milestone_toggle == "New") {
         iv$add_rule("milestone", shinyvalidate::sv_required())
+      }
+      else {
+        iv$add_rule("milestone_existing", shinyvalidate::sv_required())
       }
     })
 

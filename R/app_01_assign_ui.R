@@ -13,7 +13,12 @@ ghqc_assign_ui <- function(id) {
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/styles.css"),
       tags$script(type = "module", src = "ghqc/js/adjust_grid.js"),
-      tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js")
+      tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js"),
+      tags$style(HTML("
+    ::placeholder {
+      color: #8e8e8e; /* match colors of placeholders */
+    }
+  "))
     ),
     waiter_show_on_load(
       html = tagList(

@@ -72,14 +72,14 @@ get_milestone_list_errors <- function(org, repo) {
     {
       milestone_list <- get_open_milestone_names(org = org, repo = repo)
 
-      if (length(milestone_list) == 0) {
-        updateSelectizeInput(
-          session,
-          "milestone_existing",
-          options = list(placeholder = "No existing milestones")
-        )
-        return()
-      }
+      # if (length(milestone_list) == 0) {
+      #   updateSelectizeInput(
+      #     session,
+      #     "milestone_existing",
+      #     options = list(placeholder = "No existing milestones")
+      #   )
+      #   return()
+      # }
 
       rev(milestone_list)
     },

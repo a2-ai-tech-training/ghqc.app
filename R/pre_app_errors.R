@@ -89,10 +89,5 @@ get_all_milestone_list_errors <- function(org, repo) {
       rlang::abort(e$message)
     }
   )
-
-  if (length(all_milestones) == 0) {
-    error(.le$logger, glue::glue("There were no Milestones found in {org}/{repo}. Create a milestone by using the Assign app."))
-    rlang::abort("No Milestones found")
-  }
 }
 

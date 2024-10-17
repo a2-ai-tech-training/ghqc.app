@@ -11,7 +11,7 @@ ghqc_record_app <- function() {
   repo <- get_repo_errors(remote)
   all_milestones <- get_all_milestone_list_errors(org = org, repo = repo)
 
-  if (length(all_milestones) == 0) {
+  if (length(all_milestones) == 0 || is.null(all_milestones)) {
     error(.le$logger, glue::glue("There were no Milestones found in {org}/{repo}. Create a Milestone by using the Assign app."))
     rlang::abort("No Milestones found")
   }

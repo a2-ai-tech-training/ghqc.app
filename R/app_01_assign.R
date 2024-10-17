@@ -13,8 +13,10 @@ ghqc_assign_app <- function() {
   repo <- get_repo_errors(remote)
   members <- get_members_errors(org = org,
                                 repo = repo)
-  milestone_list <- get_milestone_list_errors(org = org,
+
+  milestone_list <- get_open_milestone_list_errors(org = org,
                                               repo = repo)
+
 
   app <- shinyApp(
     ui = ghqc_assign_ui(

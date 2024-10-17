@@ -64,29 +64,35 @@ get_members_errors <- function(org, repo) {
   )
 }
 
-get_milestone_list_errors <- function(org, repo) {
-  # w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
-  # w_gh$show()
-
+get_open_milestone_list_errors <- function(org, repo) {
   tryCatch(
     {
       milestone_list <- get_open_milestone_names(org = org, repo = repo)
-
-      # if (length(milestone_list) == 0) {
-      #   updateSelectizeInput(
-      #     session,
-      #     "milestone_existing",
-      #     options = list(placeholder = "No existing milestones")
-      #   )
-      #   return()
-      # }
-
       rev(milestone_list)
     },
     error = function(e) {
       # it's fine to swallow error for this because milestones are not needed for creating
-      error(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
+      error(.le$logger, glue::glue("There was an error retrieving open Milestones: {e$message}"))
       rlang::abort(e$message)
     }
   )
 }
+
+get_all_milestone_list_errors <- function(org, repo) {
+  tryCatch(
+    {
+      all_milestones <- list_milestones(org = org, repo = repo)
+      rev(all_milestones)
+    },
+    error = function(e) {
+      error(.le$logger, glue::glue("There was an error retrieving all Milestones: {e$message}"))
+      rlang::abort(e$message)
+    }
+  )
+
+  if (length(all_milestones) == 0) {
+    error(.le$logger, glue::glue("There were no Milestones found in {org}/{repo}. Create a milestone by using the Assign app."))
+    rlang::abort("No Milestones found")
+  }
+}
+

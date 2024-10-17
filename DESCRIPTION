@@ -43,7 +43,6 @@ Imports:
     rprojroot (>= 2.0.3),
     usethis (>= 2.2.2),
     gitcreds (>= 0.1.2),
-    pak,
     shinyvalidate
 Suggests: 
     testthat (>= 3.0.0),

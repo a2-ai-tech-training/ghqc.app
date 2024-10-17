@@ -42,7 +42,7 @@ get_milestone_from_name <- function(owner, repo, name_in) {
 # look up number for milestone that exists - return null if it can't be found
 #' @import log4r
 look_up_existing_milestone_number <- function(params) {
-  debug(.le$logger, glue::glue("Retrieving milestone: {params$title}"))
+  debug(.le$logger, glue::glue("Retrieving Milestone: {params$title}"))
   milestone <- get_milestone_from_name(params$owner, params$repo, params$title)
 
   if (!is.null(milestone)) {
@@ -61,9 +61,9 @@ look_up_existing_milestone_number <- function(params) {
 create_milestone <- function(params) {
   params$.api_url <- Sys.getenv("GHQC_API_URL")
 
-  debug(.le$logger, glue::glue("Creating milestone: {params$title}..."))
+  debug(.le$logger, glue::glue("Creating Milestone: {params$title}..."))
   milestone <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/milestones", params))
-  info(.le$logger, glue::glue("Created milestone: {params$title}"))
+  info(.le$logger, glue::glue("Created Milestone: {params$title}"))
   milestone
 } # create_milestone
 
@@ -73,7 +73,7 @@ get_milestone_number <- function(params) {
   searched_number <- tryCatch({
       look_up_existing_milestone_number(params)
     }, error = function(e){
-      debug(.le$logger, glue::glue("No milestones found: {e$message}"))
+      debug(.le$logger, glue::glue("No Milestones found: {e$message}"))
       return(NULL)
     })
 
@@ -82,7 +82,7 @@ get_milestone_number <- function(params) {
     milestone$number
   }
   else {
-    debug(.le$logger, glue::glue("Retrieved milestone: {params$title}, #{searched_number}"))
+    debug(.le$logger, glue::glue("Retrieved Milestone: {params$title}, #{searched_number}"))
     searched_number
   }
 } # get_milestone_number

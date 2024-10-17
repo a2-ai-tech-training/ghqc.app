@@ -16,9 +16,9 @@ create_issue <- function(file, issue_params) {
   issue_params$.api_url <- Sys.getenv("GHQC_API_URL")
 
   # create the issue
-  debug(.le$logger, glue::glue("Creating issue... {issue_params$title}"))
+  debug(.le$logger, glue::glue("Creating Issue... {issue_params$title}"))
   issue <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/issues", issue_params))
-  debug(.le$logger, glue::glue("Created issue {issue_params$title}"))
+  debug(.le$logger, glue::glue("Created Issue {issue_params$title}"))
 
   # return the issue number
   list(number = issue$number, assignees = issue_params$assignees)
@@ -47,7 +47,7 @@ create_issues <- function(data) {
     if (!is.null(data$description)) {
       milestone_params$description <- data$description
     }
-    debug(.le$logger, glue::glue("Adding milestone characteristics: {milestone_params}"))
+    debug(.le$logger, glue::glue("Adding Milestone characteristics: {milestone_params}"))
 
     # add milestone to the issue_params
     issue_params$milestone <- get_milestone_number(milestone_params)

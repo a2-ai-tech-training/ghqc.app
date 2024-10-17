@@ -199,7 +199,7 @@ get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
 
 #' @import log4r
 markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
-  debug(.le$logger, "Creating report pdf...")
+  debug(.le$logger, "Creating Record pdf...")
   # create temporary rmd
   rmd <- tempfile(fileext = ".Rmd")
 
@@ -228,7 +228,7 @@ markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, loc
   pdf_path_abs <- get_simple_path(output_file)
 
   info(.le$logger, "Converted rmd to pdf")
-  info(.le$logger, glue::glue("Created report pdf: {pdf_path_abs}"))
+  info(.le$logger, glue::glue("Created Record pdf: {pdf_path_abs}"))
 
   return(pdf_path_abs)
 } # markdown_to_pdf
@@ -250,14 +250,14 @@ get_summary_table_col_vals <- function(issue) {
           `qc type` = "NA"
         )
       }, error = function(e) {
-        rlang::abort(glue::glue("Issue: \"{issue$title}\" in milestone: \"{issue$milestone$title}\" has a metadata section that cannot be parsed."))
+        rlang::abort(glue::glue("Issue: \"{issue$title}\" in Milestone: \"{issue$milestone$title}\" has a metadata section that cannot be parsed."))
       })
 
     })
   }
 
   if(length(metadata) == 0) {
-    rlang::abort(glue::glue("Issue: \"{issue$title}\" in milestone: \"{issue$milestone$title}\" was not created with ghqc and therefore cannot be parsed."))
+    rlang::abort(glue::glue("Issue: \"{issue$title}\" in Milestone: \"{issue$milestone$title}\" was not created with ghqc and therefore cannot be parsed."))
   }
 
   close_data <- get_close_info(issue)
@@ -356,7 +356,7 @@ create_intro <- function(repo, milestone_names, header_path) {
   image_path <- file.path(.le$info_repo_path, "logo.png")
   intro <- glue::glue(
     "---
-  title: \"QC Report: {milestone_names_list}\"
+  title: \"QC Record: {milestone_names_list}\"
   subtitle: \"Git repository: {repo}\"
   author: {author}
   date: {date}
@@ -459,14 +459,14 @@ create_set_of_issue_sections <- function(issues, owner, repo) {
 
 #' @import log4r
 create_milestone_report_section <- function(owner, repo, milestone_name, env, just_tables = FALSE) {
-  debug(.le$logger, glue::glue("Creating section for milestone: {milestone_name}..."))
+  debug(.le$logger, glue::glue("Creating section for Milestone: {milestone_name}..."))
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
 
-  debug(.le$logger, glue::glue("Creating summary table for milestone: {milestone_name}..."))
+  debug(.le$logger, glue::glue("Creating summary table for Milestone: {milestone_name}..."))
   # summary table
   summary_csv <- create_summary_csv(issues, env)
   summary_table_section <- create_summary_table_section(summary_csv)
-  info(.le$logger, glue::glue("Created summary table for milestone: {milestone_name}"))
+  info(.le$logger, glue::glue("Created summary table for Milestone: {milestone_name}"))
   # issues
   issue_sections <- create_set_of_issue_sections(issues, owner, repo)
 
@@ -478,7 +478,7 @@ create_milestone_report_section <- function(owner, repo, milestone_name, env, ju
       paste0(summary_table_section, issue_sections)
     }
   }
-  info(.le$logger, glue::glue("Created section for milestone: {milestone_name}"))
+  info(.le$logger, glue::glue("Created section for Milestone: {milestone_name}"))
   return(res)
 
 } # create_milestone_report_section
@@ -703,22 +703,22 @@ ghqc_report <- function(milestone_names = NULL,
     rlang::abort(message = glue::glue("Inputted directory {location} doesn't exist.<br>Input an existing directory."))
   }
 
-  debug(.le$logger, "Creating report introduction...")
+  debug(.le$logger, "Creating Record introduction...")
   # intro
   intro <- create_intro(repo, milestone_names, header_path)
   set_up_chunk <- set_up_chunk()
-  info(.le$logger, "Created report introduction")
+  info(.le$logger, "Created Record introduction")
 
   # create milestone table
   milestone_table <- create_milestone_table(milestone_names, owner, repo)
 
-  debug(.le$logger, "Creating milestone sections...")
+  debug(.le$logger, "Creating Milestone sections...")
   # create milestone sections
   milestone_sections <- lapply(milestone_names, function(milestone_name) {
     milestone_body <- create_milestone_report_section(owner, repo, milestone_name, parent.frame(n = 2), just_tables)
     create_big_section(milestone_name, milestone_body)
   })
-  info(.le$logger, "Created milestone sections")
+  info(.le$logger, "Created Milestone sections")
 
   # appendix
 

@@ -6,7 +6,7 @@
 #' @importFrom gert git_status git_ahead_behind
 NULL
 
-ghqc_resolve_server <- function(id, remote) {
+ghqc_resolve_server <- function(id, remote, org, repo, milestone_list) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     preview_trigger <- reactiveVal(FALSE)
@@ -17,62 +17,13 @@ ghqc_resolve_server <- function(id, remote) {
       waiter_hide()
     })
 
-    org <- reactive({
-      req(remote)
-      tryCatch(
-        {
-          get_organization()
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
-          showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
-        }
-      )
-    })
-
-    repo <- reactive({
-      req(remote)
-      tryCatch(
-        {
-          get_current_repo(remote)
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
-          showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
-        }
-      )
-    })
-
-    milestone_list <- reactive({
-      req(org(), repo())
-      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
-      w_gh$show()
-      tryCatch(
-        {
-          milestone_list <- get_open_milestone_names(org = org(), repo = repo())
-
-          if (length(milestone_list) == 0) {
-            w_gh$hide()
-            showModal(modalDialog(glue::glue("There were no open milestones found in {org()}/{repo()}. Please use the Assign QC app before using the Comment QC app."), footer = NULL))
-            return()
-          }
-
-          rev(milestone_list)
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
-          showModal(modalDialog("Error in getting milestones: ", e$message, footer = NULL))
-        }
-      )
-    })
-
     observe({
-      req(milestone_list())
+      req(milestone_list)
 
       updateSelectInput(
         session,
         "select_milestone",
-        choices = c("All Issues", milestone_list())
+        choices = c("All Issues", milestone_list)
       )
     })
 
@@ -86,16 +37,16 @@ ghqc_resolve_server <- function(id, remote) {
       tryCatch(
         {
           if (input$select_milestone == "All Issues") {
-            all_issues <- get_all_issues_in_repo(owner = org(), repo = repo())
+            all_issues <- get_all_issues_in_repo(owner = org, repo = repo)
             issue_choices <- convert_issue_df_format(all_issues)
           } else {
-            issues_by_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = input$select_milestone)
+            issues_by_milestone <- get_all_issues_in_milestone(owner = org, repo = repo, milestone_name = input$select_milestone)
             issue_choices <- convert_issue_df_format(issues_by_milestone)
           }
         },
         error = function(e) {
           error(.le$logger, glue::glue("There was an error retrieving issues: {e$message}"))
-          showModal(modalDialog("Error in getting issues: ", e$message, footer = NULL))
+          rlang::abort(e$message)
         }
       )
     })
@@ -116,11 +67,11 @@ ghqc_resolve_server <- function(id, remote) {
     })
 
     all_commits <- reactive({
-      req(org(), repo(), issue_parts()$issue_number)
+      req(org, repo, issue_parts()$issue_number)
       get_commits_df(
         issue_number = issue_parts()$issue_number,
-        owner = org(),
-        repo = repo()
+        owner = org,
+        repo = repo
       )
     })
 
@@ -260,8 +211,8 @@ ghqc_resolve_server <- function(id, remote) {
             input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
           )
 
-          html_file_path <- create_gfm_file(create_comment_body(org(),
-            repo(),
+          html_file_path <- create_gfm_file(create_comment_body(org,
+            repo,
             message = input$message,
             issue_number = issue_parts()$issue_number,
             diff = input$show_diff,
@@ -272,7 +223,7 @@ ghqc_resolve_server <- function(id, remote) {
         },
         error = function(e) {
           log_string <- glue::glue(
-            "There was an error creating preview comment for issue {issue_parts()$issue_number} in repository {org()}/{repo()}.\n",
+            "There was an error creating preview comment for issue {issue_parts()$issue_number} in repository {org}/{repo}.\n",
             "Input Parameters:\n",
             "- Message: {input$message}\n",
             "- Show Diff: {input$show_diff}\n",
@@ -315,8 +266,8 @@ ghqc_resolve_server <- function(id, remote) {
           )
 
           add_fix_comment(
-            org(),
-            repo(),
+            org,
+            repo,
             message = input$message,
             issue_number = issue_parts()$issue_number,
             diff = input$show_diff,
@@ -324,12 +275,12 @@ ghqc_resolve_server <- function(id, remote) {
             comparator_commit = commits_for_compare$comparator_commit
           )
 
-          issue <- get_issue(org(), repo(), issue_parts()$issue_number)
+          issue <- get_issue(org, repo, issue_parts()$issue_number)
           issue_url <- issue$html_url
         },
         error = function(e) {
           log_string <- glue::glue(
-            "There was an error creating comment for issue {issue_parts()$issue_number} in repository {org()}/{repo()}.\n",
+            "There was an error creating comment for issue {issue_parts()$issue_number} in repository {org}/{repo}.\n",
             "Input Parameters:\n",
             "- Message: {input$message}\n",
             "- Show Diff: {input$show_diff}\n",

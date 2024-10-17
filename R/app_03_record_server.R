@@ -10,7 +10,7 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_record_server <- function(id, remote) {
+ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     report_trigger <- reactiveVal(FALSE)
@@ -20,41 +20,41 @@ ghqc_record_server <- function(id, remote) {
       waiter_hide()
     })
 
-    org <- reactive({
-      req(remote)
-      tryCatch(
-        {
-          get_organization()
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
-          showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
-        }
-      )
-    })
+    # org <- reactive({
+    #   req(remote)
+    #   tryCatch(
+    #     {
+    #       get_organization()
+    #     },
+    #     error = function(e) {
+    #       error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
+    #       showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
+    #     }
+    #   )
+    # })
 
-    repo <- reactive({
-      req(remote)
-      tryCatch(
-        {
-          get_current_repo(remote)
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
-          showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
-        }
-      )
-    })
+    # repo <- reactive({
+    #   req(remote)
+    #   tryCatch(
+    #     {
+    #       get_current_repo(remote)
+    #     },
+    #     error = function(e) {
+    #       error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
+    #       showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
+    #     }
+    #   )
+    # })
 
     closed_milestones <- reactive({
-      req(org(), repo())
-      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
+      req(org, repo)
+      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo, org))
       w_gh$show()
       on.exit(w_gh$hide())
 
       tryCatch(
         {
-          closed_milestones <- get_closed_milestone_names(org = org(), repo = repo())
+          closed_milestones <- get_closed_milestone_names(org = org, repo = repo)
           milestone_list_url <- get_milestone_list_url()
           if (length(closed_milestones) == 0) {
             warn_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
@@ -65,16 +65,15 @@ ghqc_record_server <- function(id, remote) {
                   modalButton("Dismiss"),
                   style = "overflow: hidden; text-align: right;"
                 ),
-                #tags$p("QC items created successfully."),
 
-                HTML(warn_icon_html, glue::glue("There were no closed milestones found in {org()}/{repo()}.<br>
+                HTML(warn_icon_html, glue::glue("There were no closed milestones found in {org}/{repo}.<br>
                                              Ensure that QC on each relevant milestone is finished, close relevant milestones on Github, then click \"Reset\" in the top right corner of this app.<div style=\"margin-bottom: 9px;\"></div>")),
                 tags$a(href = milestone_list_url, "Click here to close milestones on Github", target = "_blank"),
                 easyClose = TRUE,
                 footer = NULL
               )
             )
-            warn(.le$logger, glue::glue("There were no closed milestones found in {org()}/{repo()}. Ensure that QC on each relevant milestone is finished and close relevant milestones on Github."))
+            warn(.le$logger, glue::glue("There were no closed milestones found in {org}/{repo}. Ensure that QC on each relevant milestone is finished and close relevant milestones on Github."))
           } # length(closed_milestones) == 0
           rev(closed_milestones)
         },
@@ -85,38 +84,6 @@ ghqc_record_server <- function(id, remote) {
       )
     })
 
-    all_milestones <- reactive({
-      req(org(), repo())
-
-      tryCatch(
-        {
-          all_milestones <- list_milestones(org = org(), repo = repo())
-          if (length(all_milestones) == 0) {
-            error_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#10071;</span>"
-            showModal(
-              modalDialog(
-                title = tags$div(
-                  tags$span("Error", style = "float: left; font-weight: bold; font-size: 20px;"),
-                  modalButton("Dismiss"),
-                  style = "overflow: hidden; text-align: right;"
-                ),
-                HTML(error_icon_html, glue::glue("There were no milestones found in {org()}/{repo()}.<br>
-                                             Create a milestone by using the ghqc assign app.<br>")),
-                easyClose = TRUE,
-                footer = NULL
-              )
-            )
-            error(.le$logger, glue::glue("There were no milestones found in {org()}/{repo()}. Create a milestone by using the ghqc assign app."))
-          } # if (length(all_milestones) == 0)
-
-          rev(all_milestones)
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving all milestones: {e$message}"))
-          showModal(modalDialog("Error in getting milestones: ", e$message, footer = NULL))
-        }
-      )
-    })
 
     observeEvent(input$closed_only, {
       # if closed
@@ -133,12 +100,12 @@ ghqc_record_server <- function(id, remote) {
 
       # if not closed
       else {
-        placeholder <- ifelse(length(all_milestones()) == 0, "No milestones", "Select milestones")
+        placeholder <- ifelse(length(all_milestones) == 0, "No milestones", "Select milestones")
 
         updateSelectizeInput(
           session,
           "select_milestone",
-          choices = all_milestones(),
+          choices = all_milestones,
           options = list(placeholder = placeholder)
         )
       }
@@ -163,7 +130,7 @@ ghqc_record_server <- function(id, remote) {
       w_check_status$show()
       on.exit(w_check_status$hide())
 
-      determine_modal_message_report(org(), repo(), input$select_milestone)
+      determine_modal_message_report(org, repo, input$select_milestone)
     })
 
     observeEvent(input$generate_report, {

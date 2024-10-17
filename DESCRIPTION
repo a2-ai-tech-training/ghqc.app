@@ -3,9 +3,9 @@ Title: Create QC Checklists in Github Issues
 Version: 0.0.0.9010
 Authors@R: c(
     person("Jenna", "Johnson", , "jenna@a2-ai.com", role = c("aut", "cre")),
-    person("Anne", "Zheng", , "anne@a2-ai.com", role = "aut", "cre"),
+    person("Anne", "Zheng", , "anne@a2-ai.com", role = c("aut", "cre")),
     person("Devin", "Pastoor", , "devin@a2-ai.com", role = "aut"),
-    person("Wes", "Cummings", , "wes@a2-ai.com", role = c("ctb"))
+    person("Wes", "Cummings", , "wes@a2-ai.com", role = c("aut"))
   )
 Description: A QC tool with 3 major functions: creation and management of QC log, creation and management of QC record, perform semi-automated QC tasks.
 License: MIT + file LICENSE

@@ -8,8 +8,9 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_assign_server <- function(id, remote, root_dir, checklists) {
+ghqc_assign_server <- function(id, remote, root_dir, checklists, org, repo, members, milestone_list) {
   iv <- shinyvalidate::InputValidator$new()
+
 
   observe({
     req(remote, root_dir)
@@ -39,90 +40,83 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    if (length(milestone_list) == 0) {
+      updateSelectizeInput(
+        session,
+        "milestone_existing",
+        options = list(placeholder = "No Existing Milestones")
+      )
+    }
+
     qc_trigger <- reactiveVal(FALSE)
-    # used reactive vs observe here to stop downstream
-    # git_creds <- reactive({
-    #   #req(rproj_root_dir())
+
+    # org <- reactive({
+    #   req(remote, root_dir)
     #   tryCatch(
     #     {
-    #       #remote <- check_github_credentials()
-    #       waiter_hide()
-    #       #return(remote)
+    #       get_organization()
     #     },
     #     error = function(e) {
-    #       waiter_hide()
-    #       showModal(modalDialog("There was an error setting up the app. Please check log messages.", footer = NULL))
+    #       error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
+    #       showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
     #     }
     #   )
     # })
 
-    org <- reactive({
-      req(remote, root_dir)
-      tryCatch(
-        {
-          get_organization()
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
-          showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
-        }
-      )
-    })
+    # repo <- reactive({
+    #   req(remote, root_dir)
+    #   tryCatch(
+    #     {
+    #       get_current_repo(remote)
+    #     },
+    #     error = function(e) {
+    #       error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
+    #       showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
+    #     }
+    #   )
+    # })
 
-    repo <- reactive({
-      req(remote, root_dir)
-      tryCatch(
-        {
-          get_current_repo(remote)
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
-          showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
-        }
-      )
-    })
-
-    members <- reactive({
-      req(remote, root_dir)
-      tryCatch(
-        {
-          get_collaborators(owner = org(), repo = repo())
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving members: {e$message}"))
-          showModal(modalDialog("Error in getting members: ", e$message, footer = NULL))
-        }
-      )
-    })
+    # members <- reactive({
+    #   req(remote, root_dir)
+    #   tryCatch(
+    #     {
+    #       get_collaborators(owner = org(), repo = repo())
+    #     },
+    #     error = function(e) {
+    #       error(.le$logger, glue::glue("There was an error retrieving members: {e$message}"))
+    #       rlang::abort(e$message)
+    #     }
+    #   )
+    # })
 
 
-    milestone_list <- reactive({
-      req(repo(), org())
-      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
-      w_gh$show()
-
-      tryCatch(
-        {
-          milestone_list <- get_open_milestone_names(org = org(), repo = repo())
-
-          if (length(milestone_list) == 0) {
-            updateSelectizeInput(
-              session,
-              "milestone_existing",
-              options = list(placeholder = "No existing milestones")
-            )
-            return()
-          }
-
-          rev(milestone_list)
-        },
-        error = function(e) {
-          # it's fine to swallow error for this because milestones are not needed for creating
-          debug(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
-          return(NULL)
-        }
-      )
-    })
+    # milestone_list <- reactive({
+    #   req(repo(), org())
+    #   w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo(), org()))
+    #   w_gh$show()
+    #
+    #   tryCatch(
+    #     {
+    #       milestone_list <- get_open_milestone_names(org = org(), repo = repo())
+    #
+    #       if (length(milestone_list) == 0) {
+    #         updateSelectizeInput(
+    #           session,
+    #           "milestone_existing",
+    #           options = list(placeholder = "No existing milestones")
+    #         )
+    #         return()
+    #       }
+    #
+    #       rev(milestone_list)
+    #     },
+    #     error = function(e) {
+    #       # it's fine to swallow error for this because milestones are not needed for creating
+    #       debug(.le$logger, glue::glue("There was an error retrieving milestones: {e$message}"))
+    #       return(NULL)
+    #     }
+    #   )
+    # })
 
     w_load_items <- Waiter$new(
       id = ns("content"),
@@ -135,12 +129,12 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists) {
     rv_milestone <- reactiveVal(NULL)
 
     observe({
-      req(milestone_list())
+      req(milestone_list)
 
       updateSelectizeInput(
         session,
         "milestone_existing",
-        choices = milestone_list()
+        choices = milestone_list
       )
     })
 
@@ -163,14 +157,14 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists) {
           condition = "input.milestone_toggle == `New`", ns = ns,
           textInput(ns("milestone"),
                     "Milestone Name",
-                    placeholder = "Name this QC",
+                    placeholder = "Milestone Name",
                     width = "100%"
           )
         ),
         conditionalPanel(
           condition = "input.milestone_toggle == `Existing`", ns = ns,
           selectizeInput(ns("milestone_existing"),
-                         "Select an existing milestone",
+                         "Select Existing Milestone",
                          choices = "",
                          multiple = FALSE,
                          width = "100%",
@@ -209,11 +203,14 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists) {
       if (input$milestone_toggle == "New") {
         iv$add_rule("milestone", shinyvalidate::sv_required())
       }
+      else {
+        iv$add_rule("milestone_existing", shinyvalidate::sv_required())
+      }
     })
 
     observe({
-      req(org(), members())
-      w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org()))
+      req(org, members)
+      w_gh <- create_waiter(ns, sprintf("Fetching organization and member data for %s ...", org))
       w_gh$show()
       on.exit(w_gh$hide())
 
@@ -221,7 +218,7 @@ ghqc_assign_server <- function(id, remote, root_dir, checklists) {
         session,
         "assignees",
         server = TRUE,
-        choices = members(),
+        choices = members,
         options = list(
           placeholder = "(optional)",
           valueField = "username",
@@ -241,11 +238,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     observe({
-      req(org(), repo(), rv_milestone())
+      req(org, repo, rv_milestone())
 
       issue_titles <- tryCatch(
         {
-          issues_in_milestone <- get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
+          issues_in_milestone <- get_all_issues_in_milestone(owner = org, repo = repo, milestone_name = rv_milestone())
           issue_titles <- sapply(issues_in_milestone, function(issue) issue$title)
           issue_titles_with_root_dir <- file.path(basename(root_dir), issue_titles)
           issue_titles_with_root_dir
@@ -332,7 +329,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
           issues_in_milestone <- tryCatch(
             {
-              get_all_issues_in_milestone(owner = org(), repo = repo(), milestone_name = rv_milestone())
+              get_all_issues_in_milestone(owner = org, repo = repo, milestone_name = rv_milestone())
             },
             error = function(e) {
               debug(.le$logger, glue::glue("There were no milestones to query: {e$message}"))
@@ -384,8 +381,8 @@ return "<div><strong>" + escape(item.username) + "</div>"
       tryCatch(
         {
           create_yaml("test",
-                      org = org(),
-                      repo = repo(),
+                      org = org,
+                      repo = repo,
                       milestone = rv_milestone(),
                       description = input$milestone_description,
                       files = qc_items()
@@ -402,7 +399,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       )
 
       w_create_qc_items$hide()
-      milestone_url <- get_milestone_url(org(), repo(), rv_milestone())
+      milestone_url <- get_milestone_url(org, repo, rv_milestone())
 
       custom_checklist_selected <- function() {
         qc_items <- qc_items()

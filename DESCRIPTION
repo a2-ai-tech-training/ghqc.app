@@ -38,12 +38,11 @@ Imports:
     rvest (>= 1.0.3),
     digest (>= 0.6.34),
     readr (>= 2.1.4),
-    jsTreeR (>= 2.6.0),
+    jsTreeR (>= 2.5.0),
     log4r (>= 0.4.3),
     rprojroot (>= 2.0.3),
     usethis (>= 2.2.2),
     gitcreds (>= 0.1.2),
-    pak (>= 0.7.0),
     shinyvalidate
 Suggests: 
     testthat (>= 3.0.0),

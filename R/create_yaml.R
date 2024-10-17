@@ -5,6 +5,19 @@ get_checklists <- function() {
   custom_checklist <- system.file("default_checklist", "custom.yaml", package = "ghqc")
   yaml_checklists <- c(yaml_checklists, custom_checklist)
 
+  invalid_search <- grepl("INVALID - ", yaml_checklists)
+  if (any(invalid_search)) {
+    invalid_checklists <- yaml_checklists[which(invalid_search)]
+    invalid_checklist_names <- lapply(invalid_checklists, function(invalid_checklist) {
+      basename(invalid_checklist) %>% stringr::str_remove("\\.ya?ml$") %>% stringr::str_remove("INVALID - ")
+    })
+    invalid_checklist_names_col <- glue::glue_collapse(invalid_checklist_names, sep = ", ", last = " and ")
+    warn(.le$logger, glue::glue("The following checklist(s) are invalid and will therefore not be selectable in the app: {invalid_checklist_names_col}. Run check_ghqc_configuration() for guidance."))
+
+    # remove bad checklists
+    yaml_checklists <- yaml_checklists[!invalid_search]
+  }
+
   checklists_data <- sapply(yaml_checklists, function(yaml_checklist) {
     yaml::read_yaml(yaml_checklist)
   }, USE.NAMES = FALSE)

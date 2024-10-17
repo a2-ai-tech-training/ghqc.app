@@ -8,6 +8,7 @@ ghqc_assign_app <- function() {
   # error handling before starting app
   root_dir <- rproj_root_dir()
   remote <- check_github_credentials()
+  checklists <- get_valid_checklists()
 
   app <- shinyApp(
     ui = ghqc_assign_ui(
@@ -17,7 +18,8 @@ ghqc_assign_app <- function() {
       ghqc_assign_server(
         id = "ghqc_assign_app",
         remote = remote,
-        root_dir = root_dir
+        root_dir = root_dir,
+        checklists = checklists
       )
     }
   )

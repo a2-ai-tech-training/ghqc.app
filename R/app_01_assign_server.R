@@ -8,7 +8,7 @@
 #' @importFrom rprojroot find_rstudio_root_file
 NULL
 
-ghqc_assign_server <- function(id, remote, root_dir) {
+ghqc_assign_server <- function(id, remote, root_dir, checklists) {
   iv <- shinyvalidate::InputValidator$new()
 
   observe({
@@ -95,17 +95,6 @@ ghqc_assign_server <- function(id, remote, root_dir) {
       )
     })
 
-    checklists <- reactive({
-      tryCatch(
-        {
-          get_checklists()
-        },
-        error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving checklists: {e$message}"))
-          showModal(modalDialog("Error in getting checklists: ", e$message, footer = NULL))
-        }
-      )
-    })
 
     milestone_list <- reactive({
       req(repo(), org())
@@ -302,7 +291,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
       log_string <- glue::glue_collapse(selected_items(), sep = ", ")
       debug(.le$logger, glue::glue("Files selected for QC: {log_string}"))
 
-      list <- render_selected_list(input, ns, iv, items = selected_items(), checklist_choices = get_checklists())
+      list <- render_selected_list(input, ns, iv, items = selected_items(), checklist_choices = checklists)
       isolate_rendered_list(input, session, selected_items())
 
       session$sendCustomMessage("adjust_grid", id) # finds the width of the files and adjusts grid column spacing based on values
@@ -441,7 +430,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     #--- checklist info button begin
     observeEvent(input$file_info, {
-      req(checklists())
+      req(checklists)
       debug(.le$logger, glue::glue("file_info button was triggered."))
 
       showModal(
@@ -453,7 +442,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           "See below for a reference of all types and their items.",
           br(),
           br(),
-          selectInput(ns("checklist_info"), NULL, choices = names(checklists()), width = "100%"),
+          selectInput(ns("checklist_info"), NULL, choices = names(checklists), width = "100%"),
           uiOutput(ns("file_info_panel"))
         )
       )
@@ -473,7 +462,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
             "See below for a reference of all types and their items.",
             br(),
             br(),
-            selectInput(ns("checklist_info"), NULL, choices = names(checklists()), width = "100%"),
+            selectInput(ns("checklist_info"), NULL, choices = names(checklists), width = "100%"),
             uiOutput(ns("file_info_panel"))
           )
         )
@@ -481,11 +470,11 @@ return "<div><strong>" + escape(item.username) + "</div>"
     })
 
     output$file_info_panel <- renderUI({
-      req(checklists())
+      req(checklists)
       req(input$checklist_info)
       debug(.le$logger, glue::glue("Checklist selected for review: {input$checklist_info}"))
 
-      info <- checklists()[[input$checklist_info]]
+      info <- checklists[[input$checklist_info]]
 
       log_string <- glue::glue_collapse(info, sep = "\n")
       debug(.le$logger, glue::glue("Items found in the checklist: \n{log_string}"))
@@ -535,14 +524,14 @@ return "<div><strong>" + escape(item.username) + "</div>"
 
     #HERE
     observeEvent(selected_items(), {
-      req(checklists())
+      req(checklists)
       items <- selected_items()
       for (name in items) {
         log_string <- glue::glue_collapse(items, sep = ", ")
         debug(.le$logger, glue::glue("Preview buttons created for: {log_string}"))
         tryCatch(
           {
-            create_checklist_preview_event(input, iv, ns, name = name, checklists())
+            create_checklist_preview_event(input, iv, ns, name = name, checklists)
           },
           error = function(e) {
             error(.le$logger, glue::glue("There was an error creating the preview buttons: {e$message}"))

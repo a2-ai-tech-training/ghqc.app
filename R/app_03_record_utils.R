@@ -8,7 +8,6 @@ generate_tiered_html_list_with_hyperlink <- function(items) {
 
   milestone_sections <- lapply(names(milestone_dfs), function(milestone_name) {
     milestone_url <- milestone_dfs[[milestone_name]]$milestone_url[1]
-    #browser()
     milestone_heading <- glue::glue("<a href='{milestone_url}'>{milestone_name}</a>:")
 
     milestone_list_items <- paste(

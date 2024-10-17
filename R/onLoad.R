@@ -9,10 +9,10 @@
 #' @importFrom shiny addResourcePath
 #' @noRd
 .onLoad <- function(...) {
-  shiny::addResourcePath("ghqc", system.file(".", package = "ghqc.app"))
+  shiny::addResourcePath("ghqc.app", system.file(".", package = "ghqc.app"))
   logger <- init_logger()
 }
 
 .onUnload <- function(...) {
-  shiny::removeResourcePath("ghqc")
+  shiny::removeResourcePath("ghqc.app")
 }

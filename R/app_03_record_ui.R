@@ -26,7 +26,7 @@ ghqc_record_ui <- function(id) {
           style = "display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%;",
           div(
             style = "position: relative;",  # Keep this div centered
-            tags$img(src = "ghqc.app/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
+            tags$img(src = "ghqc.app/ghqc_hex.png", height = 46, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px; top: -2px;")
           ),
           div("Generate QC Record", style = "white-space: nowrap;")
         ),

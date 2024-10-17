@@ -37,7 +37,6 @@ generate_excluded_file_message <- function(excluded_files) {
 #' such as the `renv` directory, from a file listing.
 #'
 #' @return A character string containing the exclusion patterns.
-#' @importFrom pkglite ext_binary
 #' @noRd
 exclude_patterns <- function() {
   # excludes binaries as won't be qc items

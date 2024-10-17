@@ -1,4 +1,4 @@
-Package: ghqc
+Package: ghqc.app
 Title: Create QC Checklists in Github Issues
 Version: 0.0.0.9010
 Authors@R: c(

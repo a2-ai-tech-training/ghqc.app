@@ -1,4 +1,10 @@
-# ghqc (development version)
+# ghqc.app (development version)
+
+# ghqc.app 0.0.0.9011
+
+## Minor improvements
+
+- rename ghqc to ghqc.app and ghqc.launcher to ghqc
 
 # ghqc 0.0.0.9010
 

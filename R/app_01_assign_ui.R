@@ -9,11 +9,11 @@ ghqc_assign_ui <- function(id) {
   ui <- miniPage(
     use_waiter(),
     useShinyjs(),
-    # tags$head(tags$style(HTML(brio::read_file(system.file("css/styles.css", package = "ghqc"))))),
+    # tags$head(tags$style(HTML(brio::read_file(system.file("css/styles.css", package = "ghqc.app"))))),
     tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/styles.css"),
-      tags$script(type = "module", src = "ghqc/js/adjust_grid.js"),
-      tags$script(type = "module", src = "ghqc/js/toggle_sidebar.js"),
+      tags$link(rel = "stylesheet", type = "text/css", href = "ghqc.app/css/styles.css"),
+      tags$script(type = "module", src = "ghqc.app/js/adjust_grid.js"),
+      tags$script(type = "module", src = "ghqc.app/js/toggle_sidebar.js"),
       tags$style(HTML("
     ::placeholder {
       color: #8e8e8e; /* match colors of placeholders */
@@ -33,7 +33,7 @@ ghqc_assign_ui <- function(id) {
           style = "display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%;",
           div(
             style = "position: relative;",  # Keep this div centered
-            tags$img(src = "ghqc/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
+            tags$img(src = "ghqc.app/ghqc_hex.png", height = 40, class = "logo-img", style = "position: relative; left: -18px; margin-right: 10px;")  # Move image to the left
           ),
           div("Assign file(s) for QC", style = "white-space: nowrap;")
         ),

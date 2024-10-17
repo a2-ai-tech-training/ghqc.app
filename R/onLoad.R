@@ -9,7 +9,7 @@
 #' @importFrom shiny addResourcePath
 #' @noRd
 .onLoad <- function(...) {
-  shiny::addResourcePath("ghqc", system.file(".", package = "ghqc"))
+  shiny::addResourcePath("ghqc", system.file(".", package = "ghqc.app"))
   logger <- init_logger()
 }
 

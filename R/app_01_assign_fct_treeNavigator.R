@@ -118,9 +118,9 @@ treeNavigatorUI <- function(id, width = "100%", height = "auto") {
   tree <- jstreeOutput(outputId = id, width = width, height = height)
   tagList(
     tree,
-    tags$link(rel = "stylesheet", type = "text/css", href = "ghqc/css/tree.css"),
-    tags$script(type = "module", src = "ghqc/js/highlight_files.js"),
-    tags$script(type = "module", src = "ghqc/js/tree.js")
+    tags$link(rel = "stylesheet", type = "text/css", href = "ghqc.app/css/tree.css"),
+    tags$script(type = "module", src = "ghqc.app/js/highlight_files.js"),
+    tags$script(type = "module", src = "ghqc.app/js/tree.js")
   )
 }
 

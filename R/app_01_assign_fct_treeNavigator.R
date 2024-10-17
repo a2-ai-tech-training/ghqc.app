@@ -41,7 +41,7 @@ generate_excluded_file_message <- function(excluded_files) {
 #' @noRd
 exclude_patterns <- function() {
   # excludes binaries as won't be qc items
-  exclude_pattern <- paste0("\\.(", paste(ext_binary(flat = TRUE), collapse = "|"), ")$", collapse = "")
+  exclude_pattern <- "\\.(rda|rds|RData|jpg|jpeg|pdf|png|bmp|gif|tif|tiff|emf|svgz|ico|webp|eps|ppm|pgm|pbm|pnm|o|so|rdb|rdx|woff2|woff|otf|ttf|eot|docx|xlsx|pptx|xltx|potx|doc|xls|ppt|odt|ods|odp|odg|odc|odf|odi|odm|odb|sas7bdat|sas7bcat|xpt|xpt5|xpt8|zip|tar|gz|tgz|bz2|7z|xz|sqlite|sqlite3|pyc|jar|mo|shx|shp|laz|sbx|sbn|nc|gpkg|bam|bai|wav|mp3|mid|ogg|au|m4a|mp4|avi|mov|mkv|webm|Rproj)$"
 
   # removes renv folder and specifically
   # makes sure to only scope exactly for "renv/" only so renv2/ 2renv/ renv.R gets picked up

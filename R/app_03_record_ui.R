@@ -36,7 +36,7 @@ ghqc_record_ui <- function(id) {
       miniContentPanel(
         div(
           id = ns("center_content"),
-          checkboxInput(ns("closed_only"), "Closed milestones only", TRUE),
+          checkboxInput(ns("closed_only"), "Closed Milestones only", TRUE),
           selectizeInput(ns("select_milestone"), "Select Milestones", choices = "", multiple = TRUE),
           textAreaInput(ns("pdf_name"), "PDF Name", placeholder = "(optional)"),
           textAreaInput(ns("pdf_location"), "PDF Location", value = get_simple_path()),

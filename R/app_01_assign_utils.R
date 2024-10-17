@@ -308,7 +308,7 @@ create_checklist_preview_event <- function(input, iv, ns, name, checklists) {
               footer = NULL,
               easyClose = TRUE,
               renderUI({
-                "Select a checklist to preview in the checklists dropdown."
+                "Select a checklist to preview in the Checklist dropdown."
               })
             )
           )

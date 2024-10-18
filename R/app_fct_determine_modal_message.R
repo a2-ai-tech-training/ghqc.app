@@ -1,9 +1,9 @@
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_html_list <- function(files) {
   paste("<li>", files, "</li>", collapse = "")
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_sync_message <- function(git_sync_status, error_icon_html) {
   messages <- c()
   if (git_sync_status$ahead > 0 || git_sync_status$behind > 0) {
@@ -15,7 +15,7 @@ generate_sync_message <- function(git_sync_status, error_icon_html) {
   return(messages)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_uncommitted_message <- function(uncommitted_files, error_icon_html, warning_icon_html) {
   messages <- c()
   if (length(uncommitted_files$selected) > 0) {
@@ -33,7 +33,7 @@ generate_uncommitted_message <- function(uncommitted_files, error_icon_html, war
   return(messages)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_existing_issue_message <- function(existing_issues, error_icon_html) {
   messages <- c()
   if (length(existing_issues) > 0) {
@@ -45,7 +45,7 @@ generate_existing_issue_message <- function(existing_issues, error_icon_html) {
   return(messages)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_commit_update_message <- function(commit_update_status, error_icon_html) {
   messages <- c()
 

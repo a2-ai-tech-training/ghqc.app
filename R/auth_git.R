@@ -1,4 +1,4 @@
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_git_inited <- function() {
   tryCatch(
     {
@@ -11,7 +11,7 @@ check_git_inited <- function() {
   )
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_remote_set <- function() {
   remotes <- gert::git_remote_list()
 
@@ -21,7 +21,7 @@ check_remote_set <- function() {
   }
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_upstream_set <- function(remote_name) {
   repo <- get_simple_path()
 
@@ -58,7 +58,7 @@ check_upstream_set <- function(remote_name) {
   }
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_env_url <- function() {
   env_url <- Sys.getenv("GHQC_GITHUB_URL")
   env_url <- gsub("/$", "", env_url)
@@ -86,7 +86,7 @@ get_env_url <- function() {
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_gh_url <- function(remote_url) {
   env_url <- get_env_url()
 
@@ -95,7 +95,7 @@ get_gh_url <- function(remote_url) {
   return(env_url)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_remote_matches_env_url <- function(remote_url, env_url) {
   if (remote_url != env_url) {
     error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
@@ -103,7 +103,7 @@ check_remote_matches_env_url <- function(remote_url, env_url) {
   }
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_gh_api_url <- function(remote_url) {
   gh_url <- tryCatch(
     {
@@ -119,7 +119,7 @@ get_gh_api_url <- function(remote_url) {
   res
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_gh_token <- function() {
   res <- Sys.getenv("GHQC_GITHUB_PAT")
   if (!nzchar(res)) {
@@ -131,7 +131,7 @@ get_gh_token <- function() {
   res
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_github_credentials <- function() {
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 

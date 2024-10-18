@@ -197,7 +197,7 @@ get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
   return(pdf_name)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
   debug(.le$logger, "Creating Record pdf...")
   # create temporary rmd
@@ -457,7 +457,7 @@ create_set_of_issue_sections <- function(issues, owner, repo) {
   issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 create_milestone_report_section <- function(owner, repo, milestone_name, env, just_tables = FALSE) {
   debug(.le$logger, glue::glue("Creating section for Milestone: {milestone_name}..."))
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
@@ -675,7 +675,7 @@ create_milestone_df <- function(milestone_names, owner, repo) {
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 ghqc_report <- function(milestone_names = NULL,
                         input_name = NULL,
                         just_tables = FALSE,

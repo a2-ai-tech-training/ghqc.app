@@ -1,4 +1,4 @@
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_stored_token_matches_renviron_token <- function(renviron_token, gitcreds_token) {
   if (renviron_token != gitcreds_token) {
     error(.le$logger, glue::glue("gitcreds_get token doesn't match .Renviron token"))
@@ -11,7 +11,7 @@ check_stored_token_matches_renviron_token <- function(renviron_token, gitcreds_t
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 run_gitcreds_get <- function(url, renviron_token) {
   tryCatch({
     retrieved_creds <- gitcreds::gitcreds_get(url, use_cache = FALSE)
@@ -31,21 +31,21 @@ run_gitcreds_get <- function(url, renviron_token) {
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 try_api_call <- function(url) {
   user <- gh::gh("GET /user",
                  .api_url = url)
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 run_gitcreds_approve <- function(creds) {
   info(.le$logger, glue::glue("Running gitcreds_approve..."))
   gitcreds::gitcreds_approve(creds)
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 run_gitcreds_reject <- function(creds) {
   # needs this weird format
   reject_creds <- list(url = creds$url)
@@ -54,7 +54,7 @@ run_gitcreds_reject <- function(creds) {
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 run_giteds_reject_then_approve <- function(desired_creds, renviron_token) {
   tryCatch({
     run_gitcreds_reject(desired_creds)
@@ -77,7 +77,7 @@ run_giteds_reject_then_approve <- function(desired_creds, renviron_token) {
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_renvion_token <- function() {
   info(.le$logger, "Retrieving GHQC_GITHUB_PAT environment variable from Renviron...")
   renviron_token <- Sys.getenv('GHQC_GITHUB_PAT')
@@ -96,7 +96,7 @@ get_renvion_token <- function() {
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_url <- function() {
   info(.le$logger, "Retrieving GHQC_GITHUB_URL environment variable from .Renviron...")
   url <- Sys.getenv("GHQC_GITHUB_URL")
@@ -106,7 +106,7 @@ get_url <- function() {
 }
 
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 ghqc_authenticate <- function() {
   url <- get_url()
 

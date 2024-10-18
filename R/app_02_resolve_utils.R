@@ -8,7 +8,7 @@
 #'
 #' @return A named list where the names are the issue states ("Open Items" or "Closed Items")
 #' and the values are named vectors with issue details formatted as "Item <number>: <title>".
-#' @import dplyr
+#' @importFrom dplyr %>% tibble mutate case_when
 #' @importFrom purrr map_df
 #' @examples
 #' issues <- list(
@@ -55,7 +55,7 @@ convert_issue_df_format <- function(issue_df) {
 #' @param commit_df A data frame of commits, where each row contains the columns: date, commit, and display.
 #'
 #' @return A named list where the names are the commit display names and the values are the corresponding commit hashes.
-#' @import dplyr
+#' @importFrom dplyr %>%
 #' @examples
 #' commits <- tibble(
 #'   date = as.Date(c("2023-01-01", "2023-01-02")),

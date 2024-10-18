@@ -87,7 +87,6 @@ get_env_url <- function() {
 
 
 #' @import log4r
-#' @export
 get_gh_url <- function(remote_url) {
   env_url <- get_env_url()
 
@@ -105,7 +104,6 @@ check_remote_matches_env_url <- function(remote_url, env_url) {
 }
 
 #' @import log4r
-#' @export
 get_gh_api_url <- function(remote_url) {
   gh_url <- tryCatch(
     {
@@ -122,7 +120,6 @@ get_gh_api_url <- function(remote_url) {
 }
 
 #' @import log4r
-#' @export
 get_gh_token <- function() {
   res <- Sys.getenv("GHQC_GITHUB_PAT")
   if (!nzchar(res)) {
@@ -135,7 +132,6 @@ get_gh_token <- function() {
 }
 
 #' @import log4r
-#' @export
 check_github_credentials <- function() {
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 

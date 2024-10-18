@@ -1,4 +1,3 @@
-#' @export
 get_checklists <- function() {
   checklists_path <- file.path(.le$info_repo_path, "checklists")
   yaml_checklists <- list.files(checklists_path, pattern = "\\.ya?ml$", full.names = TRUE)

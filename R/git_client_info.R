@@ -90,7 +90,6 @@ remote_repo_updates <- function(client_repo_path) {
 }
 
 #' @import log4r
-#' @export
 load_client_info <- function(){
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 

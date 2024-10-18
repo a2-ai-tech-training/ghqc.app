@@ -29,22 +29,20 @@ Imports:
     shinyjs (>= 2.1.0),
     dplyr (>= 1.1.4),
     diffobj (>= 0.3.5),
-    flextable (>= 0.9.3),
     processx (>= 3.8.3),
     rmarkdown (>= 2.24),
-    knitr (>= 1.43),
-    rstudioapi (>= 0.15.0),
     rvest (>= 1.0.3),
     digest (>= 0.6.34),
     readr (>= 2.1.4),
     jsTreeR (>= 2.5.0),
     log4r (>= 0.4.3),
     rprojroot (>= 2.0.3),
-    usethis (>= 2.2.2),
     gitcreds (>= 0.1.2),
-    shinyvalidate
+    shinyvalidate,
+    xml2
 Suggests: 
     testthat (>= 3.0.0),
     httptest,
+    knitr,
     shinytest2
 Config/testthat/edition: 3

@@ -31,7 +31,6 @@ my_layout <- function(level, ...) {
   paste0(format(Sys.time()), " [", level, "] ", ..., "\n", collapse = "")
 }
 
-#' @export
 ghqc_toggle_logger <- function() {
   verbosity <- Sys.getenv("GHQC_VERBOSE")
 

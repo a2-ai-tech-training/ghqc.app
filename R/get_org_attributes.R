@@ -82,7 +82,6 @@ get_closed_milestone_names <- function(org, repo) {
 }
 
 #' @import log4r
-#' @export
 list_milestones <- function(org, repo) {
   debug(.le$logger, glue::glue("Retrieving Milestone(s) in organization {org}, repo {repo}..."))
   milestones <- get_all_milestone_objects(org, repo)
@@ -116,7 +115,6 @@ get_remote_url <- function(remote) {
 }
 
 #' @import log4r
-#' @export
 get_remote <- function(remote_list) {
 
   debug(.le$logger, glue::glue("Retrieving local repo path..."))
@@ -184,7 +182,6 @@ get_remote <- function(remote_list) {
 }
 
 #' @import log4r
-#' @export
 get_current_repo <- function(remote = get_remote()) {
   tryCatch({
   debug(.le$logger, glue::glue("Connecting to repository..."))

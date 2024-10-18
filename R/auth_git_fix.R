@@ -107,7 +107,6 @@ get_url <- function() {
 
 
 #' @import log4r
-#' @export
 ghqc_authenticate <- function() {
   url <- get_url()
 

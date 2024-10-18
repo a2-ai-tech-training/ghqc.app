@@ -576,7 +576,7 @@ knitr::kable(
   linesep = \"\\\\addlinespace\\\\addlinespace\"
 ) %>%
   kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
-  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{‡}} open issue\", \"\\\\\\\\textcolor{{green}}{{§}} issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
+  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{O}} open issue\", \"\\\\\\\\textcolor{{green}}{{U}} issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
   column_spec(1, width = \"5em\", latex_valign = \"p\") %>%
   column_spec(2, width = \"10em\", latex_valign = \"p\") %>%
   column_spec(3, width = \"3em\", latex_valign = \"p\") %>%
@@ -622,10 +622,10 @@ create_milestone_df <- function(milestone_names, owner, repo) {
       issue_name <- insert_breaks(issue_name, 45)
 
       if (issue$state == "open") {
-        issue_name <- glue::glue("{issue_name}\\textcolor{{red}}{{‡}}")
+        issue_name <- glue::glue("{issue_name}\\textcolor{{red}}{{O}}")
       }
       if (unchecked_items_in_issue(issue)) {
-        issue_name <- glue::glue("{issue_name}\\textcolor{{green}}{{§}}")
+        issue_name <- glue::glue("{issue_name}\\textcolor{{green}}{{U}}")
       }
 
       return(issue_name)
@@ -674,7 +674,7 @@ create_milestone_df <- function(milestone_names, owner, repo) {
   milestone_df
 }
 
-#' @export
+
 #' @import log4r
 ghqc_report <- function(milestone_names = NULL,
                         input_name = NULL,

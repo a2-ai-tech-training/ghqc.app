@@ -1,3 +1,6 @@
+#' set the repo that stores the ghqc info
+#' @param repo_path path to the git repo storing ghqc information
+#' @export
 ghqc_set_info_repo <- function(repo_path = file.path("~/.local/share/ghqc", info_repo_name())) {
   not_files <- NULL
   if (!file.exists(file.path(repo_path, "checklists"))) not_files <- append(not_files, "Checklists directory")

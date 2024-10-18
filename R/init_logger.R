@@ -1,7 +1,7 @@
 
 .le <- new.env() # parent = emptyenv()
 
-#' @importFrom log4r warn error info debug logger
+# #' @importFrom log4r warn error info debug logger console_appender
 NULL
 
 init_logger <- function() {
@@ -11,8 +11,8 @@ init_logger <- function() {
     cat("Invalid verbosity level. Available options are:", paste(LEVEL_NAMES, collapse = ", "), "\n")
   }
 
-  # logger <- logger(verbosity, appenders = console_appender(logfmt_log_layout()))
-  logger <- logger(verbosity, appenders = console_appender(my_layout))
+  appenders_in <- log4r::console_appender(my_layout)
+  logger <- log4r::logger(verbosity, appenders = appenders_in)
   assign("logger", logger, envir = .le)
 
   # log for logger

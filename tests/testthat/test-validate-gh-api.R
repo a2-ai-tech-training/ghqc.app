@@ -1,7 +1,7 @@
 # # validate inputs exist on github
-test_that("error occurs if owner doesn't exist", {
-
-})
+# test_that("error occurs if owner doesn't exist", {
+#
+# })
 
 # test_that("error occurs if repo doesn't exist", {
 #

@@ -8,7 +8,7 @@
 #'
 #' @return A named list where the names are the issue states ("Open Items" or "Closed Items")
 #' and the values are named vectors with issue details formatted as "Item <number>: <title>".
-#' @importFrom dplyr %>%
+#' @importFrom dplyr %>% tibble mutate case_when
 #' @importFrom purrr map_df
 #' @examples
 #' issues <- list(

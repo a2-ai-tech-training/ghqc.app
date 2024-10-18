@@ -8,7 +8,8 @@
 #' the current and previous versions. These changes will likely be implementations of QC feedback.
 #'
 #' @return Starts a Shiny app and does not return any value.
-#' @import shiny log4r
+#' @import shiny
+#' @importFrom log4r warn error info debug
 #' @export
 ghqc_resolve_app <- function() {
   if (!exists("info_repo_path", .le)) ghqc_set_info_repo()

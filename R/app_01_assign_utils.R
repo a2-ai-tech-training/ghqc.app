@@ -274,8 +274,8 @@ create_button_preview_event <- function(input, name) {
 }
 
 #' @import shiny
-#' @import glue
-#' @import log4r
+#' @importFrom glue glue
+#' @importFrom log4r warn error info debug
 #' @importFrom shinyjs enable disable addClass removeClass delay
 create_checklist_preview_event <- function(input, iv, ns, name, checklists) {
 

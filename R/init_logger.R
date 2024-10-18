@@ -1,7 +1,7 @@
 
 .le <- new.env() # parent = emptyenv()
 
-#' @import log4r
+#' @importFrom log4r warn error info debug logger
 NULL
 
 init_logger <- function() {
@@ -31,15 +31,15 @@ my_layout <- function(level, ...) {
   paste0(format(Sys.time()), " [", level, "] ", ..., "\n", collapse = "")
 }
 
-ghqc_toggle_logger <- function() {
-  verbosity <- Sys.getenv("GHQC_VERBOSE")
-
-  ifelse(verbosity != "DEBUG",
-         Sys.setenv("GHQC_VERBOSE" = "DEBUG"),
-         Sys.setenv("GHQC_VERBOSE" = "INFO"))
-
-  init_logger()
-
-}
+# ghqc_toggle_logger <- function() {
+#   verbosity <- Sys.getenv("GHQC_VERBOSE")
+#
+#   ifelse(verbosity != "DEBUG",
+#          Sys.setenv("GHQC_VERBOSE" = "DEBUG"),
+#          Sys.setenv("GHQC_VERBOSE" = "INFO"))
+#
+#   init_logger()
+#
+# }
 
 

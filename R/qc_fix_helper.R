@@ -21,7 +21,7 @@ rename_file_copy <- function(file_path) {
   file.rename(file_path, stringr::str_remove(file_path, "_copy_for_ghqc"))
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 read_file_at_commit <- function(commit_sha, file_path) {
   args <- c("checkout", commit_sha, "--", file_path)
   result <- processx::run("git", args, error_on_status = FALSE)

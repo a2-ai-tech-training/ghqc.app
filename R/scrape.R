@@ -344,11 +344,11 @@ create_summary_csv <- function(issues, env) {
   summary_csv <- tempfile(fileext = ".csv")
   #suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
   #summary_csv <- file.path(getwd(), "summary.csv")
-  write.csv(summary_df, file = summary_csv, row.names = FALSE)
+  utils::write.csv(summary_df, file = summary_csv, row.names = FALSE)
   return(summary_csv)
 }
 
-create_intro <- function(repo, milestone_names, header_path) {
+create_intro <- function(repo, milestone_names) {
   author <- Sys.info()[["user"]]
   date <- format(Sys.Date(), '%B %d, %Y')
   milestone_names_list <- glue::glue_collapse(milestone_names, sep = ", ")
@@ -600,7 +600,7 @@ print(table)
 create_milestone_csv <- function(milestone_df) {
   milestone_csv <- tempfile(fileext = ".csv")
   #suppressMessages({withr::defer(fs::file_delete(milestone_csv))})
-  write.csv(milestone_df, file = milestone_csv, row.names = FALSE)
+  utils::write.csv(milestone_df, file = milestone_csv, row.names = FALSE)
   return(milestone_csv)
 }
 
@@ -705,7 +705,7 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Creating Record introduction...")
   # intro
-  intro <- create_intro(repo, milestone_names, header_path)
+  intro <- create_intro(repo, milestone_names)
   set_up_chunk <- set_up_chunk()
   info(.le$logger, "Created Record introduction")
 

@@ -273,7 +273,7 @@ get_issue_timeline <- function(owner, repo, issue_number) {
 get_issues <- function(owner, repo, milestone) {
   params <- c(owner, repo)
   gh::gh("GET /repos/:owner/:repo/issues", .api_url = Sys.getenv("GHQC_API_URL"),
-         owner = owner, repo = repo, milestone = milestone_number, state = "all")
+         owner = owner, repo = repo, milestone = milestone, state = "all")
 }
 
 #' @importFrom log4r warn error info debug

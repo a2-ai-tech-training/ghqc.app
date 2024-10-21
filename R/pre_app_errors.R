@@ -5,7 +5,6 @@ rproj_root_dir <- function() {
       return(root_dir)
     },
     error = function(e) {
-      waiter_hide()
       error(.le$logger, glue::glue("There was no Rproj file found within the directory '{getwd()}'."))
       rlang::abort(e$message)
     }

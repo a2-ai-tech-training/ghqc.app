@@ -1,7 +1,7 @@
 # milestone helper fns
 
 # check if a milestone exists
-#' @import log4r
+#' @importFrom log4r warn error info debug
 milestone_exists <- function(title, owner, repo) {
   # list milestones
   milestones <- get_all_milestone_objects(owner, repo)
@@ -11,7 +11,7 @@ milestone_exists <- function(title, owner, repo) {
   return(any_matches)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_milestone_from_name <- function(owner, repo, name_in) {
   # list milestones
   milestones <- get_all_milestone_objects(owner = owner, repo = repo)
@@ -40,7 +40,7 @@ get_milestone_from_name <- function(owner, repo, name_in) {
 }
 
 # look up number for milestone that exists - return null if it can't be found
-#' @import log4r
+#' @importFrom log4r warn error info debug
 look_up_existing_milestone_number <- function(params) {
   debug(.le$logger, glue::glue("Retrieving Milestone: {params$title}"))
   milestone <- get_milestone_from_name(params$owner, params$repo, params$title)
@@ -57,7 +57,7 @@ look_up_existing_milestone_number <- function(params) {
   }
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 create_milestone <- function(params) {
   params$.api_url <- .le$github_api_url
 
@@ -67,7 +67,7 @@ create_milestone <- function(params) {
   milestone
 } # create_milestone
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_milestone_number <- function(params) {
 
   searched_number <- tryCatch({

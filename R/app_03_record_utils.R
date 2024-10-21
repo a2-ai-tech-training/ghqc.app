@@ -1,4 +1,4 @@
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_html_list_with_hyperlink <- function(items) {
   paste("<li><a href='", items$url, "' target='_blank'>", items$title, "</a></li>", collapse = "")
 }
@@ -26,7 +26,7 @@ generate_tiered_html_list_with_hyperlink <- function(items) {
   return(list)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_open_milestone_message <- function(open_milestones, warning_icon_html) {
   messages <- c()
   if (length(open_milestones) > 0) {
@@ -38,7 +38,7 @@ generate_open_milestone_message <- function(open_milestones, warning_icon_html) 
   return(messages)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_open_issue_message <- function(open_issues, warning_icon_html) {
   messages <- c()
   if (length(open_issues) > 0) {
@@ -50,7 +50,7 @@ generate_open_issue_message <- function(open_issues, warning_icon_html) {
   return(messages)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 generate_open_checklist_message <- function(issues_with_open_checklists, warning_icon_html) {
   messages <- c()
   if (length(issues_with_open_checklists) > 0) {
@@ -62,7 +62,7 @@ generate_open_checklist_message <- function(issues_with_open_checklists, warning
   return(messages)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 determine_modal_message_report <- function(owner, repo, milestone_names) {
   warning_icon_html <- "<span style='font-size: 24px; vertical-align: middle;'>&#9888;</span>"
 
@@ -91,7 +91,7 @@ determine_modal_message_report <- function(owner, repo, milestone_names) {
   }
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_for_open_milestones <- function(owner, repo, milestone_names) {
   milestones <- purrr::map(milestone_names, function(milestone_name) {
     tryCatch(
@@ -113,7 +113,7 @@ check_for_open_milestones <- function(owner, repo, milestone_names) {
   })
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_for_open_issues <- function(owner, repo, milestone_names) {
   open_issues <- purrr::map_dfr(milestone_names, function(milestone_name) {
     issues <- tryCatch(
@@ -138,7 +138,7 @@ check_for_open_issues <- function(owner, repo, milestone_names) {
   })
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_for_open_checklists <- function(owner, repo, milestone_names) {
   issues_with_open_checklists <- purrr::map_dfr(milestone_names, function(milestone_name) {
     issues <- tryCatch(

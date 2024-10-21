@@ -1,4 +1,4 @@
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_git_inited <- function() {
   tryCatch(
     {
@@ -11,7 +11,7 @@ check_git_inited <- function() {
   )
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_remote_set <- function() {
   remotes <- gert::git_remote_list()
 
@@ -21,7 +21,7 @@ check_remote_set <- function() {
   }
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_upstream_set <- function(remote_name) {
   repo <- get_simple_path()
 
@@ -38,9 +38,10 @@ check_upstream_set <- function(remote_name) {
     rlang::abort(glue::glue("There were no branches found for the existing repo: {repo}"))
   }
 
+  col_names <- c("name", "upstream") # doing this to pass rcmdcheck: check_upstream_set: no visible binding for global variable ‘upstream’
   tracking_branch <- gert::git_branch_list() %>%
-    dplyr::filter(name == current_branch & upstream != "") %>%
-    dplyr::pull(upstream)
+    dplyr::filter(col_names[[1]] == current_branch & col_names[[2]] != "") %>%
+    dplyr::pull(col_names[[2]])
 
 
   if (length(tracking_branch) == 0) {
@@ -58,7 +59,7 @@ check_upstream_set <- function(remote_name) {
   }
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_env_url <- function() {
   env_url <- Sys.getenv("GITHUB_API_URL")
   env_url <- gsub("/$", "", env_url)
@@ -66,16 +67,24 @@ get_env_url <- function() {
   if (!stringr::str_starts(env_url, "https://")) env_url <- paste0("https://", env_url)
 }
 
-#' @import log4r
-check_remote_matches_env_url <- function(remote_url) {
+#' @importFrom log4r warn error info debug
+get_gh_url <- function(remote_url) {
   env_url <- get_env_url()
-  if (remote_url != env_url && env_url != "https://") {
-    info(.le$logger, glue::glue("GITHUB_API_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\". No action necessary"))
+
+  check_remote_matches_env_url(remote_url, env_url)
+
+  return(env_url)
+}
+
+#' @importFrom log4r warn error info debug
+check_remote_matches_env_url <- function(remote_url, env_url) {
+  if (remote_url != env_url) {
+    error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
+    rlang::abort(message = glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
   }
 }
 
-#' @import log4r
-#' @export
+#' @importFrom log4r warn error info debug
 get_gh_api_url <- function(remote_url) {
   tryCatch(
     {
@@ -86,8 +95,7 @@ get_gh_api_url <- function(remote_url) {
   )
 }
 
-#' @import log4r
-#' @export
+#' @importFrom log4r warn error info debug
 get_gh_token <- function(url) {
   tryCatch({
     pat <- gitcreds::gitcreds_get(url = get_gh_api_url(url))$password
@@ -117,8 +125,7 @@ try_api_call <- function(url, token) {
   })
 }
 
-#' @import log4r
-#' @export
+#' @importFrom log4r warn error info debug
 check_github_credentials <- function() {
   # Check errors
   check_git_inited()

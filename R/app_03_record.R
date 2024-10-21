@@ -1,6 +1,10 @@
+#' @title Generate a QC Record for one or more Milestones
+#'
+#' @description
+#' This function allows the user to generate a QC Record for one or more Milestones created with the assign app.
+#'
+#' @return Starts a Shiny app and does not return any value.
 #' @import shiny
-NULL
-
 #' @export
 ghqc_record_app <- function() {
   if (!exists("info_repo_path", .le)) ghqc_set_info_repo()

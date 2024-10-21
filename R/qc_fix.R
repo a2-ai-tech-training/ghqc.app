@@ -65,7 +65,6 @@ create_diff_body <- function(diff, reference_commit, reference_script, comparato
   }
 }
 
-#' @export
 create_comment_body <- function(owner,
                                 repo,
                                 issue_number,
@@ -124,7 +123,7 @@ create_comment_body <- function(owner,
   as.character(comment_body)
 }
 
-#' @export
+
 post_comment <- function(owner, repo, issue_number, body) {
   debug(.le$logger, glue::glue("Posting comment to issue #{issue_number} in {owner}/{repo}..."))
 

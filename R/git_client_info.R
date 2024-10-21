@@ -1,6 +1,6 @@
 .lci <- new.env()
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 get_client_git_url <- function() {
   git_url <- Sys.getenv("GIT_CLIENT_URL")
 
@@ -19,7 +19,7 @@ get_client_git_url <- function() {
   git_url
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 check_client_local <- function(git_url) {
   client_repo_name <- get_remote_name(git_url)
   client_repo_path <- file.path("~",client_repo_name)
@@ -71,7 +71,7 @@ check_client_local <- function(git_url) {
   return(client_repo_path)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 local_repo_updates <- function(client_repo_path) {
   status <- gert::git_status(repo = client_repo_path)
   local_repo_updates <- "modified" %in% status$status
@@ -81,7 +81,7 @@ local_repo_updates <- function(client_repo_path) {
   return(local_repo_updates)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 remote_repo_updates <- function(client_repo_path) {
   remote_commit_id <- gert::git_remote_ls(repo = client_repo_path)$oid[1]
   local_commit_id <- gert::git_info(repo = client_repo_path)$commit
@@ -89,8 +89,7 @@ remote_repo_updates <- function(client_repo_path) {
   return(remote_repo_updates)
 }
 
-#' @import log4r
-#' @export
+#' @importFrom log4r warn error info debug
 load_client_info <- function(){
   if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
 

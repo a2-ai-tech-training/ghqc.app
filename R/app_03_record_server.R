@@ -1,7 +1,6 @@
 #' @import shiny
 #' @importFrom shinyjs enable disable addClass removeClass
-#' @import dplyr
-#' @import log4r
+#' @importFrom log4r warn error info debug
 #' @importFrom purrr map_df
 #' @importFrom gert git_status git_ahead_behind
 #' @importFrom shinyjs enable disable addClass removeClass delay
@@ -19,32 +18,6 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
       req(remote)
       waiter_hide()
     })
-
-    # org <- reactive({
-    #   req(remote)
-    #   tryCatch(
-    #     {
-    #       get_organization()
-    #     },
-    #     error = function(e) {
-    #       error(.le$logger, glue::glue("There was an error retrieving organization: {e$message}"))
-    #       showModal(modalDialog("Error in getting organization: ", e$message, footer = NULL))
-    #     }
-    #   )
-    # })
-
-    # repo <- reactive({
-    #   req(remote)
-    #   tryCatch(
-    #     {
-    #       get_current_repo(remote)
-    #     },
-    #     error = function(e) {
-    #       error(.le$logger, glue::glue("There was an error retrieving repo: {e$message}"))
-    #       showModal(modalDialog("Error in getting repository: ", e$message, footer = NULL))
-    #     }
-    #   )
-    # })
 
     closed_milestones <- reactive({
       req(org, repo)

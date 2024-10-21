@@ -37,7 +37,7 @@ render_selected_list <- function(input, ns, iv, items = NULL, checklist_choices 
   tryCatch(
     {
       debug(.le$logger, glue::glue("Rendering selected list with items: {paste(items, collapse = ', ')}"))
-      checklist_choices <- setNames(names(checklist_choices), names(checklist_choices))
+      checklist_choices <- stats::setNames(names(checklist_choices), names(checklist_choices))
       ul <- div(class = paste("grid-container", "depth", depth, sep = "-")) # if i remove depth, it won't take styles anymore
 
       for (name in items) {
@@ -274,8 +274,8 @@ create_button_preview_event <- function(input, name) {
 }
 
 #' @import shiny
-#' @import glue
-#' @import log4r
+#' @importFrom glue glue
+#' @importFrom log4r warn error info debug
 #' @importFrom shinyjs enable disable addClass removeClass delay
 create_checklist_preview_event <- function(input, iv, ns, name, checklists) {
 

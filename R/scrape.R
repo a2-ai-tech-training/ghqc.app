@@ -197,7 +197,7 @@ get_pdf_name <- function(input_name, milestone_names, just_tables, repo) {
   return(pdf_name)
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 markdown_to_pdf <- function(rmd_content, repo, milestone_names, just_tables, location, pdf_name) {
   debug(.le$logger, "Creating Record pdf...")
   # create temporary rmd
@@ -344,11 +344,11 @@ create_summary_csv <- function(issues, env) {
   summary_csv <- tempfile(fileext = ".csv")
   #suppressMessages({withr::defer(fs::file_delete(summary_csv), env)})
   #summary_csv <- file.path(getwd(), "summary.csv")
-  write.csv(summary_df, file = summary_csv, row.names = FALSE)
+  utils::write.csv(summary_df, file = summary_csv, row.names = FALSE)
   return(summary_csv)
 }
 
-create_intro <- function(repo, milestone_names, header_path) {
+create_intro <- function(repo, milestone_names) {
   author <- Sys.info()[["user"]]
   date <- format(Sys.Date(), '%B %d, %Y')
   milestone_names_list <- glue::glue_collapse(milestone_names, sep = ", ")
@@ -457,7 +457,7 @@ create_set_of_issue_sections <- function(issues, owner, repo) {
   issue_sections <- glue::glue_collapse(issue_section_strs, sep = "\n\\newpage\n")
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 create_milestone_report_section <- function(owner, repo, milestone_name, env, just_tables = FALSE) {
   debug(.le$logger, glue::glue("Creating section for Milestone: {milestone_name}..."))
   issues <- get_all_issues_in_milestone(owner, repo, milestone_name)
@@ -576,7 +576,7 @@ knitr::kable(
   linesep = \"\\\\addlinespace\\\\addlinespace\"
 ) %>%
   kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
-  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{‡}} open issue\", \"\\\\\\\\textcolor{{green}}{{§}} issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
+  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{O}} open issue\", \"\\\\\\\\textcolor{{green}}{{U}} issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
   column_spec(1, width = \"5em\", latex_valign = \"p\") %>%
   column_spec(2, width = \"10em\", latex_valign = \"p\") %>%
   column_spec(3, width = \"3em\", latex_valign = \"p\") %>%
@@ -600,7 +600,7 @@ print(table)
 create_milestone_csv <- function(milestone_df) {
   milestone_csv <- tempfile(fileext = ".csv")
   #suppressMessages({withr::defer(fs::file_delete(milestone_csv))})
-  write.csv(milestone_df, file = milestone_csv, row.names = FALSE)
+  utils::write.csv(milestone_df, file = milestone_csv, row.names = FALSE)
   return(milestone_csv)
 }
 
@@ -622,10 +622,10 @@ create_milestone_df <- function(milestone_names, owner, repo) {
       issue_name <- insert_breaks(issue_name, 45)
 
       if (issue$state == "open") {
-        issue_name <- glue::glue("{issue_name}\\textcolor{{red}}{{‡}}")
+        issue_name <- glue::glue("{issue_name}\\textcolor{{red}}{{O}}")
       }
       if (unchecked_items_in_issue(issue)) {
-        issue_name <- glue::glue("{issue_name}\\textcolor{{green}}{{§}}")
+        issue_name <- glue::glue("{issue_name}\\textcolor{{green}}{{U}}")
       }
 
       return(issue_name)
@@ -674,8 +674,8 @@ create_milestone_df <- function(milestone_names, owner, repo) {
   milestone_df
 }
 
-#' @export
-#' @import log4r
+
+#' @importFrom log4r warn error info debug
 ghqc_report <- function(milestone_names = NULL,
                         input_name = NULL,
                         just_tables = FALSE,
@@ -705,7 +705,7 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Creating Record introduction...")
   # intro
-  intro <- create_intro(repo, milestone_names, header_path)
+  intro <- create_intro(repo, milestone_names)
   set_up_chunk <- set_up_chunk()
   info(.le$logger, "Created Record introduction")
 

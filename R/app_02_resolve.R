@@ -1,8 +1,16 @@
+#' @title Comment in an Issue to display file changes during QC
+#'
+#' @description
+#' This function allows a user to insert a comment into a ghqc GitHub Issue that displays changes
+#' in the version control information for the Issue’s corresponding file. By default, the comment
+#' displays both the original and current commits and hashes for the file. These versions are
+#' selected by the user. The comment can optionally display the file difference (“diff”) between
+#' the current and previous versions. These changes will likely be implementations of QC feedback.
+#'
+#' @return Starts a Shiny app and does not return any value.
 #' @import shiny
-NULL
-
+#' @importFrom log4r warn error info debug
 #' @export
-#' @import log4r
 ghqc_resolve_app <- function() {
   if (!exists("info_repo_path", .le)) ghqc_set_info_repo()
 

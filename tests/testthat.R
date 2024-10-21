@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(ghqc)
+library(ghqc.app)
 
-test_check("ghqc")
+test_check("ghqc.app")

@@ -2,7 +2,6 @@
 # - organize issues associated with a set of files with milestones
 # - assign a different user to each issue for a given file
 
-#' @export
 create_issue <- function(file, issue_params) {
   # issue title is the name of the file
   issue_params$title <- file$name
@@ -24,8 +23,7 @@ create_issue <- function(file, issue_params) {
   list(number = issue$number, assignees = issue_params$assignees)
 } # create_issue
 
-#' @import log4r
-#' @export
+#' @importFrom log4r warn error info debug
 create_issues <- function(data) {
   # create list of issue_params to input to api call -
   # will build up in pieces because some are optional
@@ -75,8 +73,7 @@ create_issues <- function(data) {
 
 
 # test with "test_yamls/checklist.yaml"
-#' @import log4r
-#' @export
+#' @importFrom log4r warn error info debug
 create_checklists <- function(yaml_path) {
   data <- read_and_validate_yaml(yaml_path)
   create_issues(data)

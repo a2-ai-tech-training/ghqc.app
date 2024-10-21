@@ -39,9 +39,12 @@ check_upstream_set <- function(remote_name) {
   }
 
   col_names <- c("name", "upstream") # doing this to pass rcmdcheck: check_upstream_set: no visible binding for global variable ‘upstream’
-  tracking_branch <- gert::git_branch_list() %>%
-    dplyr::filter(col_names[[1]] == current_branch & col_names[[2]] != "") %>%
-    dplyr::pull(col_names[[2]])
+  branch_list <- gert::git_branch_list()
+  tracking_branch <- branch_list[branch_list$name == current_branch & branch_list$upstream != "", ]$upstream
+
+  # tracking_branch <- gert::git_branch_list() %>%
+  #   dplyr::filter(col_names[[1]] == current_branch & col_names[[2]] != "") %>%
+  #   dplyr::pull(col_names[[2]])
 
 
   if (length(tracking_branch) == 0) {
@@ -77,10 +80,10 @@ get_gh_url <- function(remote_url) {
 }
 
 #' @importFrom log4r warn error info debug
-check_remote_matches_env_url <- function(remote_url, env_url) {
-  if (remote_url != env_url) {
-    error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
-    rlang::abort(message = glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
+check_remote_matches_env_url <- function(remote_url) {
+  env_url <- get_env_url()
+  if (remote_url != env_url && env_url != "https://") {
+    info(.le$logger, glue::glue("GITHUB_API_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\". No action necessary"))
   }
 }
 

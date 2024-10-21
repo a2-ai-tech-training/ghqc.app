@@ -39,9 +39,12 @@ check_upstream_set <- function(remote_name) {
   }
 
   col_names <- c("name", "upstream") # doing this to pass rcmdcheck: check_upstream_set: no visible binding for global variable ‘upstream’
-  tracking_branch <- gert::git_branch_list() %>%
-    dplyr::filter(col_names[[1]] == current_branch & col_names[[2]] != "") %>%
-    dplyr::pull(col_names[[2]])
+  branch_list <- gert::git_branch_list()
+  tracking_branch <- branch_list[branch_list$name == current_branch & branch_list$upstream != "", ]$upstream
+
+  # tracking_branch <- gert::git_branch_list() %>%
+  #   dplyr::filter(col_names[[1]] == current_branch & col_names[[2]] != "") %>%
+  #   dplyr::pull(col_names[[2]])
 
 
   if (length(tracking_branch) == 0) {
@@ -61,31 +64,11 @@ check_upstream_set <- function(remote_name) {
 
 #' @importFrom log4r warn error info debug
 get_env_url <- function() {
-  env_url <- Sys.getenv("GHQC_GITHUB_URL")
+  env_url <- Sys.getenv("GITHUB_API_URL")
   env_url <- gsub("/$", "", env_url)
-
-  # if GHQC_GITHUB_URL not set, use github.com
-  if (!nzchar(env_url)) {
-    warn(.le$logger, "No GHQC_GITHUB_URL environment variable found. Using Github URL \"https://github.com\". To specify otherwise, set GHQC_GITHUB_URL environment variable, likely in your ~/.Renviron file.")
-    env_url <- "https://github.com"
-  }
-  # else if was set
-  else {
-    info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL environment variable: {env_url}"))
-  }
-
-  # error if not https
-  url_starts_with_https <- stringr::str_starts(env_url, "https://")
-  if (!url_starts_with_https) {
-    error(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
-    rlang::abort(message = glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
-  }
-
-  # remove /api/v3 if at the end
   env_url <- stringr::str_remove(env_url, "/api/v3$")
-  return(env_url)
+  if (!stringr::str_starts(env_url, "https://")) env_url <- paste0("https://", env_url)
 }
-
 
 #' @importFrom log4r warn error info debug
 get_gh_url <- function(remote_url) {
@@ -97,129 +80,69 @@ get_gh_url <- function(remote_url) {
 }
 
 #' @importFrom log4r warn error info debug
-check_remote_matches_env_url <- function(remote_url, env_url) {
-  if (remote_url != env_url) {
-    error(.le$logger, glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
-    rlang::abort(message = glue::glue("GHQC_GITHUB_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\""))
+check_remote_matches_env_url <- function(remote_url) {
+  env_url <- get_env_url()
+  if (remote_url != env_url && env_url != "https://") {
+    info(.le$logger, glue::glue("GITHUB_API_URL environment variable: \"{env_url}\" does not match remote URL: \"{remote_url}\". No action necessary"))
   }
 }
 
 #' @importFrom log4r warn error info debug
 get_gh_api_url <- function(remote_url) {
-  gh_url <- tryCatch(
+  tryCatch(
     {
-      get_gh_url(remote_url)
-    },
-    error = function(e) {
+      glue::glue("{remote_url}/api/v3")
+    }, error = function(e) {
       rlang::abort(message = e$message)
     }
   )
-
-  res <- glue::glue("{gh_url}/api/v3")
-  info(.le$logger, glue::glue("Configured api url: {res}"))
-  res
 }
 
 #' @importFrom log4r warn error info debug
-get_gh_token <- function() {
-  res <- Sys.getenv("GHQC_GITHUB_PAT")
-  if (!nzchar(res)) {
-    error(.le$logger, "No Github token found. Please set GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
-    rlang::abort(message = "No Github token found. Please set GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
+get_gh_token <- function(url) {
+  tryCatch({
+    pat <- gitcreds::gitcreds_get(url = get_gh_api_url(url))$password
+  }, error = function(e) {
+    error(.le$logger, message = glue::glue("Could not find GitHub PAT for {url} due to: {e$message}. Set your GitHub credentials before continuing"))
+    rlang::abort(message = glue::glue("Could not find GitHub PAT for {url}. Set your GitHub credentials before continuing"), parent = e$parent)
+  })
+
+  if (nchar(pat) != 40) {
+    error(.le$logger, glue::glue("Retrieved GitHub PAT is not 40 characters. Reconfigure your Git Credentials for {url} before continuing"))
+    rlang::abort(message = glue::glue("Retrieved GitHub PAT is not 40 characters. Reconfigure your Git Credentials for {url} before continuing"))
   }
-  info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_PAT environment variable: {substr(res, 1, 4)}************************************"))
-  debug(.le$logger, glue::glue("Retrieved GHQC_GITHUB_PAT environment variable: {res}"))
-  res
+  info(.le$logger, glue::glue("Retrieved GitHub PAT successfully: {paste0(substr(pat, 1, 4), strrep('*', nchar(pat)-4))}"))
+  pat
+}
+
+#' @import log4r
+try_api_call <- function(url, token) {
+  tryCatch({
+    debug(.le$logger, glue::glue("Attempting test api call..."))
+    gh::gh("GET /user", .api_url = get_gh_api_url(url), .token = token)
+    info(.le$logger, glue::glue("Successful test api call to {get_gh_api_url(url)}"))
+  }, error = function(e) {
+    pat_substr <- paste0(substr(token, 1, 4), strrep("*", nchar(token)-4))
+    error(.le$logger, message = glue::glue("{url} could not be accessed using {pat_substr} due to: {e$message}. Ensure your GitHub credentials are correct before continuing"))
+    rlang::abort(message = glue::glue("{url} could not be accessed using {pat_substr}. Ensure your GitHub credentials are correct before continuing", parent = e$parent))
+  })
 }
 
 #' @importFrom log4r warn error info debug
 check_github_credentials <- function() {
-  if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
-
-  # Check for errors
+  # Check errors
   check_git_inited()
-
   check_remote_set()
 
   remote <- get_remote()
-  remote_name <- remote$name
   remote_url <- get_remote_url(remote)
+  check_upstream_set(remote$name)
 
-  check_upstream_set(remote_name)
-
-  tryCatch(
-    {
-      api_url <- get_gh_api_url(remote_url)
-      token <- get_gh_token()
-    },
-    error = function(e) {
-      error(.le$logger, glue::glue("There was an error setting credentials."))
-      rlang::abort(message = glue::glue("There was an error setting credentials."))
-    }
-  )
-
-  if (token == "") {
-    error(.le$logger, glue::glue(
-      "To configure GitHub Enterprise connectitivity run:
-    {usethis::ui_code(paste0('usethis::create_github_token(host = \"', get_gh_url(), '\")'))}
-    and generate token
-    Then use {usethis::ui_code('usethis::edit_r_environ()')}
-    and fill in {usethis::ui_code('GHQC_GITHUB_PAT = [your token]')}"
-    ))
-    stop("stopping", call. = TRUE)
-  }
-
-
-  if (nchar(token) == 40) {
-    creds <- list(
-      url = api_url,
-      username = "PersonalAccessToken",
-      password = token
-    )
-
-    tryCatch({
-      # Case 1: gitcreds_approve works if git isn't authenticated for the url
-      # OR if it is already authenticated
-      debug(.le$logger, glue::glue("Approving credentials..."))
-      gitcreds::gitcreds_approve(creds)
-      debug(.le$logger, glue::glue("Approved credentials"))
-
-      debug(.le$logger, glue::glue("Attempting test api call..."))
-      try_api_call(api_url)
-      info(.le$logger, glue::glue("Successful test api call"))
-    }, error = function(e) {
-      # Case 2: git is incorrectly authenticated for the url
-      tryCatch({
-          # get uncached creds
-          debug(.le$logger, e$message)
-          debug(.le$logger, glue::glue("Retrieving uncached credentials..."))
-          run_gitcreds_get(url = api_url, renviron_token = token)
-
-          # approve again (this has worked every time so far)
-          debug(.le$logger, glue::glue("Approving credentials..."))
-          gitcreds::gitcreds_approve(creds)
-          debug(.le$logger, glue::glue("Approved credentials"))
-
-          # try api call again
-          debug(.le$logger, glue::glue("Attempting test api call..."))
-          try_api_call(api_url)
-          info(.le$logger, glue::glue("Successful test api call"))
-        },
-        # Case 3: if authentication fails, have user run gitcreds manually
-        error = function(e) {
-          error(.le$logger, glue::glue("Could not set github credentials for {api_url}. Double check that the GHQC_GITHUB_PAT and GHQC_GITHUB_URL environment variables are correct, then run gitcreds::gitcreds_set()")) #, then run ghqc_authenticate() to set Github credentials.
-          rlang::abort(message = e$message)
-        } # error
-      ) # tryCatch
-    } # error
-    ) # tryCatch
-
-    info(.le$logger, glue::glue("GitHub credentials set"))
-  } else {
-    error(.le$logger, glue::glue("Token not equal to 40 characters. Please reset GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file."))
-    rlang::abort(message = "Token not equal to 40 characters. Please reset GHQC_GITHUB_PAT environment variable, likely in your ~/.Renviron file.")
-  }
-
-  return(remote)
+  # api_url <- get_gh_api_url(remote_url)
+  token <- get_gh_token(remote_url)
+  try_api_call(remote_url, token)
+  check_remote_matches_env_url(remote_url)
+  assign("github_api_url", get_gh_api_url(remote_url), envir = .le)
+  invisible(remote)
 }
 

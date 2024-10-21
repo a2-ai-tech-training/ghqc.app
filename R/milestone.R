@@ -59,7 +59,7 @@ look_up_existing_milestone_number <- function(params) {
 
 #' @importFrom log4r warn error info debug
 create_milestone <- function(params) {
-  params$.api_url <- Sys.getenv("GHQC_API_URL")
+  params$.api_url <- .le$github_api_url
 
   debug(.le$logger, glue::glue("Creating Milestone: {params$title}..."))
   milestone <- do.call(gh::gh, c("POST /repos/{owner}/{repo}/milestones", params))

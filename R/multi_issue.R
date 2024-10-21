@@ -12,7 +12,7 @@ create_issue <- function(file, issue_params) {
     issue_params$assignees <- I(file$assignees)
   }
 
-  issue_params$.api_url <- Sys.getenv("GHQC_API_URL")
+  issue_params$.api_url <- .le$github_api_url
 
   # create the issue
   debug(.le$logger, glue::glue("Creating Issue... {issue_params$title}"))

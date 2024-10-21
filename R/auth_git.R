@@ -90,17 +90,6 @@ get_env_url <- function() {
   # return(env_url)
 }
 
-
-#' @import log4r
-#' @export
-# get_gh_url <- function(remote_url) {
-#   env_url <- get_env_url()
-#
-#   check_remote_matches_env_url(remote_url, env_url)
-#
-#   return(env_url)
-# }
-
 #' @import log4r
 check_remote_matches_env_url <- function(remote_url) {
   env_url <- get_env_url()

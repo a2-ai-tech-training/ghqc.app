@@ -2,7 +2,6 @@
 
 export(check_github_credentials)
 export(check_if_qc_file_untracked)
-export(check_remote_matches_env_url)
 export(create_checklists)
 export(create_comment_body)
 export(create_issue)

@@ -71,15 +71,6 @@ get_env_url <- function() {
 }
 
 #' @importFrom log4r warn error info debug
-get_gh_url <- function(remote_url) {
-  env_url <- get_env_url()
-
-  check_remote_matches_env_url(remote_url, env_url)
-
-  return(env_url)
-}
-
-#' @importFrom log4r warn error info debug
 check_remote_matches_env_url <- function(remote_url) {
   env_url <- get_env_url()
   if (remote_url != env_url && env_url != "https://") {
@@ -115,7 +106,7 @@ get_gh_token <- function(url) {
   pat
 }
 
-#' @import log4r
+#' @importFrom log4r warn error info debug
 try_api_call <- function(url, token) {
   tryCatch({
     debug(.le$logger, glue::glue("Attempting test api call..."))

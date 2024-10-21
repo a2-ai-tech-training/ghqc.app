@@ -83,7 +83,7 @@ download_image <- function(url) {
     bool
   }
 
-  token <- Sys.getenv("GHQC_GITHUB_PAT")
+  token <- get_gh_token(.le$github_api_url)
 
   req <- httr2::request(url)
 

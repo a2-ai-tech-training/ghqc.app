@@ -348,7 +348,7 @@ create_summary_csv <- function(issues, env) {
   return(summary_csv)
 }
 
-create_intro <- function(repo, milestone_names, header_path) {
+create_intro <- function(repo, milestone_names) {
   author <- Sys.info()[["user"]]
   date <- format(Sys.Date(), '%B %d, %Y')
   milestone_names_list <- glue::glue_collapse(milestone_names, sep = ", ")
@@ -705,7 +705,7 @@ ghqc_report <- function(milestone_names = NULL,
 
   debug(.le$logger, "Creating Record introduction...")
   # intro
-  intro <- create_intro(repo, milestone_names, header_path)
+  intro <- create_intro(repo, milestone_names)
   set_up_chunk <- set_up_chunk()
   info(.le$logger, "Created Record introduction")
 

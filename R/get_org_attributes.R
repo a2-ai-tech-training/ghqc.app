@@ -100,25 +100,16 @@ get_remote_name <- function(remote_url) {
   return(remote_repo_name)
 }
 
-
-
+#' @importFrom log4r info
 get_remote_url <- function(remote) {
-  org_url <- dirname(remote$url)
-  api_url <- dirname(org_url)
-
-  debug(.le$logger, glue::glue("Setting GHQC_API_URL environment variable: {api_url}..."))
+  api_url <- dirname(dirname(remote$url))
   info(.le$logger, glue::glue("Connected to remote repository url: {api_url}"))
-
-  Sys.setenv("GHQC_API_URL" = api_url)
-  info(.le$logger, glue::glue("Set GHQC_API_URL environment variable: {Sys.getenv(\"GHQC_API_URL\")}"))
-
-  return(api_url)
+  api_url
 }
 
 #' @import log4r
 #' @export
-get_remote <- function(remote_list) {
-
+get_remote <- function() {
   debug(.le$logger, glue::glue("Retrieving local repo path..."))
   repo_path <- gert::git_find()
   debug(.le$logger, glue::glue("Retrieved local repo path: {repo_path}"))

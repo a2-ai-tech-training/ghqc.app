@@ -128,7 +128,10 @@ get_gh_api_url <- function(remote_url) {
 get_gh_token <- function(api_url) {
   tryCatch({
     pat <- gitcreds::gitcreds_get(url = api_url)$password
-    info(.le$logger, glue::glue("Found GitHub PAT for {api_url}: {paste0(substr(pat, 1, 4), strrep('*', nchar(pat)))}"))
+    if (nchar(pat) != 40) {
+      error(.le$logger, glue::glue("Retrieved GitHub PAT is not 40 characters. Reconfigure your Git Credentials for {api_url}"))
+      rlang::abort(message = glue::glue("Retrieved GitHub PAT is not 40 characters. Reconfigure your Git Credentials for {api_url}"))
+    }
     pat
   }, error = function(e) {
     error(.le$logger, message = glue::glue("Could not find GitHub PAT for {api_url} due to: {e$message}. Set your GitHub credentials before continuing"))

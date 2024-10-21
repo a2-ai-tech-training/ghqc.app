@@ -64,30 +64,6 @@ get_env_url <- function() {
   env_url <- gsub("/$", "", env_url)
   env_url <- stringr::str_remove(env_url, "/api/v3$")
   if (!stringr::str_starts(env_url, "https://")) env_url <- paste0("https://", env_url)
-
-  # env_url <- Sys.getenv("GHQC_GITHUB_URL")
-  # env_url <- gsub("/$", "", env_url)
-  #
-  # # if GHQC_GITHUB_URL not set, use github.com
-  # if (!nzchar(env_url)) {
-  #   warn(.le$logger, "No GHQC_GITHUB_URL environment variable found. Using Github URL \"https://github.com\". To specify otherwise, set GHQC_GITHUB_URL environment variable, likely in your ~/.Renviron file.")
-  #   env_url <- "https://github.com"
-  # }
-  # # else if was set
-  # else {
-  #   info(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL environment variable: {env_url}"))
-  # }
-  #
-  # # error if not https
-  # url_starts_with_https <- stringr::str_starts(env_url, "https://")
-  # if (!url_starts_with_https) {
-  #   error(.le$logger, glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
-  #   rlang::abort(message = glue::glue("Retrieved GHQC_GITHUB_URL: {env_url} does not start with https"))
-  # }
-  #
-  # # remove /api/v3 if at the end
-  # env_url <- stringr::str_remove(env_url, "/api/v3$")
-  # return(env_url)
 }
 
 #' @import log4r

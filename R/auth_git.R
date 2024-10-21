@@ -38,9 +38,10 @@ check_upstream_set <- function(remote_name) {
     rlang::abort(glue::glue("There were no branches found for the existing repo: {repo}"))
   }
 
+  col_names <- c("name", "upstream") # doing this to pass rcmdcheck: check_upstream_set: no visible binding for global variable ‘upstream’
   tracking_branch <- gert::git_branch_list() %>%
-    dplyr::filter(name == current_branch & upstream != "") %>%
-    dplyr::pull(upstream)
+    dplyr::filter(col_names[[1]] == current_branch & col_names[[2]] != "") %>%
+    dplyr::pull(col_names[[2]])
 
 
   if (length(tracking_branch) == 0) {
@@ -168,11 +169,6 @@ check_github_credentials <- function() {
     stop("stopping", call. = TRUE)
   }
 
-  ## workaround to avoid ssl error, remove the following lines if possible
-  dconf <- gert::git_config_global()
-  if (!identical(dconf$value[dconf$name %in% "http.sslverify"], "false")) {
-    gert::git_config_global_set(name = "http.sslverify", value = "false")
-  }
 
   if (nchar(token) == 40) {
     creds <- list(

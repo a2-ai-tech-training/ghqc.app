@@ -381,7 +381,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
     observeEvent(input$checklist_input_id, {
       selected_checklist <- input$checklist_input_id
 
-      observeEvent(input[[ns(preview_checklist_id)]], {
+      observeEvent(input[[ns(preview_input_id)]], {
         showModal(
           modalDialog(
             title = tags$div(modalButton("Dismiss"), style = "text-align: right;"),

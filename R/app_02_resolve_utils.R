@@ -20,7 +20,7 @@
 convert_issue_df_format <- function(issue_df) {
   debug(.le$logger, "Converting issue data frame format to named list")
 
-  issues_df <- map_df(issue_df, ~ {
+  issues_df <- map_df(issue_df, function(.x) {
     tibble(
       number = .x$number,
       title = .x$title,
@@ -34,11 +34,13 @@ convert_issue_df_format <- function(issue_df) {
     mutate(state = case_when(
       state == "open" ~ "Open Items",
       state == "closed" ~ "Closed Items"
-    )) %>%
-    split(.$state) %>%
+    ))
+
+  issues_choices <- issues_choices %>%
+    split(issues_choices$state) %>%
     rev() %>%
     lapply(function(x) {
-      setNames(nm = paste0("Item ", x$number, ": ", x$title))
+      stats::setNames(nm = paste0("Item ", x$number, ": ", x$title))
     })
 
   debug(.le$logger, "Successfully created issues choices list")
@@ -68,10 +70,10 @@ convert_commits_df_format <- function(commit_df) {
   debug(.le$logger, "Converting commits data frame format to named list")
 
   commits <- commit_df %>%
-    split(.$date) %>%
+    split(commit_df$date) %>%
     rev() %>%
     lapply(function(x) {
-      setNames(
+      stats::setNames(
         object = x$commit,
         nm = x$display
       )

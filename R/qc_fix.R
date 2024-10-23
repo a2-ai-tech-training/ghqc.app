@@ -49,20 +49,11 @@ create_metadata_body <- function(reference_commit,
 }
 
 create_diff_body <- function(diff, reference_commit, reference_script, comparator_commit, comparator_script) {
-  if (!diff) ""
-
-  else {
-    # get context for diff
-    # context <- glue::glue(
-    #   "reference commit (older version): {reference_commit}\n
-    #     comparator commit (newer version): {comparator_commit}\n"
-    # )
+  if (!diff) return("")
 
     diff_formatted <- format_diff(reference_script = reference_script, comparator_script = comparator_script)
-    glue::glue("## File Difference\n",
-               #"{context}\n",
-               "{diff_formatted}\n\n",)
-  }
+    glue::glue("## File Difference\n\n",
+               "{diff_formatted}\n\n")
 }
 
 create_comment_body <- function(owner,

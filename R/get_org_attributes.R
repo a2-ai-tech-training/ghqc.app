@@ -380,7 +380,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   }
 
   issues <- c(open_issues, closed_issues)
-  info(.le$logger, glue::glue("Retrieved {length(issues)} issue(s) from Milestone: {milestone_name}"))
+  info(.le$logger, glue::glue("Retrieved {length(issues)} Issue(s) from Milestone: {milestone_name}"))
   return(issues)
 }
 

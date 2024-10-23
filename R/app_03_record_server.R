@@ -118,7 +118,7 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
             },
             actionButton(ns("return"), "Return")
           ), style = "text-align: right;"),
-          HTML(paste("It is recommended that relevant GitHub Issues and Milestones are closed upon completion of QC, and checklists within GitHub Issues are checked to indicate completed QCed items.<br><br> You may want to double check the following items for outstanding QC progress:<br><br>", modal_check()$message)),
+          HTML(paste("It is recommended that relevant GitHub Issues and Milestones are closed upon completion of QC, and checklists within GitHub Issues are checked to indicate QCed items.<br><br> You may want to double check the following items for outstanding QC progress:<br><br>", modal_check()$message)),
           tags$style(HTML("
         .modal-content {
           word-wrap: break-word; /* Allows long text to break into new lines */

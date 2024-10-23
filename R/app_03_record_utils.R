@@ -43,7 +43,7 @@ generate_open_issue_message <- function(open_issues, warning_icon_html) {
   messages <- c()
   if (length(open_issues) > 0) {
     messages <- c(messages, sprintf(
-      "%s The selected milestones contain the following open Issues:<ul>%s</ul><br>",
+      "%s The selected Milestones contain the following open Issues:<ul>%s</ul><br>",
       warning_icon_html, generate_tiered_html_list_with_hyperlink(open_issues)
     ))
   }

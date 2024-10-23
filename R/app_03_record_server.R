@@ -21,7 +21,7 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
 
     closed_milestones <- reactive({
       req(org, repo)
-      w_gh <- create_waiter(ns, sprintf("Fetching milestone data for %s in %s...", repo, org))
+      w_gh <- create_waiter(ns, sprintf("Fetching Milestone data for %s in %s...", repo, org))
       w_gh$show()
       on.exit(w_gh$hide())
 
@@ -39,20 +39,20 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
                   style = "overflow: hidden; text-align: right;"
                 ),
 
-                HTML(warn_icon_html, glue::glue("There were no closed milestones found in {org}/{repo}.<br>
-                                             Ensure that QC on each relevant milestone is finished, close relevant milestones on Github, then click \"Reset\" in the top right corner of this app.<div style=\"margin-bottom: 9px;\"></div>")),
-                tags$a(href = milestone_list_url, "Click here to close milestones on Github", target = "_blank"),
+                HTML(warn_icon_html, glue::glue("There were no closed Milestones found in {org}/{repo}.<br>
+                                             Close relevant Milestones on GitHub to indicate finished QC, then click \"Reset\" in the top right corner of this app.<div style=\"margin-bottom: 9px;\"></div>")),
+                tags$a(href = milestone_list_url, "Click here to close Milestones on GitHub", target = "_blank"),
                 easyClose = TRUE,
                 footer = NULL
               )
             )
-            warn(.le$logger, glue::glue("There were no closed milestones found in {org}/{repo}. Ensure that QC on each relevant milestone is finished and close relevant milestones on Github."))
+            warn(.le$logger, glue::glue("There were no closed Milestones found in {org}/{repo}. Close relevant Milestones on GitHub to indicate finished QC."))
           } # length(closed_milestones) == 0
           rev(closed_milestones)
         },
         error = function(e) {
-          error(.le$logger, glue::glue("There was an error retrieving closed milestones: {e$message}"))
-          showModal(modalDialog("Error in getting milestones: ", e$message, footer = NULL))
+          error(.le$logger, glue::glue("There was an error retrieving closed Milestones: {e$message}"))
+          showModal(modalDialog("Error in getting Milestones: ", e$message, footer = NULL))
         }
       )
     })
@@ -61,7 +61,7 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
     observeEvent(input$closed_only, {
       # if closed
       if (input$closed_only) {
-        placeholder <- ifelse(length(closed_milestones()) == 0, "No closed milestones", "Select closed milestones")
+        placeholder <- ifelse(length(closed_milestones()) == 0, "No closed Milestones", "Select closed Milestones")
 
         updateSelectizeInput(
           session,
@@ -73,7 +73,7 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
 
       # if not closed
       else {
-        placeholder <- ifelse(length(all_milestones) == 0, "No milestones", "Select milestones")
+        placeholder <- ifelse(length(all_milestones) == 0, "No Milestones", "Select Milestones")
 
         updateSelectizeInput(
           session,
@@ -139,7 +139,7 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
       req(report_trigger())
       report_trigger(FALSE)
 
-      milestone_num_str <- ifelse(length(input$select_milestone) == 1, "milestone", "milestones")
+      milestone_num_str <- ifelse(length(input$select_milestone) == 1, "Milestone", "Milestones")
       milestones <- glue::glue_collapse(input$select_milestone, sep = ", ", last = " and ")
 
       w_generate_report <- create_waiter(ns, glue::glue("Generating report for {milestone_num_str}: {milestones}..."))

@@ -66,7 +66,7 @@ generate_commit_update_message <- function(commit_update_status, error_icon_html
 #' @param untracked_selected_files A character vector of untracked selected files.
 #' @param git_sync_status Result from gert::git_ahead_behind().
 #' @param commit_update_status A logical indicating whether there is 2 or more commits available for selected Issue. Defaults to TRUE.
-#' @param issues_in_milestone A list containing existing Issues already found in a milestone. Defaults to empty list.
+#' @param issues_in_milestone A list containing existing Issues already found in a Milestone. Defaults to empty list.
 #'
 #' @return A list containing:
 #' \item{message}{A character string with the generated message, or \code{NULL} if no message is generated.}

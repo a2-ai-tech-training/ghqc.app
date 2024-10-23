@@ -99,7 +99,7 @@ check_for_open_milestones <- function(owner, repo, milestone_names) {
         get_milestone_from_name(owner, repo, milestone_name)
       },
       error = function(e) {
-        debug(.le$logger, glue::glue("Error retrieving milestones: {e$message}"))
+        debug(.le$logger, glue::glue("Error retrieving Milestones: {e$message}"))
         rlang::abort(e$message)
       }
     )
@@ -146,7 +146,7 @@ check_for_open_checklists <- function(owner, repo, milestone_names) {
         get_all_issues_in_milestone(owner, repo, milestone_name)
       },
       error = function(e) {
-        debug(.le$logger, glue::glue("Error retrieving issues from {milestone_name}: {e$message}"))
+        debug(.le$logger, glue::glue("Error retrieving Issues from {milestone_name}: {e$message}"))
         rlang::abort(e$message)
       }
     )

@@ -496,12 +496,12 @@ get_inputted_milestone_names <- function(owner, repo) {
   if (interactive()) {
 
     milestones <- list_milestones(owner, repo)
-    print(glue::glue("Non-empty milestones in {repo}:\n"))
+    print(glue::glue("Non-empty Milestones in {repo}:\n"))
     print(milestones)
     valid_input <- FALSE
     while (!valid_input) {
       # read in milestones
-      user_input <- readline(prompt = glue::glue("\nInput milestones: e.g. milestone1, milestone2: "))
+      user_input <- readline(prompt = glue::glue("\nInput Milestones: e.g. milestone1, milestone2: "))
       clean_input <- clean_input(user_input)
 
       # check they exist and are non-empty
@@ -536,12 +536,12 @@ check_milestones <- function(milestone_names, owner, repo) {
   lapply(milestone_names, function(milestone_name) {
     exists <- milestone_exists(milestone_name, owner, repo)
     if (!exists) {
-      stop(glue::glue("\"{milestone_name}\" is not a milestone in {repo}"))
+      stop(glue::glue("\"{milestone_name}\" is not a Milestone in {repo}"))
     }
     milestone <- get_milestone_from_name(owner, repo, milestone_name)
     non_empty <- check_that_milestone_is_non_empty(milestone)
     if (!non_empty) {
-      stop(glue::glue("\"{milestone_name}\" in {repo} is an empty milestone (no issues)"))
+      stop(glue::glue("\"{milestone_name}\" in {repo} is an empty Milestone (no issues)"))
     }
   })
 }

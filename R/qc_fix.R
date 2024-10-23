@@ -43,9 +43,9 @@ create_metadata_body <- function(reference_commit,
 
   glue::glue("## Metadata\n",
              "* current commit: {comparator_commit}\n",
-             "* current script hash: {comparator_script_hash}\n",
+             "* current script md5 checksum: {comparator_script_hash}\n",
              "* previous commit: {reference_commit}\n",
-             "* previous script hash: {reference_script_hash}\n\n\n")
+             "* previous script md5 checksum: {reference_script_hash}\n\n\n")
 }
 
 create_diff_body <- function(diff, reference_commit, reference_script, comparator_commit, comparator_script) {

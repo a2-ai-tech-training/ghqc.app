@@ -180,7 +180,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           issue_titles_with_root_dir
         },
         error = function(e) {
-          debug(.le$logger, glue::glue("There was no milestones to query: {e$message}"))
+          debug(.le$logger, glue::glue("There was no Milestones to query: {e$message}"))
           return(list())
         }
       )
@@ -264,7 +264,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
               get_all_issues_in_milestone(owner = org, repo = repo, milestone_name = rv_milestone())
             },
             error = function(e) {
-              debug(.le$logger, glue::glue("There were no milestones to query: {e$message}"))
+              debug(.le$logger, glue::glue("There were no Milestones to query: {e$message}"))
               return(list())
             }
           )
@@ -325,7 +325,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           addClass("create_qc_items", "disabled-btn")
         },
         error = function(e) {
-          error(.le$logger, glue::glue("There was an error creating the milestone {qc_items()}: {e$message}"))
+          error(.le$logger, glue::glue("There was an error creating the Milestone {qc_items()}: {e$message}"))
           rlang::abort(e$message)
         }
       )
@@ -352,7 +352,7 @@ return "<div><strong>" + escape(item.username) + "</div>"
           footer = NULL,
           easyClose = TRUE,
           tags$p(success_note),
-          tags$a(href = milestone_url, "Click here to visit the milestone on Github", target = "_blank")
+          tags$a(href = milestone_url, "Click here to visit the Milestone on Github", target = "_blank")
         )
       )
     })

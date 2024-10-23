@@ -27,8 +27,8 @@ ghqc_resolve_app <- function() {
 
   # error if no open milestones
   if (length(milestone_list) == 0) {
-    error(.le$logger, glue::glue("There were no open milestones found in {org}/{repo}. Please use the Assign app before using the Resolve app."))
-    rlang::abort("There were no open milestones found.")
+    error(.le$logger, glue::glue("There were no open Milestones found in {org}/{repo}. Please use the Assign app before using the Resolve app."))
+    rlang::abort("There were no open Milestones found.")
   }
 
   app <- shinyApp(

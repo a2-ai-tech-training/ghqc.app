@@ -38,7 +38,7 @@ generate_existing_issue_message <- function(existing_issues, error_icon_html) {
   messages <- c()
   if (length(existing_issues) > 0) {
     messages <- c(messages, sprintf(
-      "%s The following selected files are already associated with issues in the milestone:<ul>%s</ul><br>",
+      "%s The following selected files are already associated with Issues in the Milestone:<ul>%s</ul><br>",
       error_icon_html, generate_html_list(existing_issues)
     ))
   }
@@ -59,14 +59,14 @@ generate_commit_update_message <- function(commit_update_status, error_icon_html
 #' Determine Modal Message
 #'
 #' Generates a message for a modal dialog based on the status of selected files, git synchronization status,
-#' and GitHub issue status.
+#' and GitHub Issue status.
 #'
 #' @param selected_files A character vector of selected files.
 #' @param uncommitted_git_files A character vector of uncommitted git files.
 #' @param untracked_selected_files A character vector of untracked selected files.
 #' @param git_sync_status Result from gert::git_ahead_behind().
-#' @param commit_update_status A logical indicating whether there is 2 or more commits available for selected issue. Defaults to TRUE.
-#' @param issues_in_milestone A list containing existing issues already found in a milestone. Defaults to empty list.
+#' @param commit_update_status A logical indicating whether there is 2 or more commits available for selected Issue. Defaults to TRUE.
+#' @param issues_in_milestone A list containing existing Issues already found in a Milestone. Defaults to empty list.
 #'
 #' @return A list containing:
 #' \item{message}{A character string with the generated message, or \code{NULL} if no message is generated.}

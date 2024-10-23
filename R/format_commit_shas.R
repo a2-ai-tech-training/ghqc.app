@@ -16,7 +16,7 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
 
   commit_log <- all_commits[1:cutoff_position, ]
 
-columns <- c("commit", "message", "date", "time", "short_sha", "display")
+  columns <- c("commit", "message", "date", "time", "short_sha", "display")
   commit_log <- commit_log %>%
     dplyr::mutate(
       date = stringr::str_extract(.data[[columns[[4]]]], "^[\\w'-]+"),

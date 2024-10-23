@@ -211,14 +211,15 @@ ghqc_resolve_server <- function(id, remote, org, repo, milestone_list) {
             input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
           )
 
-          html_file_path <- create_gfm_file(create_comment_body(org,
-            repo,
-            message = input$message,
-            issue_number = issue_parts()$issue_number,
-            diff = input$show_diff,
-            comparator_commit = commits_for_compare$comparator_commit,
-            reference_commit = commits_for_compare$reference_commit
-          ))
+          comment_body <- create_comment_body(org,
+                                              repo,
+                                              message = input$message,
+                                              issue_number = issue_parts()$issue_number,
+                                              diff = input$show_diff,
+                                              comparator_commit = commits_for_compare$comparator_commit,
+                                              reference_commit = commits_for_compare$reference_commit
+          )
+          html_file_path <- create_gfm_file(comment_body)
           custom_html <- readLines(html_file_path, warn = FALSE) %>% paste(collapse = "\n")
         },
         error = function(e) {

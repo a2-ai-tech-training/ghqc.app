@@ -78,33 +78,49 @@ create_comment_body <- function(owner,
   # log
   debug(.le$logger, glue::glue("Creating comment body for issue #{issue_number} in {owner}/{repo}"))
 
+  debug(.le$logger, glue::glue("Creating assignees body..."))
   assignees_list <- create_assignees_list(issue$assignees)
   assignees_body <- create_assignees_body(assignees_list)
+  debug(.le$logger, glue::glue("Created assignees body"))
 
+  debug(.le$logger, glue::glue("Creating message body..."))
   message_body <- create_message_body(message)
+  debug(.le$logger, glue::glue("Created message body"))
 
   # get reference and comparator scripts if default
   if (reference_commit == "original" && comparator_commit == "current") {
     # reference = oldest
+    debug(.le$logger, glue::glue("Getting reference commit..."))
     reference_commit <- get_init_qc_commit(owner, repo, issue_number)
+    debug(.le$logger, glue::glue("Got reference commit: {reference_commit}"))
+
     # comparator = newest
+    debug(.le$logger, glue::glue("Getting comparator commit..."))
     comparator_commit <- gert::git_log(max = 1)$commit
+    debug(.le$logger, glue::glue("Got comparator commit: {comparator_commit}"))
   }
 
+
+  debug(.le$logger, glue::glue("Getting script contents..."))
   script_contents <- get_script_contents(issue$title, reference = reference_commit, comparator = comparator_commit)
   reference_script <- script_contents$reference_script
   comparator_script <- script_contents$comparator_script
+  debug(.le$logger, glue::glue("Got script contents"))
 
+  debug(.le$logger, glue::glue("Getting file difference body..."))
   diff_body <- create_diff_body(diff = diff,
                            reference_commit = reference_commit,
                            reference_script = reference_script,
                            comparator_commit = comparator_commit,
                            comparator_script = comparator_script)
+  debug(.le$logger, glue::glue("Got file difference body"))
 
+  debug(.le$logger, glue::glue("Getting metadata body..."))
   metadata_body <- create_metadata_body(reference_commit = reference_commit,
                                         reference_script = reference_script,
                                         comparator_commit = comparator_commit,
                                         comparator_script = comparator_script)
+  debug(.le$logger, glue::glue("Got metadata body"))
 
   comment_body <- glue::glue("{assignees_body}",
                              "{message_body}",

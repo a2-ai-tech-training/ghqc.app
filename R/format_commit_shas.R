@@ -19,13 +19,16 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
   columns <- c("commit", "message", "date", "time", "short_sha", "display")
   commit_log <- commit_log %>%
     dplyr::mutate(
-      date = stringr::str_extract(.data[[columns[[4]]]], "^[\\w'-]+"),
-      message = stringr::str_remove_all(.data[[columns[[2]]]], "\n"),  # remove /n from message
-      short_sha = stringr::str_extract(.data[[columns[[1]]]], "^.{1,7}")) %>%
-    dplyr::mutate(
+      date = stringr::str_extract(commit_log[[columns[[4]]]], "^[\\w'-]+"),
+      message = stringr::str_remove_all(commit_log[[columns[[2]]]], "\n"),  # remove /n from message
+      short_sha = stringr::str_extract(commit_log[[columns[[1]]]], "^.{1,7}"))
+
+  comit_log <- commit_log %>% dplyr::mutate(
       display = glue::glue("{message} | {short_sha}")
-    ) %>%
-    dplyr::select(.data[[columns[[3]]]], .data[[columns[[1]]]], .data[[columns[[6]]]])
+    )
+
+  commit_log <- commit_log %>%
+    dplyr::select(commit_log[[columns[[3]]]], commit_log[[columns[[1]]]], commit_log[[columns[[6]]]])
 
 
   #last_row <- nrow(commit_log)

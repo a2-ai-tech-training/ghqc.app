@@ -25,7 +25,7 @@ format_section_list <- function(section_name, items) {
   glue::glue("### {section_name}\n\n{formatted_items}\n\n")
 }
 
-# functions to format body of issue
+# functions to format body of Issue
 format_checklist_items <- function(checklist) {
   names <- names(checklist)
   # if no sub-headers

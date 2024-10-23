@@ -92,7 +92,7 @@ ghqc_record_server <- function(id, remote, org, repo, all_milestones) {
       num_milestones_selected <- length(input$select_milestone)
 
       if (num_milestones_selected > 0) {
-        debug(.le$logger, glue::glue("generate_report buttons are activated because there are {num_milestones_selected} selected QC Item Lists"))
+        debug(.le$logger, glue::glue("generate_report buttons are activated because there are {num_milestones_selected} selected Milestones"))
         removeClass("generate_report", "disabled-btn")
         addClass("generate_report", "enabled-btn")
       }

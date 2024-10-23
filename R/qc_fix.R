@@ -67,7 +67,7 @@ create_comment_body <- function(owner,
   issue <- get_issue(owner, repo, issue_number)
 
   # log
-  debug(.le$logger, glue::glue("Creating comment body for issue #{issue_number} in {owner}/{repo}"))
+  debug(.le$logger, glue::glue("Creating comment body for Issue #{issue_number} in {owner}/{repo}"))
 
   debug(.le$logger, glue::glue("Creating assignees body..."))
   assignees_list <- create_assignees_list(issue$assignees)
@@ -142,7 +142,7 @@ post_comment <- function(owner, repo, issue_number, body) {
                     body = body
   )
 
-  info(.le$logger, glue::glue("Posted comment to issue #{issue_number} in {owner}/{repo}"))
+  info(.le$logger, glue::glue("Posted comment to Issue #{issue_number} in {owner}/{repo}"))
 }
 
 add_fix_comment <- function(owner,

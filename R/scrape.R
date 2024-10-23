@@ -576,7 +576,7 @@ knitr::kable(
   linesep = \"\\\\addlinespace\\\\addlinespace\"
 ) %>%
   kable_styling(latex_options = c(\"hold_position\", \"scale_down\")) %>%
-  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{O}} open issue\", \"\\\\\\\\textcolor{{green}}{{U}} issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
+  footnote(general=c(\"\\\\\\\\textcolor{{red}}{{O}} Open Issue\", \"\\\\\\\\textcolor{{green}}{{U}} Issue with unchecked items\"), general_title = \"\", escape = FALSE) %>%
   column_spec(1, width = \"5em\", latex_valign = \"p\") %>%
   column_spec(2, width = \"10em\", latex_valign = \"p\") %>%
   column_spec(3, width = \"3em\", latex_valign = \"p\") %>%

@@ -16,15 +16,20 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
 
   commit_log <- all_commits[1:cutoff_position, ]
 
-  columns <- c("commit", "message", "date", "time", "short_sha", "display")
+columns <- c("commit", "message", "date", "time", "short_sha", "display")
+ # browser()
   commit_log <- commit_log %>%
-    dplyr::select(dplyr::all_of(columns[1:4])) %>%  # Select the first 4 columns dynamically
     dplyr::mutate(
-      date = stringr::str_extract(date, "^[\\w'-]+"), # just get the date
+      date = stringr::str_extract(columns[[4]], "^[\\w'-]+"),
       message = stringr::str_remove_all(message, "\n"),  # remove /n from message
       short_sha = stringr::str_extract(columns[[1]], "^.{1,7}"),
-      display = glue::glue("{message} | {short_sha}")
-    )
+      display = glue::glue("{message} | {short_sha}"))
+    # dplyr::mutate(
+    #   date = stringr::str_extract(time, "^[\\w'-]+"), # just get the date
+    #   message = stringr::str_remove_all(message, "\n"),  # remove /n from message
+    #   short_sha = stringr::str_extract(columns[[1]], "^.{1,7}"),
+    #   display = glue::glue("{message} | {short_sha}")
+    # )
 
   # commit_log <- commit_log %>%
   #   dplyr::select(columns[[1]], columns[[2]], columns[[3]], columns[[4]]) %>%

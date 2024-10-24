@@ -8,7 +8,7 @@ Authors@R: c(
     person("Devin", "Pastoor", email = "devin@a2-ai.com", role = c("aut")),
     person("Wes", "Cummings", email = "wes@a2-ai.com", role = c("aut")))
 Description: A QC tool with 3 major functions: creation and management of QC log, creation and management of QC record, perform semi-automated QC tasks.
-License: MIT + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

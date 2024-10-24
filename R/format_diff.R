@@ -11,9 +11,10 @@ name_file_copy <- function(file_path) {
   dir_name <- dirname(file_path)
   file_name <- basename(file_path)
   file_extension <- tools::file_ext(file_name)
+  if (nzchar(file_extension)) file_extension <- paste0(".", file_extension)
   file_base_name <- tools::file_path_sans_ext(file_name)
 
-  file_copy_name <- paste0(file_base_name, "_copy_for_ghqc.", file_extension)
+  file_copy_name <- paste0(file_base_name, "_copy_for_ghqc", file_extension)
   file.path(dir_name, file_copy_name)
 }
 

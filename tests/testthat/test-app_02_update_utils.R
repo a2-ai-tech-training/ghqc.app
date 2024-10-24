@@ -9,11 +9,11 @@ test_that("convert_issue_df_format works correctly", {
   result <- convert_issue_df_format(issues)
 
   expect_true(is.list(result))
-  expect_named(result, c("Open Items", "Closed Items"))
-  expect_equal(length(result[["Open Items"]]), 2)
-  expect_equal(length(result[["Closed Items"]]), 2)
-  expect_equal(result[["Open Items"]][[1]], "Item 1: Issue 1")
-  expect_equal(result[["Closed Items"]][[1]], "Item 2: Issue 2")
+  expect_named(result, c("Open Issues", "Closed Issues"))
+  expect_equal(length(result[["Open Issues"]]), 2)
+  expect_equal(length(result[["Closed Issues"]]), 2)
+  expect_equal(result[["Open Issues"]][[1]], "Issue 1: Issue 1")
+  expect_equal(result[["Closed Issues"]][[1]], "Issue 2: Issue 2")
 })
 
 test_that("convert_commits_df_format works correctly", {
@@ -32,7 +32,7 @@ test_that("convert_commits_df_format works correctly", {
 })
 
 test_that("split_issue_parts works correctly", {
-  issue <- "Item 1: Issue Title"
+  issue <- "Issue 1: Issue Title"
   result <- split_issue_parts(issue)
 
   expect_true(is.list(result))

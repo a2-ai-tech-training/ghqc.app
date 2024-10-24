@@ -328,7 +328,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   # get milestone number from name
   milestone_number <- look_up_existing_milestone_number(list(owner = owner, repo = repo, title = milestone_name))
 
-  # if the milestone dne, there are no issues in the milestone, return an empty vector
+  # if the Milestone dne, there are no Issues in the Milestone, return an empty vector
   if (is.null(milestone_number)) {
     info(.le$logger, glue::glue("Milestone: {milestone_name} doesn't yet exist"))
     return(c())
@@ -380,7 +380,7 @@ get_all_issues_in_milestone <- function(owner, repo, milestone_name) {
   }
 
   issues <- c(open_issues, closed_issues)
-  info(.le$logger, glue::glue("Retrieved {length(issues)} issue(s) from Milestone: {milestone_name}"))
+  info(.le$logger, glue::glue("Retrieved {length(issues)} Issue(s) from Milestone: {milestone_name}"))
   return(issues)
 }
 

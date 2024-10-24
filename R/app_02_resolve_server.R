@@ -30,7 +30,7 @@ ghqc_resolve_server <- function(id, remote, org, repo, milestone_list) {
     issue_choices <- reactive({
       req(input$select_milestone)
 
-      w_gh <- create_waiter(ns, sprintf("Fetching issue data for %s ...", input$select_milestone))
+      w_gh <- create_waiter(ns, sprintf("Fetching Issue data for %s ...", input$select_milestone))
       w_gh$show()
       on.exit(w_gh$hide())
 
@@ -211,19 +211,20 @@ ghqc_resolve_server <- function(id, remote, org, repo, milestone_list) {
             input$compare == "comparators" ~ list(comparator_commit = input$comp_commits, reference_commit = input$ref_commits)
           )
 
-          html_file_path <- create_gfm_file(create_comment_body(org,
-            repo,
-            message = input$message,
-            issue_number = issue_parts()$issue_number,
-            diff = input$show_diff,
-            comparator_commit = commits_for_compare$comparator_commit,
-            reference_commit = commits_for_compare$reference_commit
-          ))
+          comment_body <- create_comment_body(org,
+                                              repo,
+                                              message = input$message,
+                                              issue_number = issue_parts()$issue_number,
+                                              diff = input$show_diff,
+                                              comparator_commit = commits_for_compare$comparator_commit,
+                                              reference_commit = commits_for_compare$reference_commit
+          )
+          html_file_path <- create_gfm_file(comment_body)
           custom_html <- readLines(html_file_path, warn = FALSE) %>% paste(collapse = "\n")
         },
         error = function(e) {
           log_string <- glue::glue(
-            "There was an error creating preview comment for issue {issue_parts()$issue_number} in repository {org}/{repo}.\n",
+            "There was an error creating preview comment for Issue {issue_parts()$issue_number} in repository {org}/{repo}.\n",
             "Input Parameters:\n",
             "- Message: {input$message}\n",
             "- Show Diff: {input$show_diff}\n",
@@ -302,7 +303,7 @@ ghqc_resolve_server <- function(id, remote, org, repo, milestone_list) {
         footer = NULL,
         easyClose = TRUE,
         tags$p("Resolved QC finding(s) commented successfully."),
-        tags$a(href = post_comment(), "Click here to visit the updated issue on Github", target = "_blank")
+        tags$a(href = post_comment(), "Click here to visit the updated Issue on Github", target = "_blank")
       ))
     })
 
@@ -315,7 +316,7 @@ ghqc_resolve_server <- function(id, remote, org, repo, milestone_list) {
       addClass("post", "disabled-btn")
 
       if (isTruthy(input$select_issue)) {
-        debug(.le$logger, glue::glue("comment buttons are activated because there is an issue selected: {input$select_issue}"))
+        debug(.le$logger, glue::glue("comment buttons are activated because there is an Issue selected: {input$select_issue}"))
 
         removeClass("preview", "disabled-btn")
         addClass("preview", "enabled-btn")

@@ -1,13 +1,13 @@
 #' Convert Issue Data Frame Format
 #'
-#' This function converts a list of issue data frames into a structured format for further processing.
-#' It extracts issue number, title, and state, then organizes them into a named list split by their state
+#' This function converts a list of Issue data frames into a structured format for further processing.
+#' It extracts Issue number, title, and state, then organizes them into a named list split by their state
 #' for shiny input.
 #'
-#' @param issue_df A list of issue data frames, where each data frame contains the columns: number, title, and state.
+#' @param issue_df A list of Issue data frames, where each data frame contains the columns: number, title, and state.
 #'
-#' @return A named list where the names are the issue states ("Open Items" or "Closed Items")
-#' and the values are named vectors with issue details formatted as "Item <number>: <title>".
+#' @return A named list where the names are the Issue states ("Open Issues" or "Closed Issues")
+#' and the values are named vectors with Issue details formatted as "Issues <number>: <title>".
 #' @importFrom dplyr %>% tibble mutate case_when
 #' @importFrom purrr map_df
 #' @examples
@@ -18,7 +18,7 @@
 #' convert_issue_df_format(issues)
 #' @noRd
 convert_issue_df_format <- function(issue_df) {
-  debug(.le$logger, "Converting issue data frame format to named list")
+  debug(.le$logger, "Converting Issue data frame format to named list")
 
   issues_df <- map_df(issue_df, function(.x) {
     tibble(
@@ -32,18 +32,18 @@ convert_issue_df_format <- function(issue_df) {
 
   issues_choices <- issues_df %>%
     mutate(state = case_when(
-      state == "open" ~ "Open Items",
-      state == "closed" ~ "Closed Items"
+      state == "open" ~ "Open Issues",
+      state == "closed" ~ "Closed Issues"
     ))
 
   issues_choices <- issues_choices %>%
     split(issues_choices$state) %>%
     rev() %>%
     lapply(function(x) {
-      stats::setNames(nm = paste0("Item ", x$number, ": ", x$title))
+      stats::setNames(nm = paste0("Issue ", x$number, ": ", x$title))
     })
 
-  debug(.le$logger, "Successfully created issues choices list")
+  debug(.le$logger, "Successfully created Issues choices list")
 
   return(issues_choices)
 }
@@ -87,20 +87,20 @@ convert_commits_df_format <- function(commit_df) {
 
 #' Split Issue Parts
 #'
-#' This function splits an issue string into its components: issue number and issue title for functions that take one or the other.
+#' This function splits an Issue string into its components: Issue number and Issue title for functions that take one or the other.
 #'
-#' @param issue A character string representing an issue in the format "Item <number>: <title>".
+#' @param issue A character string representing an Issue in the format "Issue <number>: <title>".
 #'
 #' @return A list containing the issue number and issue title.
 #' @examples
-#' split_issue_parts("Item 1: Issue Title")
+#' split_issue_parts("Issue 1: Issue Title")
 #' @noRd
 split_issue_parts <- function(issue) {
   tryCatch(
     {
-      debug(.le$logger, glue::glue("Splitting issue parts for: {issue}"))
+      debug(.le$logger, glue::glue("Splitting Issue parts for: {issue}"))
 
-      issue_parts <- strsplit(sub("Item ", "", issue), ": ")[[1]]
+      issue_parts <- strsplit(sub("Issue ", "", issue), ": ")[[1]]
       issue_number <- as.numeric(issue_parts[1])
       issue_title <- as.character(issue_parts[2])
 

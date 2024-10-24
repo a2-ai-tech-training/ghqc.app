@@ -18,20 +18,18 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
 
   columns <- c("commit", "message", "date", "time", "short_sha", "display")
   commit_log <- commit_log %>%
-    dplyr::select(dplyr::all_of(columns[1:4])) %>%  # Select the first 4 columns dynamically
     dplyr::mutate(
-      date = stringr::str_extract(date, "^[\\w'-]+"), # just get the date
-      message = stringr::str_remove_all(message, "\n"),  # remove /n from message
-      short_sha = stringr::str_extract(columns[[1]], "^.{1,7}"),
+      date = stringr::str_extract(commit_log[[columns[[4]]]], "^[\\w'-]+"),
+      message = stringr::str_remove_all(commit_log[[columns[[2]]]], "\n"),  # remove /n from message
+      short_sha = stringr::str_extract(commit_log[[columns[[1]]]], "^.{1,7}"))
+
+  commit_log <- commit_log %>% dplyr::mutate(
       display = glue::glue("{message} | {short_sha}")
     )
 
-  # commit_log <- commit_log %>%
-  #   dplyr::select(columns[[1]], columns[[2]], columns[[3]], columns[[4]]) %>%
-  #   dplyr::mutate(columns[[3]] = stringr::str_extract(columns[[3]], "^[\\w'-]+")) %>%  # just get the date
-  #   dplyr::mutate(columns[[2]] = stringr::str_remove_all(columns[[2]], "\n")) %>% # remove /n from message
-  #   dplyr::mutate(columns[[4]] = stringr::str_extract(columns[[1]], "^.{1,7}")) %>%
-  #   dplyr::mutate(columns[[6]] = glue::glue("{message} | {short_sha}"))
+  commit_log <- commit_log %>%
+    dplyr::select(columns[[3]], columns[[1]], columns[[6]])
+
 
   #last_row <- nrow(commit_log)
   # commit_log$display[last_row] <- glue::glue("{commit_log$display[last_row]}") # \n(initial qc commit)

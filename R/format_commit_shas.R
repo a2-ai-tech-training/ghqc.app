@@ -23,12 +23,12 @@ get_commits_df <- function(issue_number, owner = get_organization(), repo = get_
       message = stringr::str_remove_all(commit_log[[columns[[2]]]], "\n"),  # remove /n from message
       short_sha = stringr::str_extract(commit_log[[columns[[1]]]], "^.{1,7}"))
 
-  comit_log <- commit_log %>% dplyr::mutate(
+  commit_log <- commit_log %>% dplyr::mutate(
       display = glue::glue("{message} | {short_sha}")
     )
 
   commit_log <- commit_log %>%
-    dplyr::select(commit_log[[columns[[3]]]], commit_log[[columns[[1]]]], commit_log[[columns[[6]]]])
+    dplyr::select(columns[[3]], columns[[1]], columns[[6]])
 
 
   #last_row <- nrow(commit_log)
